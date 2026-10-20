@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Tamirhane.Application/Tamirhane.Application.csproj" />
+    <Project Path="src/Tamirhane.Domain/Tamirhane.Domain.csproj" />
+    <Project Path="src/Tamirhane.Infrastructure/Tamirhane.Infrastructure.csproj" />
+    <Project Path="src/Tamirhane.Web/Tamirhane.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Tamirhane.Application.Tests/Tamirhane.Application.Tests.csproj" />
+    <Project Path="tests/Tamirhane.Architecture.Tests/Tamirhane.Architecture.Tests.csproj" />
+    <Project Path="tests/Tamirhane.Domain.Tests/Tamirhane.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
