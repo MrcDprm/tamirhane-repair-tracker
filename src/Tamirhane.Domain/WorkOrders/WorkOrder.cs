@@ -28,6 +28,7 @@ public sealed class WorkOrder : Entity
 
     private readonly List<StatusChange> _history = [];
     private readonly List<QuoteLine> _quoteLines = [];
+    private readonly List<Payment> _payments = [];
 
     private WorkOrder() { }
 
@@ -50,6 +51,16 @@ public sealed class WorkOrder : Entity
     public IReadOnlyList<QuoteLine> QuoteLines => _quoteLines;
     public QuoteDecision? QuoteDecision { get; private set; }
     public QuoteTotals QuoteTotals => QuoteTotals.Of(_quoteLines);
+    public IReadOnlyList<Payment> Payments => _payments;
+    /// <summary>Teklif reddedildiğinde istenen inceleme ücreti (KDV dahil). Varsayılan 0.</summary>
+    public decimal DiagnosisFee { get; private set; }
+
+    /// <summary>Müşterinin ödemesi gereken tutar: teklif reddedildiyse inceleme ücreti, değilse teklifin toplamı.</summary>
+    public decimal AmountDue => QuoteDecision?.Kind == QuoteDecisionKind.Declined ? DiagnosisFee : QuoteTotals.Total;
+    public decimal PaidTotal => _payments.Sum(p => p.SignedAmount);
+    public decimal Balance => AmountDue - PaidTotal;
+    /// <summary>Borçlu teslim edildiyse teslim anındaki borç; borçsuz teslimde boş.</summary>
+    public decimal? BalanceAtDelivery { get; private set; }
 
     public bool IsClosed => Status is WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled;
 
@@ -177,16 +188,76 @@ public sealed class WorkOrder : Entity
         return movements;
     }
 
-    public Result Deliver(Guid staffId, DateTimeOffset now)
+    /// <summary>
+    /// Teslim. Kalan borç varsa <paramref name="allowBalanceDue"/> gerekir; bu onayı sadece atölye sahibinin
+    /// verebileceğini uygulama katmanı denetler. Borçlu teslimde o anki borç <see cref="BalanceAtDelivery"/>'de kalır.
+    /// </summary>
+    public Result Deliver(Guid staffId, DateTimeOffset now, bool allowBalanceDue = false)
     {
-        var result = MoveTo(WorkOrderStatus.Delivered, staffId, now, null);
-        if (result.IsSuccess)
-        {
-            DeliveredAt = now;
-            // Cihaz şifresi sadece onarım süresince gerekir; teslimde saklanmaya devam etmez.
-            Passcode = null;
-        }
-        return result;
+        if (!CanMoveTo(WorkOrderStatus.Delivered))
+            return WorkOrderErrors.InvalidTransition;
+        if (Balance > 0 && !allowBalanceDue)
+            return PaymentErrors.BalanceDue;
+        // Eksi bakiye: müşteriden fazla para alınmış (ör. kapora > inceleme ücreti); önce iade edilir.
+        if (Balance < 0)
+            return PaymentErrors.RefundDue;
+
+        MoveTo(WorkOrderStatus.Delivered, staffId, now, null);
+        DeliveredAt = now;
+        BalanceAtDelivery = Balance > 0 ? Balance : null;
+        // Cihaz şifresi sadece onarım süresince gerekir; teslimde saklanmaya devam etmez.
+        Passcode = null;
+        return Result.Success();
+    }
+
+    public Result<Payment> RecordPayment(decimal amount, PaymentMethod method, Guid staffId, DateTimeOffset now, string? note)
+    {
+        var error = CheckPayment(amount, note);
+        if (error is not null)
+            return error;
+        if (amount > Balance)
+            return PaymentErrors.Overpayment;
+
+        var payment = new Payment(Id, PaymentKind.Payment, amount, method, staffId, now, Clean(note));
+        _payments.Add(payment);
+        return payment;
+    }
+
+    /// <summary>Müşteriye para iadesi (ör. iptal edilen işin kaporası). Alınandan fazlası iade edilemez.</summary>
+    public Result<Payment> RecordRefund(decimal amount, PaymentMethod method, Guid staffId, DateTimeOffset now, string? note)
+    {
+        var error = CheckPayment(amount, note);
+        if (error is not null)
+            return error;
+        if (amount > PaidTotal)
+            return PaymentErrors.RefundTooLarge;
+
+        var refund = new Payment(Id, PaymentKind.Refund, amount, method, staffId, now, Clean(note));
+        _payments.Add(refund);
+        return refund;
+    }
+
+    /// <summary>Teklif reddedilen cihaz için inceleme ücreti (KDV dahil); teslimden önce girilir.</summary>
+    public Result SetDiagnosisFee(decimal fee)
+    {
+        if (Status != WorkOrderStatus.Declined)
+            return WorkOrderErrors.InvalidTransition;
+        if (fee < 0 || fee > QuoteLine.MaxUnitPrice || decimal.Round(fee, 2) != fee)
+            return PaymentErrors.InvalidDiagnosisFee;
+
+        DiagnosisFee = fee;
+        return Result.Success();
+    }
+
+    private Error? CheckPayment(decimal amount, string? note)
+    {
+        if (Status == WorkOrderStatus.Cancelled)
+            return PaymentErrors.NotAllowed;
+        if (amount <= 0 || amount > QuoteLine.MaxUnitPrice || decimal.Round(amount, 2) != amount)
+            return PaymentErrors.InvalidAmount;
+        if (note?.Length > Payment.MaxNoteLength)
+            return PaymentErrors.NoteTooLong;
+        return null;
     }
 
     /// <summary>İptal. Parçalar daha önce stoktan düşüldüyse (iş emri hazırdı) stoğa geri döner.</summary>
@@ -199,6 +270,9 @@ public sealed class WorkOrder : Entity
             return WorkOrderErrors.TextTooLong;
         if (!CanMoveTo(WorkOrderStatus.Cancelled))
             return WorkOrderErrors.InvalidTransition;
+        // Alınan para önce iade edilmeli; yoksa kasa kaydı iptal edilmiş işte para gösterirdi.
+        if (PaidTotal > 0)
+            return PaymentErrors.RefundRequired;
         if (stock.BranchId != BranchId)
             return InventoryErrors.WrongBranch;
 
