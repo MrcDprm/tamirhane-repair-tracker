@@ -35,10 +35,17 @@ public interface IDeviceRepository
     void Add(Device device);
 }
 
+/// <summary>Bir parça ve bir şubedeki miktarı (stok kaydı yoksa 0).</summary>
+public sealed record PartStock(Part Part, int Quantity);
+
 public interface IPartRepository
 {
     Task<Part?> GetAsync(Guid id, CancellationToken ct);
     Task<bool> SkuExistsAsync(string sku, Guid? exceptPartId, CancellationToken ct);
+
+    /// <summary>Atölyenin kullanımdaki parçaları ve verilen şubedeki miktarları.</summary>
+    Task<IReadOnlyList<PartStock>> ListActiveWithStockAsync(Guid branchId, CancellationToken ct);
+
     void Add(Part part);
 }
 
