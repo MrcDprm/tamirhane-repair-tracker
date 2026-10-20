@@ -72,12 +72,12 @@ public class PaymentTests
     {
         var order = Ready();
 
-        Assert.Equal(PaymentErrors.BalanceDue, order.Deliver(Staff, Now).Error);
+        Assert.Equal(PaymentErrors.BalanceDue, order.Deliver(Staff, Now, 90).Error);
         Assert.Equal(WorkOrderStatus.Ready, order.Status);
 
         order.RecordPayment(1200m, PaymentMethod.Transfer, Staff, Now, null);
 
-        Assert.True(order.Deliver(Staff, Now).IsSuccess);
+        Assert.True(order.Deliver(Staff, Now, 90).IsSuccess);
         Assert.Null(order.BalanceAtDelivery);
     }
 
@@ -87,7 +87,7 @@ public class PaymentTests
         var order = Ready();
         order.RecordPayment(1000m, PaymentMethod.Cash, Staff, Now, null);
 
-        Assert.True(order.Deliver(Staff, Now, allowBalanceDue: true).IsSuccess);
+        Assert.True(order.Deliver(Staff, Now, 90, allowBalanceDue: true).IsSuccess);
 
         Assert.Equal(WorkOrderStatus.Delivered, order.Status);
         Assert.Equal(200m, order.BalanceAtDelivery);
@@ -98,7 +98,7 @@ public class PaymentTests
     public void Debt_can_be_paid_after_delivery()
     {
         var order = Ready();
-        order.Deliver(Staff, Now, allowBalanceDue: true);
+        order.Deliver(Staff, Now, 90, allowBalanceDue: true);
 
         Assert.True(order.RecordPayment(1200m, PaymentMethod.Cash, Staff, Now.AddDays(3), null).IsSuccess);
         Assert.Equal(0m, order.Balance);
@@ -146,9 +146,9 @@ public class PaymentTests
         Assert.True(order.SetDiagnosisFee(150m).IsSuccess);
 
         Assert.Equal(150m, order.AmountDue);
-        Assert.Equal(PaymentErrors.BalanceDue, order.Deliver(Staff, Now).Error);
+        Assert.Equal(PaymentErrors.BalanceDue, order.Deliver(Staff, Now, 90).Error);
         order.RecordPayment(150m, PaymentMethod.Cash, Staff, Now, null);
-        Assert.True(order.Deliver(Staff, Now).IsSuccess);
+        Assert.True(order.Deliver(Staff, Now, 90).IsSuccess);
     }
 
     [Fact]
@@ -164,11 +164,11 @@ public class PaymentTests
 
         Assert.True(order.SetDiagnosisFee(100m).IsSuccess);
         Assert.Equal(-100m, order.Balance);
-        Assert.Equal(PaymentErrors.RefundDue, order.Deliver(Staff, Now, allowBalanceDue: true).Error);
+        Assert.Equal(PaymentErrors.RefundDue, order.Deliver(Staff, Now, 90, allowBalanceDue: true).Error);
 
         order.RecordRefund(100m, PaymentMethod.Cash, Staff, Now, null);
 
         Assert.Equal(0m, order.Balance);
-        Assert.True(order.Deliver(Staff, Now).IsSuccess);
+        Assert.True(order.Deliver(Staff, Now, 90).IsSuccess);
     }
 }
