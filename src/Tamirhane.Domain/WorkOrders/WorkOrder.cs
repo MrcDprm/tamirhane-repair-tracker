@@ -10,6 +10,7 @@ namespace Tamirhane.Domain.WorkOrders;
 public sealed class WorkOrder : Entity
 {
     public const int MaxTextLength = 1000;
+    public const int MaxWarrantyDays = 3650;
 
     private static readonly Dictionary<WorkOrderStatus, WorkOrderStatus[]> AllowedTransitions = new()
     {
@@ -61,6 +62,13 @@ public sealed class WorkOrder : Entity
     public decimal Balance => AmountDue - PaidTotal;
     /// <summary>Borçlu teslim edildiyse teslim anındaki borç; borçsuz teslimde boş.</summary>
     public decimal? BalanceAtDelivery { get; private set; }
+    /// <summary>Garantinin bittiği an; onarılmadan iade edilen ya da garantisiz teslim edilen cihazda boş.</summary>
+    public DateTimeOffset? WarrantyUntil { get; private set; }
+    /// <summary>Garanti kapsamında geri gelen cihazda önceki iş emri.</summary>
+    public Guid? WarrantyOfId { get; private set; }
+    public bool IsWarrantyReturn => WarrantyOfId is not null;
+
+    public bool IsUnderWarranty(DateTimeOffset now) => WarrantyUntil is not null && now <= WarrantyUntil;
 
     public bool IsClosed => Status is WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled;
 
@@ -99,6 +107,25 @@ public sealed class WorkOrder : Entity
             CreatedAt = now,
         };
         order._history.Add(new StatusChange(order.Id, null, WorkOrderStatus.Received, staffId, now, null));
+        return order;
+    }
+
+    /// <summary>
+    /// Garanti kapsamında geri gelen cihaz: yeni iş emri öncekine bağlanır, müşteri ve cihaz öncekinden alınır.
+    /// Önceki iş emri teslim edilmiş ve garantisi sürüyor olmalıdır.
+    /// </summary>
+    public static Result<WorkOrder> ReceiveUnderWarranty(
+        WorkOrder previous, Guid branchId, string number, string trackingCode,
+        string complaint, string? condition, string? accessories, string? passcode,
+        Guid staffId, DateTimeOffset now)
+    {
+        if (previous.Status != WorkOrderStatus.Delivered || !previous.IsUnderWarranty(now))
+            return WorkOrderErrors.NotUnderWarranty;
+
+        var order = Receive(previous.ShopId, branchId, number, trackingCode, previous.CustomerId, previous.DeviceId,
+            complaint, condition, accessories, passcode, staffId, now);
+        if (order.IsSuccess)
+            order.Value.WarrantyOfId = previous.Id;
         return order;
     }
 
@@ -192,19 +219,25 @@ public sealed class WorkOrder : Entity
     /// Teslim. Kalan borç varsa <paramref name="allowBalanceDue"/> gerekir; bu onayı sadece atölye sahibinin
     /// verebileceğini uygulama katmanı denetler. Borçlu teslimde o anki borç <see cref="BalanceAtDelivery"/>'de kalır.
     /// </summary>
-    public Result Deliver(Guid staffId, DateTimeOffset now, bool allowBalanceDue = false)
+    public Result Deliver(Guid staffId, DateTimeOffset now, int warrantyDays, bool allowBalanceDue = false)
     {
         if (!CanMoveTo(WorkOrderStatus.Delivered))
             return WorkOrderErrors.InvalidTransition;
+        if (warrantyDays < 0 || warrantyDays > MaxWarrantyDays)
+            return WorkOrderErrors.InvalidWarrantyDays;
         if (Balance > 0 && !allowBalanceDue)
             return PaymentErrors.BalanceDue;
         // Eksi bakiye: müşteriden fazla para alınmış (ör. kapora > inceleme ücreti); önce iade edilir.
         if (Balance < 0)
             return PaymentErrors.RefundDue;
 
+        // Hazır'dan teslim = onarıldı. Reddedildi'den teslim = onarılmadan iade; garanti başlamaz.
+        var repaired = Status == WorkOrderStatus.Ready;
+
         MoveTo(WorkOrderStatus.Delivered, staffId, now, null);
         DeliveredAt = now;
         BalanceAtDelivery = Balance > 0 ? Balance : null;
+        WarrantyUntil = repaired && warrantyDays > 0 ? now.AddDays(warrantyDays) : null;
         // Cihaz şifresi sadece onarım süresince gerekir; teslimde saklanmaya devam etmez.
         Passcode = null;
         return Result.Success();

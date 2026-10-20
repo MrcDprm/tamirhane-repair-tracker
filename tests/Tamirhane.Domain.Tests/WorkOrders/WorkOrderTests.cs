@@ -72,7 +72,7 @@ public class WorkOrderTests
         var order = InRepair();
 
         Assert.True(order.MarkReady(Staff, Start.AddDays(1), NoStock(order)).IsSuccess);
-        Assert.True(order.Deliver(Staff, Start.AddDays(2)).IsSuccess);
+        Assert.True(order.Deliver(Staff, Start.AddDays(2), 90).IsSuccess);
 
         Assert.Equal(WorkOrderStatus.Delivered, order.Status);
         Assert.Equal(Start.AddDays(2), order.DeliveredAt);
@@ -98,7 +98,7 @@ public class WorkOrderTests
         var order = InRepair();
         order.MarkReady(Staff, Start.AddDays(1), NoStock(order));
 
-        order.Deliver(Staff, Start.AddDays(2));
+        order.Deliver(Staff, Start.AddDays(2), 90);
 
         Assert.Null(order.Passcode);
     }
@@ -128,7 +128,7 @@ public class WorkOrderTests
     {
         var order = InRepair();
 
-        Assert.Equal(WorkOrderErrors.InvalidTransition, order.Deliver(Staff, Start.AddDays(1)).Error);
+        Assert.Equal(WorkOrderErrors.InvalidTransition, order.Deliver(Staff, Start.AddDays(1), 90).Error);
         Assert.Null(order.DeliveredAt);
     }
 
@@ -153,7 +153,7 @@ public class WorkOrderTests
 
         var delivered = InRepair();
         delivered.MarkReady(Staff, Start.AddDays(1), NoStock(delivered));
-        delivered.Deliver(Staff, Start.AddDays(2));
+        delivered.Deliver(Staff, Start.AddDays(2), 90);
 
         foreach (var order in new[] { cancelled, delivered })
         {

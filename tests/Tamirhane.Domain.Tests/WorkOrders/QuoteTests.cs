@@ -169,7 +169,7 @@ public class QuoteTests
         var order = AwaitingApproval();
         order.DecideQuote(false, "Ayşe Kaya", null, Start.AddHours(3));
 
-        Assert.True(order.Deliver(Staff, Start.AddDays(1)).IsSuccess);
+        Assert.True(order.Deliver(Staff, Start.AddDays(1), 90).IsSuccess);
         Assert.Equal(WorkOrderStatus.Delivered, order.Status);
     }
 
