@@ -23,7 +23,10 @@ public sealed class WorkOrder : Entity
         [WorkOrderStatus.Cancelled] = [],
     };
 
+    private const int MaxDeciderNameLength = 100;
+
     private readonly List<StatusChange> _history = [];
+    private readonly List<QuoteLine> _quoteLines = [];
 
     private WorkOrder() { }
 
@@ -41,8 +44,19 @@ public sealed class WorkOrder : Entity
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? DeliveredAt { get; private set; }
     public IReadOnlyList<StatusChange> History => _history;
+    public IReadOnlyList<QuoteLine> QuoteLines => _quoteLines;
+    public QuoteDecision? QuoteDecision { get; private set; }
+    public QuoteTotals QuoteTotals => QuoteTotals.Of(_quoteLines);
 
     public bool IsClosed => Status is WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled;
+
+    /// <summary>
+    /// Teklif, inceleme sırasında hazırlanır. Teklifsiz başlayan onarımda (ücretsiz ya da garanti işi)
+    /// kullanılan parçalar onarım sırasında da eklenebilir. Müşteri karar verdikten sonra kalemler kilitlenir.
+    /// </summary>
+    public bool IsQuoteEditable =>
+        Status == WorkOrderStatus.Diagnosing
+        || (Status == WorkOrderStatus.InRepair && QuoteDecision is null);
 
     public static Result<WorkOrder> Receive(
         Guid shopId, Guid branchId, string number, string trackingCode, Guid customerId, Guid deviceId,
@@ -78,6 +92,61 @@ public sealed class WorkOrder : Entity
 
     public Result StartDiagnosis(Guid staffId, DateTimeOffset now) =>
         MoveTo(WorkOrderStatus.Diagnosing, staffId, now, null);
+
+    public Result<QuoteLine> AddQuoteLine(
+        QuoteLineKind kind, Guid? partId, string description,
+        decimal quantity, decimal unitPrice, decimal vatRate, decimal discountRate)
+    {
+        if (!IsQuoteEditable)
+            return QuoteErrors.NotEditable;
+
+        var line = QuoteLine.Create(Id, kind, partId, description, quantity, unitPrice, vatRate, discountRate);
+        if (line.IsSuccess)
+            _quoteLines.Add(line.Value);
+        return line;
+    }
+
+    public Result RemoveQuoteLine(Guid lineId)
+    {
+        if (!IsQuoteEditable)
+            return QuoteErrors.NotEditable;
+
+        var line = _quoteLines.Find(l => l.Id == lineId);
+        if (line is null)
+            return QuoteErrors.LineNotFound;
+
+        _quoteLines.Remove(line);
+        return Result.Success();
+    }
+
+    public Result SendQuote(Guid staffId, DateTimeOffset now)
+    {
+        if (Status != WorkOrderStatus.Diagnosing)
+            return WorkOrderErrors.InvalidTransition;
+        if (_quoteLines.Count == 0)
+            return QuoteErrors.Empty;
+
+        return MoveTo(WorkOrderStatus.AwaitingApproval, staffId, now, null);
+    }
+
+    /// <summary>
+    /// Müşterinin kararı. Takip sayfasından gelirse staffId boştur; müşteri telefonla bildirdiyse
+    /// personel onun adına kaydeder. Onay onarımı başlatır, red cihazı onarılmadan teslime hazırlar.
+    /// </summary>
+    public Result DecideQuote(bool approved, string byName, Guid? staffId, DateTimeOffset now)
+    {
+        byName = byName?.Trim() ?? "";
+        if (byName.Length == 0 || byName.Length > MaxDeciderNameLength)
+            return QuoteErrors.DeciderNameRequired;
+        if (Status != WorkOrderStatus.AwaitingApproval)
+            return WorkOrderErrors.InvalidTransition;
+
+        var kind = approved ? QuoteDecisionKind.Approved : QuoteDecisionKind.Declined;
+        var result = MoveTo(approved ? WorkOrderStatus.InRepair : WorkOrderStatus.Declined, staffId, now, null);
+        if (result.IsSuccess)
+            QuoteDecision = new QuoteDecision(kind, byName, now, staffId);
+        return result;
+    }
 
     /// <summary>Teklif gerekmeyen onarım (ör. ücretsiz ya da garanti kapsamında): incelemeden doğrudan onarıma.</summary>
     public Result StartRepair(Guid staffId, DateTimeOffset now) =>
