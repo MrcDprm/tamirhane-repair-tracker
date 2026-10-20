@@ -30,6 +30,7 @@ public sealed class WorkOrder : Entity
     private readonly List<StatusChange> _history = [];
     private readonly List<QuoteLine> _quoteLines = [];
     private readonly List<Payment> _payments = [];
+    private readonly List<WorkOrderNote> _notes = [];
 
     private WorkOrder() { }
 
@@ -53,6 +54,7 @@ public sealed class WorkOrder : Entity
     public QuoteDecision? QuoteDecision { get; private set; }
     public QuoteTotals QuoteTotals => QuoteTotals.Of(_quoteLines);
     public IReadOnlyList<Payment> Payments => _payments;
+    public IReadOnlyList<WorkOrderNote> Notes => _notes;
     /// <summary>Teklif reddedildiğinde istenen inceleme ücreti (KDV dahil). Varsayılan 0.</summary>
     public decimal DiagnosisFee { get; private set; }
 
@@ -127,6 +129,38 @@ public sealed class WorkOrder : Entity
         if (order.IsSuccess)
             order.Value.WarrantyOfId = previous.Id;
         return order;
+    }
+
+    /// <summary>Kabulde yanlış girilen bilgileri düzeltir; iş emri kapanınca değişmez.</summary>
+    public Result UpdateIntake(string complaint, string? condition, string? accessories, string? passcode)
+    {
+        if (IsClosed)
+            return WorkOrderErrors.Closed;
+        complaint = complaint?.Trim() ?? "";
+        if (complaint.Length == 0)
+            return WorkOrderErrors.ComplaintRequired;
+        if (TooLong(complaint) || TooLong(condition) || TooLong(accessories) || TooLong(passcode))
+            return WorkOrderErrors.TextTooLong;
+
+        Complaint = complaint;
+        Condition = Clean(condition);
+        Accessories = Clean(accessories);
+        Passcode = Clean(passcode);
+        return Result.Success();
+    }
+
+    /// <summary>Not her zaman eklenebilir; teslimden sonra da (ör. "Müşteri memnun kaldığını söyledi").</summary>
+    public Result<WorkOrderNote> AddNote(string text, bool visibleToCustomer, Guid staffId, DateTimeOffset now)
+    {
+        text = text?.Trim() ?? "";
+        if (text.Length == 0)
+            return WorkOrderErrors.NoteRequired;
+        if (TooLong(text))
+            return WorkOrderErrors.TextTooLong;
+
+        var note = new WorkOrderNote(Id, text, visibleToCustomer, staffId, now);
+        _notes.Add(note);
+        return note;
     }
 
     public bool CanMoveTo(WorkOrderStatus to) => AllowedTransitions[Status].Contains(to);
