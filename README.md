@@ -70,3 +70,7 @@ To be written.
 ## What I Learned
 
 To be written when the project is finished.
+
+## License
+
+[AGPL-3.0](LICENSE). If your company can't meet the AGPL terms (for example, you want to change the code without publishing the changes), a commercial license is possible: [get in touch](https://www.miracdeprem.com/#contact).

@@ -70,3 +70,7 @@ Yazılacak.
 ## Öğrendiklerim
 
 Proje bitince yazılacak.
+
+## Lisans
+
+[AGPL-3.0](LICENSE). Şirketin AGPL koşullarını karşılayamıyorsa (ör. kodu değiştirip değişiklikleri yayınlamak istemiyorsan) ticari lisans mümkün: [iletişime geç](https://www.miracdeprem.com/#contact).
