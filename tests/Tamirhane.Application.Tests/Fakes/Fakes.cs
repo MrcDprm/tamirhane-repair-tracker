@@ -90,6 +90,14 @@ public sealed class FakeParts(ICurrentUser user) : IPartRepository
     public Task<bool> SkuExistsAsync(string sku, Guid? exceptPartId, CancellationToken ct) =>
         Task.FromResult(Items.Any(p => p.ShopId == user.ShopId && p.Sku == sku && p.Id != exceptPartId));
 
+    public FakeStock? Stock { get; set; }
+
+    public Task<IReadOnlyList<PartStock>> ListActiveWithStockAsync(Guid branchId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<PartStock>>(Items
+            .Where(p => p.ShopId == user.ShopId && p.IsActive)
+            .Select(p => new PartStock(p, Stock?.Levels.Find(l => l.PartId == p.Id && l.BranchId == branchId)?.Quantity ?? 0))
+            .ToList());
+
     public void Add(Part part) => Items.Add(part);
 }
 

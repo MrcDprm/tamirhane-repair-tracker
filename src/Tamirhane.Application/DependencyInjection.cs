@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Tamirhane.Application.Customers;
+using Tamirhane.Application.Inventory;
 using Tamirhane.Application.WorkOrders;
 
 namespace Tamirhane.Application;
@@ -23,6 +24,14 @@ public static class DependencyInjection
         services.AddScoped<MarkReady>();
         services.AddScoped<DeliverWorkOrder>();
         services.AddScoped<CancelWorkOrder>();
+        services.AddScoped<RecordPayment>();
+        services.AddScoped<RecordRefund>();
+        services.AddScoped<SetDiagnosisFee>();
+        services.AddScoped<ReopenUnderWarranty>();
+        services.AddScoped<AddPart>();
+        services.AddScoped<UpdatePart>();
+        services.AddScoped<ChangeStock>();
+        services.AddScoped<ListLowStock>();
         services.TryAddSingletonTimeProvider();
         return services;
     }

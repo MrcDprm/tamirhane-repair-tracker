@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Time.Testing;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Customers;
+using Tamirhane.Application.Inventory;
 using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.Customers;
 
@@ -16,7 +17,7 @@ public sealed class TestShop
         Orders = new FakeWorkOrders(User);
         Customers = new FakeCustomers(User);
         Devices = new FakeDevices(User);
-        Parts = new FakeParts(User);
+        Parts = new FakeParts(User) { Stock = Stock };
     }
 
     // 20 Ekim 2026 09:00 Türkiye saati
@@ -45,6 +46,14 @@ public sealed class TestShop
     public CancelWorkOrder Cancel() => new(Orders, Stock, UnitOfWork, Queue, User, Clock);
     public AddNote AddNote() => new(Orders, UnitOfWork, Queue, User, Clock);
     public UpdateIntakeDetails UpdateIntake() => new(Orders, UnitOfWork, Queue, User, Clock);
+    public RecordPayment RecordPayment() => new(Orders, UnitOfWork, Queue, User, Clock);
+    public RecordRefund RecordRefund() => new(Orders, UnitOfWork, Queue, User, Clock);
+    public SetDiagnosisFee SetDiagnosisFee() => new(Orders, UnitOfWork, Queue, User, Clock);
+    public ReopenUnderWarranty ReopenUnderWarranty() => new(Orders, new FakeSettings(Settings), UnitOfWork, Queue, User, Clock);
+    public AddPart AddPart() => new(Parts, Stock, new FakeSettings(Settings), UnitOfWork, User, Clock);
+    public UpdatePart UpdatePart() => new(Parts, UnitOfWork);
+    public ChangeStock ChangeStock() => new(Parts, Stock, new FakeSettings(Settings), UnitOfWork, User, Clock);
+    public ListLowStock ListLowStock() => new(Parts, new FakeSettings(Settings), User);
 
     public static ReceiveDeviceCommand NewCustomerCommand(string phone = "0532 123 45 67", string complaint = "Ekran kırık") =>
         new(null, "Ayşe Kaya", phone, "ayse@example.com", true,
