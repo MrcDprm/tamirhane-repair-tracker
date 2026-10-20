@@ -47,6 +47,9 @@ public sealed class QuoteLine : Entity
             return QuoteErrors.InvalidDescription;
         if (quantity <= 0 || quantity > MaxQuantity || decimal.Round(quantity, 2) != quantity)
             return QuoteErrors.InvalidQuantity;
+        // Stoktan gelen parça tam adet sayılır; işçilik saati ya da stok dışı parça ondalıklı olabilir.
+        if (kind == QuoteLineKind.Part && partId is not null && decimal.Truncate(quantity) != quantity)
+            return QuoteErrors.PartQuantityMustBeWhole;
         if (unitPrice < 0 || unitPrice > MaxUnitPrice || decimal.Round(unitPrice, 2) != unitPrice)
             return QuoteErrors.InvalidUnitPrice;
         if (vatRate < 0 || vatRate > 100)

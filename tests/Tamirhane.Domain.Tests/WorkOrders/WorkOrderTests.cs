@@ -1,3 +1,4 @@
+using Tamirhane.Domain.Inventory;
 using Tamirhane.Domain.WorkOrders;
 
 namespace Tamirhane.Domain.Tests.WorkOrders;
@@ -10,6 +11,8 @@ public class WorkOrderTests
     private static WorkOrder NewOrder(string complaint = "Ekran kırık", string? passcode = "1234") =>
         WorkOrder.Receive(Guid.NewGuid(), Guid.NewGuid(), "2026-0001", "ABCDEFGH2345",
             Guid.NewGuid(), Guid.NewGuid(), complaint, "Kasada çizik", "Kılıf", passcode, Staff, Start).Value;
+
+    private static BranchStock NoStock(WorkOrder order) => new(order.BranchId, []);
 
     private static WorkOrder InRepair()
     {
@@ -68,7 +71,7 @@ public class WorkOrderTests
     {
         var order = InRepair();
 
-        Assert.True(order.MarkReady(Staff, Start.AddDays(1)).IsSuccess);
+        Assert.True(order.MarkReady(Staff, Start.AddDays(1), NoStock(order)).IsSuccess);
         Assert.True(order.Deliver(Staff, Start.AddDays(2)).IsSuccess);
 
         Assert.Equal(WorkOrderStatus.Delivered, order.Status);
@@ -93,7 +96,7 @@ public class WorkOrderTests
     public void Deliver_removes_the_device_passcode()
     {
         var order = InRepair();
-        order.MarkReady(Staff, Start.AddDays(1));
+        order.MarkReady(Staff, Start.AddDays(1), NoStock(order));
 
         order.Deliver(Staff, Start.AddDays(2));
 
@@ -105,7 +108,7 @@ public class WorkOrderTests
     {
         var order = NewOrder();
 
-        var result = order.MarkReady(Staff, Start.AddHours(1));
+        var result = order.MarkReady(Staff, Start.AddHours(1), NoStock(order));
 
         Assert.Equal(WorkOrderErrors.InvalidTransition, result.Error);
         Assert.Equal(WorkOrderStatus.Received, order.Status);
@@ -134,8 +137,8 @@ public class WorkOrderTests
     {
         var order = NewOrder();
 
-        Assert.Equal(WorkOrderErrors.CancelReasonRequired, order.Cancel(Staff, Start, " ").Error);
-        Assert.True(order.Cancel(Staff, Start.AddHours(1), "Müşteri vazgeçti").IsSuccess);
+        Assert.Equal(WorkOrderErrors.CancelReasonRequired, order.Cancel(Staff, Start, " ", NoStock(order)).Error);
+        Assert.True(order.Cancel(Staff, Start.AddHours(1), "Müşteri vazgeçti", NoStock(order)).IsSuccess);
 
         Assert.Equal(WorkOrderStatus.Cancelled, order.Status);
         Assert.Equal("Müşteri vazgeçti", order.History[^1].Note);
@@ -146,17 +149,17 @@ public class WorkOrderTests
     public void Closed_orders_accept_no_further_transitions()
     {
         var cancelled = NewOrder();
-        cancelled.Cancel(Staff, Start, "Müşteri vazgeçti");
+        cancelled.Cancel(Staff, Start, "Müşteri vazgeçti", NoStock(cancelled));
 
         var delivered = InRepair();
-        delivered.MarkReady(Staff, Start.AddDays(1));
+        delivered.MarkReady(Staff, Start.AddDays(1), NoStock(delivered));
         delivered.Deliver(Staff, Start.AddDays(2));
 
         foreach (var order in new[] { cancelled, delivered })
         {
             Assert.True(order.IsClosed);
             Assert.Equal(WorkOrderErrors.InvalidTransition, order.StartDiagnosis(Staff, Start).Error);
-            Assert.Equal(WorkOrderErrors.InvalidTransition, order.Cancel(Staff, Start, "Tekrar").Error);
+            Assert.Equal(WorkOrderErrors.InvalidTransition, order.Cancel(Staff, Start, "Tekrar", NoStock(order)).Error);
         }
     }
 

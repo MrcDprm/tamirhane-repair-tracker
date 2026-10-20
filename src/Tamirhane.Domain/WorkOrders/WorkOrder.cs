@@ -1,4 +1,5 @@
 using Tamirhane.Domain.Common;
+using Tamirhane.Domain.Inventory;
 
 namespace Tamirhane.Domain.WorkOrders;
 
@@ -43,6 +44,8 @@ public sealed class WorkOrder : Entity
     public WorkOrderStatus Status { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? DeliveredAt { get; private set; }
+    /// <summary>Teklifteki stok parçaları şubenin stoğundan düşüldü mü (iş emri hazır olduğunda).</summary>
+    public bool PartsConsumed { get; private set; }
     public IReadOnlyList<StatusChange> History => _history;
     public IReadOnlyList<QuoteLine> QuoteLines => _quoteLines;
     public QuoteDecision? QuoteDecision { get; private set; }
@@ -154,8 +157,25 @@ public sealed class WorkOrder : Entity
             ? MoveTo(WorkOrderStatus.InRepair, staffId, now, null)
             : WorkOrderErrors.InvalidTransition;
 
-    public Result MarkReady(Guid staffId, DateTimeOffset now) =>
+    /// <summary>
+    /// Onarım bitti: teklifteki stok parçaları şubenin stoğundan düşülür. Bir parça bile yetmezse
+    /// iş emri onarımda kalır ve hiçbir miktar değişmez. Dönen hareketler kaydedilmelidir.
+    /// </summary>
+    public Result<IReadOnlyList<StockMovement>> MarkReady(Guid staffId, DateTimeOffset now, BranchStock stock)
+    {
+        if (!CanMoveTo(WorkOrderStatus.Ready))
+            return WorkOrderErrors.InvalidTransition;
+        if (stock.BranchId != BranchId)
+            return InventoryErrors.WrongBranch;
+
+        var movements = stock.Consume(StockParts(), Id, staffId, now);
+        if (movements.IsFailure)
+            return movements;
+
         MoveTo(WorkOrderStatus.Ready, staffId, now, null);
+        PartsConsumed = true;
+        return movements;
+    }
 
     public Result Deliver(Guid staffId, DateTimeOffset now)
     {
@@ -169,19 +189,32 @@ public sealed class WorkOrder : Entity
         return result;
     }
 
-    public Result Cancel(Guid staffId, DateTimeOffset now, string reason)
+    /// <summary>İptal. Parçalar daha önce stoktan düşüldüyse (iş emri hazırdı) stoğa geri döner.</summary>
+    public Result<IReadOnlyList<StockMovement>> Cancel(Guid staffId, DateTimeOffset now, string reason, BranchStock stock)
     {
         reason = reason?.Trim() ?? "";
         if (reason.Length == 0)
             return WorkOrderErrors.CancelReasonRequired;
         if (TooLong(reason))
             return WorkOrderErrors.TextTooLong;
+        if (!CanMoveTo(WorkOrderStatus.Cancelled))
+            return WorkOrderErrors.InvalidTransition;
+        if (stock.BranchId != BranchId)
+            return InventoryErrors.WrongBranch;
 
-        var result = MoveTo(WorkOrderStatus.Cancelled, staffId, now, reason);
-        if (result.IsSuccess)
-            Passcode = null;
-        return result;
+        IReadOnlyList<StockMovement> movements = PartsConsumed ? stock.Return(StockParts(), Id, staffId, now) : [];
+        MoveTo(WorkOrderStatus.Cancelled, staffId, now, reason);
+        PartsConsumed = false;
+        Passcode = null;
+        return Result.Success(movements);
     }
+
+    /// <summary>Teklifteki stok parçaları, parça başına toplam adet.</summary>
+    private Dictionary<Guid, int> StockParts() =>
+        _quoteLines
+            .Where(l => l.PartId is not null)
+            .GroupBy(l => l.PartId!.Value)
+            .ToDictionary(g => g.Key, g => (int)g.Sum(l => l.Quantity));
 
     private Result MoveTo(WorkOrderStatus to, Guid? staffId, DateTimeOffset now, string? note)
     {
