@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Tamirhane.Application.Abstractions;
 
 namespace Tamirhane.Infrastructure.Persistence;
 
@@ -15,6 +16,14 @@ internal sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<T
     {
         var options = new DbContextOptionsBuilder<TamirhaneDbContext>();
         DependencyInjection.Configure(options, Environment.GetEnvironmentVariable("DATABASE_URL") ?? LocalDevelopment);
-        return new TamirhaneDbContext(options.Options);
+        return new TamirhaneDbContext(options.Options, new NoUser());
+    }
+
+    // Migration üretirken oturum yok; filtre sadece modele yazılır, sorgu çalışmaz.
+    private sealed class NoUser : ICurrentUser
+    {
+        public Guid ShopId => Guid.Empty;
+        public Guid StaffId => Guid.Empty;
+        public bool IsOwner => false;
     }
 }
