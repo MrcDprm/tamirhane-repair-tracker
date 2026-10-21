@@ -16,6 +16,9 @@ public static class DependencyInjection
         services.AddScoped<IDeviceRepository, DeviceRepository>();
         services.AddScoped<IPartRepository, PartRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
+
+        // /health ucu veritabanına bağlanılabiliyor mu diye bakar (yayında sunucunun sağlık kontrolü).
+        services.AddHealthChecks().AddDbContextCheck<TamirhaneDbContext>("database");
         return services;
     }
 
