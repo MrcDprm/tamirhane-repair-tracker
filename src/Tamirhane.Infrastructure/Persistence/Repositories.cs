@@ -19,8 +19,9 @@ internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRep
     public Task<WorkOrder?> GetAsync(Guid id, CancellationToken ct) =>
         Full.FirstOrDefaultAsync(o => o.Id == id, ct);
 
+    // Müşteri oturum açmadan takip koduyla bakar; kod tahmin edilemez olduğu için filtre bilerek kapatılır.
     public Task<WorkOrder?> GetByTrackingCodeAsync(string trackingCode, CancellationToken ct) =>
-        Full.FirstOrDefaultAsync(o => o.TrackingCode == trackingCode, ct);
+        Full.IgnoreQueryFilters().FirstOrDefaultAsync(o => o.TrackingCode == trackingCode, ct);
 
     /// <summary>
     /// Sayaç tek SQL komutuyla artar: aynı anda açılan iki iş emri aynı numarayı alamaz.

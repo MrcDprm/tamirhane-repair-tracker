@@ -9,5 +9,6 @@
     <Project Path="tests/Tamirhane.Application.Tests/Tamirhane.Application.Tests.csproj" />
     <Project Path="tests/Tamirhane.Architecture.Tests/Tamirhane.Architecture.Tests.csproj" />
     <Project Path="tests/Tamirhane.Domain.Tests/Tamirhane.Domain.Tests.csproj" />
+    <Project Path="tests/Tamirhane.Infrastructure.Tests/Tamirhane.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

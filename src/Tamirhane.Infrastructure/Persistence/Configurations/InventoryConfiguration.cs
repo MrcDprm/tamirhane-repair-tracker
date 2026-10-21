@@ -22,6 +22,7 @@ internal sealed class StockLevelConfiguration : IEntityTypeConfiguration<StockLe
     {
         b.HasKey(l => l.Id);
         b.Property(l => l.Id).ValueGeneratedNever();
+        b.Property<Guid>(TamirhaneDbContext.ShopIdColumn);
         b.HasOne<Part>().WithMany().HasForeignKey(l => l.PartId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(l => new { l.PartId, l.BranchId }).IsUnique();
         // İki kişi aynı anda aynı parçayı kullanırsa ikinci kayıt hata alır (iyimser eşzamanlılık).
@@ -35,6 +36,7 @@ internal sealed class StockMovementConfiguration : IEntityTypeConfiguration<Stoc
     {
         b.HasKey(m => m.Id);
         b.Property(m => m.Id).ValueGeneratedNever();
+        b.Property<Guid>(TamirhaneDbContext.ShopIdColumn);
         b.Property(m => m.Note).HasMaxLength(StockLevel.MaxNoteLength);
         b.HasIndex(m => new { m.PartId, m.At });
         b.HasIndex(m => m.WorkOrderId);

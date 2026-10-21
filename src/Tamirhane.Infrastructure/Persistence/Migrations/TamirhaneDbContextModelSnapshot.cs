@@ -191,6 +191,10 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("quantity");
 
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shop_id");
+
                     b.HasKey("Id")
                         .HasName("pk_stock_levels");
 
@@ -233,6 +237,10 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("reason");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shop_id");
 
                     b.Property<Guid>("StaffId")
                         .HasColumnType("uuid")
