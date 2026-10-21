@@ -13,11 +13,16 @@ namespace Tamirhane.Infrastructure.Tests;
 /// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:17-alpine").Build();
+    private PostgreSqlContainer? _container;
     private ServiceProvider _services = null!;
 
     public async Task InitializeAsync()
     {
+        // Docker yoksa testler [DockerFact] ile atlanır; xUnit fixture'ı yine de kurar, burada hiçbir şey yapılmaz.
+        if (!DockerEngine.IsAvailable)
+            return;
+
+        _container = new PostgreSqlBuilder("postgres:17-alpine").Build();
         await _container.StartAsync();
 
         var services = new ServiceCollection();
@@ -32,6 +37,9 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
+        if (_container is null)
+            return;
+
         await _services.DisposeAsync();
         await _container.DisposeAsync();
     }

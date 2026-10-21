@@ -13,7 +13,7 @@ public sealed class WebHostTests(TamirhaneWebFactory app)
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 22, 9, 0, 0, TimeSpan.FromHours(3));
 
-    [Fact]
+    [DockerFact]
     public async Task Health_endpoint_reports_a_reachable_database()
     {
         var response = await app.CreateClient().GetAsync("/health");
@@ -22,7 +22,7 @@ public sealed class WebHostTests(TamirhaneWebFactory app)
         Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
     }
 
-    [Fact]
+    [DockerFact]
     public async Task Home_page_opens()
     {
         var response = await app.CreateClient().GetAsync("/");
@@ -30,7 +30,7 @@ public sealed class WebHostTests(TamirhaneWebFactory app)
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [DockerFact]
     public async Task Visitor_without_a_session_sees_no_shop_records()
     {
         var shopId = Guid.NewGuid();

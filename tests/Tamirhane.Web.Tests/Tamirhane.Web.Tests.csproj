@@ -18,6 +18,12 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="Tamirhane.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Docker yoksa testleri atlayan ortak özellik; iki entegrasyon test projesi de kullanır. -->
+    <Compile Include="..\Shared\DockerFactAttribute.cs" Link="DockerFactAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>
