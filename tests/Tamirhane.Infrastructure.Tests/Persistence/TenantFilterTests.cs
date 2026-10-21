@@ -16,7 +16,7 @@ public sealed class TenantFilterTests(PostgresFixture db)
     private readonly Guid _shopA = Guid.NewGuid();
     private readonly Guid _shopB = Guid.NewGuid();
 
-    [Fact]
+    [DockerFact]
     public async Task Shop_cannot_open_another_shops_work_order_by_id()
     {
         var order = await ReceiveAsync(_shopB, "0532 111 11 11");
@@ -33,7 +33,7 @@ public sealed class TenantFilterTests(PostgresFixture db)
         Assert.NotNull(await b.Orders.GetAsync(order.Id, default));
     }
 
-    [Fact]
+    [DockerFact]
     public async Task Shop_does_not_find_another_shops_customer_by_phone()
     {
         await ReceiveAsync(_shopB, "0532 222 22 22");
@@ -44,7 +44,7 @@ public sealed class TenantFilterTests(PostgresFixture db)
         Assert.Empty(await a.Db.Devices.ToListAsync());
     }
 
-    [Fact]
+    [DockerFact]
     public async Task Tracking_code_finds_work_order_without_a_session()
     {
         var order = await ReceiveAsync(_shopB, "0532 333 33 33");
@@ -54,7 +54,7 @@ public sealed class TenantFilterTests(PostgresFixture db)
         Assert.NotNull(await anonymous.Orders.GetByTrackingCodeAsync(order.TrackingCode, default));
     }
 
-    [Fact]
+    [DockerFact]
     public async Task Stock_gets_shop_from_session_and_stays_hidden_from_other_shops()
     {
         var branchId = Guid.NewGuid();
@@ -80,7 +80,7 @@ public sealed class TenantFilterTests(PostgresFixture db)
         Assert.Empty(await a.Db.StockMovements.Where(m => m.PartId == partId).ToListAsync());
     }
 
-    [Fact]
+    [DockerFact]
     public async Task Writing_a_record_for_another_shop_is_refused()
     {
         using var a = db.AsShop(_shopA);

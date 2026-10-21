@@ -1,15 +1,24 @@
+using Tamirhane.Application.Abstractions;
+using Tamirhane.Infrastructure;
+using Tamirhane.Web.Auth;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Yayında bağlantı DATABASE_URL ortam değişkeninden gelir (Neon/Render); geliştirmede appsettings.Development.json'dan.
+var connectionString = builder.Configuration["DATABASE_URL"]
+    ?? builder.Configuration.GetConnectionString("Tamirhane")
+    ?? throw new InvalidOperationException(
+        "Veritabanı bağlantısı yok: DATABASE_URL ortam değişkenini ya da ConnectionStrings:Tamirhane ayarını verin.");
+
 builder.Services.AddControllersWithViews();
+builder.Services.AddInfrastructure(connectionString);
+builder.Services.AddScoped<ICurrentUser, AnonymousUser>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -19,11 +28,14 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapHealthChecks("/health");
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
 app.Run();
+
+// Entegrasyon testlerinde WebApplicationFactory<Program> uygulamayı bu sınıf üzerinden açar.
+public partial class Program;
