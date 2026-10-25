@@ -1,18 +1,27 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.Inventory;
+using Tamirhane.Domain.Shops;
 using Tamirhane.Domain.WorkOrders;
+using Tamirhane.Infrastructure.Identity;
 
 namespace Tamirhane.Infrastructure.Persistence;
 
+/// <summary>
+/// Uygulamanın tek veritabanı bağlamı. Identity'nin kullanıcı tabloları da burada (rol tabloları yok:
+/// rol domain'deki Staff'ta), böylece hesap ve atölye aynı transaction'da kaydedilebilir.
+/// </summary>
 public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> options, ICurrentUser currentUser)
-    : DbContext(options), IUnitOfWork
+    : IdentityUserContext<ApplicationUser, Guid>(options), IUnitOfWork
 {
     /// <summary>Stok tablolarında ShopId domain'de yok; atölyeyi Infrastructure gölge sütunla tutar.</summary>
     internal const string ShopIdColumn = "ShopId";
 
+    public DbSet<Shop> Shops => Set<Shop>();
+    public DbSet<Staff> Staff => Set<Staff>();
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Device> Devices => Set<Device>();
@@ -40,10 +49,13 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder); // Identity tabloları
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TamirhaneDbContext).Assembly);
 
         // Kiracı filtresi: her sorgu sadece oturumdaki atölyenin kayıtlarını görür.
         // İş emrinin alt kayıtları (geçmiş, kalemler, ödemeler, notlar) sadece iş emri üzerinden yüklenir.
+        modelBuilder.Entity<Shop>().HasQueryFilter(s => s.Id == CurrentShopId);
+        modelBuilder.Entity<Staff>().HasQueryFilter(s => s.ShopId == CurrentShopId);
         modelBuilder.Entity<WorkOrder>().HasQueryFilter(o => o.ShopId == CurrentShopId);
         modelBuilder.Entity<Customer>().HasQueryFilter(c => c.ShopId == CurrentShopId);
         modelBuilder.Entity<Device>().HasQueryFilter(d => d.ShopId == CurrentShopId);
@@ -55,9 +67,15 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
     /// <summary>
     /// Yeni kayıtların atölyesi her zaman oturumdan gelir. Stok kayıtlarına burada yazılır;
     /// ShopId'yi kendisi taşıyan kayıtlar başka atölyeye aitse kayıt hiç yapılmaz.
+    /// Atölye kaydı oturum açılmadan yapılır: aynı kayıtta eklenen yeni atölyenin kendisine ve personeline izin verilir.
     /// </summary>
     private void StampShop()
     {
+        var newShops = ChangeTracker.Entries<Shop>()
+            .Where(e => e.State == EntityState.Added)
+            .Select(e => e.Entity.Id)
+            .ToHashSet();
+
         foreach (var entry in ChangeTracker.Entries().Where(e => e.State == EntityState.Added))
         {
             if (entry.Entity is StockLevel or StockMovement)
@@ -68,13 +86,15 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
 
             var shopId = entry.Entity switch
             {
+                Shop s => s.Id,
+                Staff s => s.ShopId,
                 WorkOrder o => o.ShopId,
                 Customer c => c.ShopId,
                 Device d => d.ShopId,
                 Part p => p.ShopId,
                 _ => CurrentShopId,
             };
-            if (shopId != CurrentShopId)
+            if (shopId != CurrentShopId && !newShops.Contains(shopId))
                 throw new InvalidOperationException($"{entry.Entity.GetType().Name} başka bir atölyeye yazılmak istendi.");
         }
     }
