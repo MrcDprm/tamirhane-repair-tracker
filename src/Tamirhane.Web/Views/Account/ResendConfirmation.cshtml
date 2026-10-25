@@ -1,0 +1,24 @@
+@model EmailInput
+@{
+    ViewData["Title"] = "Yeni doğrulama linki";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+        <h1 class="h3 mb-3">Yeni doğrulama linki</h1>
+        <p class="text-body-secondary">Kayıtta kullandığın e-postayı yaz; hesap henüz doğrulanmadıysa yeni link gönderelim.</p>
+
+        <form asp-action="ResendConfirmation" method="post" novalidate>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Link gönder</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
