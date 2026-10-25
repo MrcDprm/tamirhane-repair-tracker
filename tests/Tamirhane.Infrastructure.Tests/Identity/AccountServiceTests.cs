@@ -1,9 +1,12 @@
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Domain.Shops;
 using Tamirhane.Infrastructure.Email;
+using Tamirhane.Infrastructure.Identity;
 
 namespace Tamirhane.Infrastructure.Tests.Identity;
 
@@ -100,6 +103,89 @@ public sealed class AccountServiceTests(PostgresFixture db)
         Assert.True(await scope.Accounts.ConfirmEmailAsync(userId, QueryHelpers.ParseQuery(LinkIn(mail).Query)["token"]!, default));
         await scope.Accounts.ResendEmailConfirmationAsync("sekiz@example.com", default);
         Assert.Single(db.Emails.SentTo("sekiz@example.com")); // doğrulanmış hesaba yeni link gitmez
+    }
+
+    [DockerFact]
+    public async Task Reset_link_sets_the_new_password_confirms_the_email_lifts_the_lock_and_works_once()
+    {
+        var (_, userId) = await RegisterShopAsync("sifre@example.com", "tr");
+        using var scope = db.AsShop(Guid.Empty);
+        var user = (await scope.Users.FindByIdAsync(userId.ToString()))!;
+        for (var i = 0; i < 5; i++)
+            await scope.Users.AccessFailedAsync(user);
+        Assert.True(await scope.Users.IsLockedOutAsync(user));
+
+        await scope.Accounts.SendPasswordResetAsync(" SIFRE@example.com", default);
+        var mail = Assert.Single(db.Emails.SentTo("sifre@example.com"));
+        var link = LinkIn(mail);
+        Assert.Equal("https://tamirhane.test/account/reset-password", link.GetLeftPart(UriPartial.Path));
+        var token = QueryHelpers.ParseQuery(link.Query)["token"].ToString();
+
+        var reset = await scope.Accounts.ResetPasswordAsync(userId, token, "yeni-mavi-kalem-7", default);
+        var again = await scope.Accounts.ResetPasswordAsync(userId, token, "baska-yesil-kalem-8", default);
+
+        Assert.True(reset.IsSuccess);
+        Assert.Equal(AccountErrors.InvalidResetLink, again.Error); // damga değişti, link tek kullanımlık
+        using var fresh = db.AsShop(Guid.Empty);
+        user = (await fresh.Users.FindByIdAsync(userId.ToString()))!;
+        Assert.True(user.EmailConfirmed);
+        Assert.False(await fresh.Users.IsLockedOutAsync(user));
+        Assert.True(await fresh.Users.CheckPasswordAsync(user, "yeni-mavi-kalem-7"));
+    }
+
+    [DockerFact]
+    public async Task Weak_new_password_is_reported_and_the_old_one_stays()
+    {
+        var (_, userId) = await RegisterShopAsync("zayif-yeni@example.com", "tr");
+        using var scope = db.AsShop(Guid.Empty);
+        await scope.Accounts.SendPasswordResetAsync("zayif-yeni@example.com", default);
+        var token = QueryHelpers.ParseQuery(LinkIn(db.Emails.SentTo("zayif-yeni@example.com").Single()).Query)["token"].ToString();
+
+        var reset = await scope.Accounts.ResetPasswordAsync(userId, token, "kisa1", default);
+
+        Assert.Equal(AccountErrors.PasswordTooShort, reset.Error);
+        Assert.True(await scope.Users.CheckPasswordAsync((await scope.Users.FindByIdAsync(userId.ToString()))!, Password));
+    }
+
+    [DockerFact]
+    public async Task Tampered_or_foreign_reset_token_is_an_invalid_link()
+    {
+        var (_, userId) = await RegisterShopAsync("dokuz@example.com", "tr");
+        var (_, otherId) = await RegisterShopAsync("on@example.com", "tr");
+        using var scope = db.AsShop(Guid.Empty);
+        await scope.Accounts.SendPasswordResetAsync("on@example.com", default);
+        var otherToken = QueryHelpers.ParseQuery(LinkIn(db.Emails.SentTo("on@example.com").Single()).Query)["token"].ToString();
+
+        Assert.Equal(AccountErrors.InvalidResetLink,
+            (await scope.Accounts.ResetPasswordAsync(userId, "bozuk*token", "yeni-mavi-kalem-7", default)).Error);
+        Assert.Equal(AccountErrors.InvalidResetLink,
+            (await scope.Accounts.ResetPasswordAsync(userId, otherToken, "yeni-mavi-kalem-7", default)).Error);
+        Assert.Equal(AccountErrors.InvalidResetLink,
+            (await scope.Accounts.ResetPasswordAsync(Guid.NewGuid(), otherToken, "yeni-mavi-kalem-7", default)).Error);
+        Assert.True((await scope.Accounts.ResetPasswordAsync(otherId, otherToken, "yeni-mavi-kalem-7", default)).IsSuccess);
+    }
+
+    [DockerFact]
+    public async Task Reset_request_goes_in_the_shop_language_and_never_to_an_unknown_address()
+    {
+        await RegisterShopAsync("onbir@example.com", "en");
+        using var scope = db.AsShop(Guid.Empty);
+
+        await scope.Accounts.SendPasswordResetAsync("onbir@example.com", default);
+        await scope.Accounts.SendPasswordResetAsync("kimse@example.com", default);
+
+        Assert.Equal("Reset your Tamirhane password", Assert.Single(db.Emails.SentTo("onbir@example.com")).Subject);
+        Assert.Empty(db.Emails.SentTo("kimse@example.com"));
+    }
+
+    [DockerFact]
+    public void Reset_links_expire_after_an_hour()
+    {
+        using var scope = db.AsShop(Guid.Empty);
+
+        Assert.Equal(PasswordResetTokenProvider.ProviderName,
+            scope.Get<IOptions<IdentityOptions>>().Value.Tokens.PasswordResetTokenProvider);
+        Assert.Equal(TimeSpan.FromHours(1), scope.Get<IOptions<PasswordResetTokenProviderOptions>>().Value.TokenLifespan);
     }
 
     [DockerFact]
