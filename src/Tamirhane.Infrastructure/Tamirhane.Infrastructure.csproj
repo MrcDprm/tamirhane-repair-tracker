@@ -17,6 +17,11 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Sık kullanılan şifreler listesi (PasswordPolicyValidator) -->
+    <EmbeddedResource Include="Identity\common-passwords.txt" LogicalName="Tamirhane.Infrastructure.Identity.common-passwords.txt" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
