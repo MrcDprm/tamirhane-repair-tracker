@@ -26,6 +26,16 @@ internal static class AccountEmails
             "Şifremi sıfırla", resetLink,
             "Bu sen değilsen e-postayı yok sayabilirsin; hesabında bir değişiklik olmadı.");
 
+    public static EmailMessage PasswordReset(string to, string locale, Uri link) => locale == "en"
+        ? Build(to, "Reset your Tamirhane password",
+            "Click the link below to choose a new password. The link is valid for 1 hour and works only once.",
+            "Choose a new password", link,
+            "If you did not ask for this, you can ignore this email; your password has not changed.")
+        : Build(to, "Tamirhane şifreni sıfırla",
+            "Yeni bir şifre belirlemek için aşağıdaki linke tıkla. Link 1 saat geçerli ve sadece bir kez kullanılabilir.",
+            "Yeni şifre belirle", link,
+            "Bunu sen istemediysen e-postayı yok sayabilirsin; şifren değişmedi.");
+
     private static EmailMessage Build(string to, string subject, string intro, string action, Uri link, string footer)
     {
         var text = $"{intro}{Environment.NewLine}{Environment.NewLine}{action}: {link}{Environment.NewLine}{Environment.NewLine}{footer}";

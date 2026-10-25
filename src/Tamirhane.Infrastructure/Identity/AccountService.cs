@@ -41,10 +41,7 @@ internal sealed class AccountService(
             return user.Id;
 
         // Identity önce şifreyi doğrular: zayıf şifre + kayıtlı e-posta da şifre hatası döner, kayıt bilgisi sızmaz.
-        var first = result.Errors.First();
-        return ErrorMap.TryGetValue(first.Code, out var error)
-            ? error
-            : throw new InvalidOperationException($"Beklenmeyen Identity hatası: {first.Code}");
+        return MapError(result);
     }
 
     public async Task SendEmailConfirmationAsync(Guid userId, string locale, CancellationToken ct)
@@ -107,12 +104,52 @@ internal sealed class AccountService(
         if (user is null || user.EmailConfirmed)
             return;
 
-        // Oturum yokken çağrılır; kiracı filtresi bilerek kapatılır, e-posta atölyenin dilinde gider.
-        var locale = await db.Staff.IgnoreQueryFilters()
-            .Where(s => s.UserId == user.Id)
+        await SendConfirmationAsync(user, await LocaleOfAsync(user.Id, ct), ct);
+    }
+
+    public async Task SendPasswordResetAsync(string email, CancellationToken ct)
+    {
+        var user = await users.FindByEmailAsync((email ?? "").Trim());
+        if (user is null)
+            return;
+
+        var token = await users.GeneratePasswordResetTokenAsync(user);
+        var link = Link("/account/reset-password", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) });
+        await SendAsync(AccountEmails.PasswordReset(user.Email!, await LocaleOfAsync(user.Id, ct), link), "şifre sıfırlama", ct);
+    }
+
+    public async Task<Result> ResetPasswordAsync(Guid userId, string token, string newPassword, CancellationToken ct)
+    {
+        var user = await users.FindByIdAsync(userId.ToString());
+        if (user is null || Decode(token) is not { } decoded)
+            return AccountErrors.InvalidResetLink;
+
+        // Identity önce token'a bakar (süresi, damgası), sonra şifre kurallarına; başarılıysa damgayı yeniler.
+        var result = await users.ResetPasswordAsync(user, decoded, newPassword ?? "");
+        if (!result.Succeeded)
+            return result.Errors.First().Code == "InvalidToken" ? AccountErrors.InvalidResetLink : MapError(result);
+
+        // Link e-postaya geldi: adresin sahibi kanıtlandı. Kilit de kalkar; yoksa yeni şifreyle 15 dk beklerdi.
+        user.EmailConfirmed = true;
+        user.LockoutEnd = null;
+        user.AccessFailedCount = 0;
+        await users.UpdateAsync(user);
+        return Result.Success();
+    }
+
+    // Hesabın atölyesinin dili. Oturum yokken çağrılır; kiracı filtresi bilerek kapatılır.
+    private async Task<string> LocaleOfAsync(Guid userId, CancellationToken ct) =>
+        await db.Staff.IgnoreQueryFilters()
+            .Where(s => s.UserId == userId)
             .Join(db.Shops.IgnoreQueryFilters(), s => s.ShopId, shop => shop.Id, (_, shop) => shop.Locale)
-            .FirstOrDefaultAsync(ct);
-        await SendConfirmationAsync(user, locale ?? "tr", ct);
+            .FirstOrDefaultAsync(ct) ?? "tr";
+
+    private static Error MapError(IdentityResult result)
+    {
+        var first = result.Errors.First();
+        return ErrorMap.TryGetValue(first.Code, out var error)
+            ? error
+            : throw new InvalidOperationException($"Beklenmeyen Identity hatası: {first.Code}");
     }
 
     private async Task SendConfirmationAsync(ApplicationUser user, string locale, CancellationToken ct)

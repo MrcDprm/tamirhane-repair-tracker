@@ -47,6 +47,11 @@ public sealed class FakeAccounts : IAccountService
         throw new NotSupportedException();
 
     public Task ResendEmailConfirmationAsync(string email, CancellationToken ct) => throw new NotSupportedException();
+
+    public Task SendPasswordResetAsync(string email, CancellationToken ct) => throw new NotSupportedException();
+
+    public Task<Result> ResetPasswordAsync(Guid userId, string token, string newPassword, CancellationToken ct) =>
+        throw new NotSupportedException();
 }
 
 public sealed class FakeShops : IShopRepository

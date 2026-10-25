@@ -10,6 +10,7 @@ public static class AccountErrors
     public static readonly Error PasswordRequiresLetter = Error.Validation("account.password_requires_letter");
     public static readonly Error PasswordRepetitive = Error.Validation("account.password_repetitive");
     public static readonly Error PasswordTooCommon = Error.Validation("account.password_too_common");
+    public static readonly Error InvalidResetLink = Error.Validation("account.invalid_reset_link");
 
     /// <summary>Sadece içeride kullanılır: kullanıcıya gösterilirse "bu e-posta kayıtlı mı" bilgisi sızar.</summary>
     public static readonly Error EmailTaken = Error.Conflict("account.email_taken");

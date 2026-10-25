@@ -32,10 +32,12 @@ public static class DependencyInjection
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 options.Lockout.AllowedForNewUsers = true;
+                options.Tokens.PasswordResetTokenProvider = PasswordResetTokenProvider.ProviderName;
             })
             .AddEntityFrameworkStores<TamirhaneDbContext>()
             .AddPasswordValidator<PasswordPolicyValidator>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddTokenProvider<PasswordResetTokenProvider>(PasswordResetTokenProvider.ProviderName);
 
         // Çerezler ve e-posta linklerindeki token'lar bu anahtarlarla imzalanır. Anahtarlar veritabanında durur:
         // sunucu yeniden başlayınca (her yayında) oturumlar kapanmaz, gönderilmiş linkler geçerli kalır.

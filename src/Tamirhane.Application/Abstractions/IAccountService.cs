@@ -34,4 +34,14 @@ public interface IAccountService
 
     /// <summary>Hesap varsa ve doğrulanmamışsa yeni link gönderir; yoksa hiçbir şey yapmaz, çağıran farkı göstermez.</summary>
     Task ResendEmailConfirmationAsync(string email, CancellationToken ct);
+
+    /// <summary>Hesap varsa şifre sıfırlama linki gönderir; yoksa hiçbir şey yapmaz, çağıran farkı göstermez.</summary>
+    Task SendPasswordResetAsync(string email, CancellationToken ct);
+
+    /// <summary>
+    /// Linkteki token'la yeni şifreyi koyar. Link e-postaya geldiği için adresin sahibi olduğu da kanıtlanır: hesap
+    /// doğrulanmış sayılır, kilit kalkar. Güvenlik damgası değişir; açık oturumlar kapanır, link ikinci kez çalışmaz.
+    /// Link geçersizse <see cref="AccountErrors.InvalidResetLink"/>, şifre kurala uymuyorsa şifre hatası.
+    /// </summary>
+    Task<Result> ResetPasswordAsync(Guid userId, string token, string newPassword, CancellationToken ct);
 }
