@@ -92,21 +92,3 @@ public sealed class ShopScope(IServiceScope scope) : IDisposable
 
     public void Dispose() => scope.Dispose();
 }
-
-public sealed class CapturingEmailSender : IEmailSender
-{
-    private readonly List<EmailMessage> _sent = [];
-
-    public IReadOnlyList<EmailMessage> SentTo(string address)
-    {
-        lock (_sent)
-            return _sent.Where(m => m.To.Equals(address, StringComparison.OrdinalIgnoreCase)).ToList();
-    }
-
-    public Task SendAsync(EmailMessage message, CancellationToken ct)
-    {
-        lock (_sent)
-            _sent.Add(message);
-        return Task.CompletedTask;
-    }
-}
