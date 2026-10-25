@@ -1,17 +1,20 @@
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Domain.Common;
 using Tamirhane.Infrastructure.Email;
+using Tamirhane.Infrastructure.Persistence;
 
 namespace Tamirhane.Infrastructure.Identity;
 
 /// <summary><see cref="IAccountService"/>'in Identity ile uygulanması.</summary>
 internal sealed class AccountService(
-    UserManager<ApplicationUser> users, IEmailSender email, AccountOptions options, ILogger<AccountService> logger)
+    UserManager<ApplicationUser> users, SignInManager<ApplicationUser> signIn, TamirhaneDbContext db,
+    IEmailSender email, AccountOptions options, ILogger<AccountService> logger)
     : IAccountService
 {
     // Identity hata kodları → uygulamanın hata kodları. Şifre hataları kullanıcı hatası değil "kuralı anlat" mesajıdır.
@@ -48,9 +51,7 @@ internal sealed class AccountService(
     {
         var user = await users.FindByIdAsync(userId.ToString())
             ?? throw new InvalidOperationException("Doğrulama e-postası için hesap bulunamadı.");
-        var token = await users.GenerateEmailConfirmationTokenAsync(user);
-        var link = Link("/account/confirm-email", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) });
-        await SendAsync(AccountEmails.Confirmation(user.Email!, locale, link), "doğrulama", ct);
+        await SendConfirmationAsync(user, locale, ct);
     }
 
     public Task SendAlreadyRegisteredAsync(string email, string locale, CancellationToken ct)
@@ -58,6 +59,67 @@ internal sealed class AccountService(
         var message = AccountEmails.AlreadyRegistered(email.Trim(), locale,
             Link("/account/login", []), Link("/account/forgot-password", []));
         return SendAsync(message, "zaten kayıtlı", ct);
+    }
+
+    public async Task<SignInOutcome> SignInAsync(string email, string password, bool remember, CancellationToken ct)
+    {
+        password ??= "";
+        var user = await users.FindByEmailAsync((email ?? "").Trim());
+        if (user is null)
+        {
+            // Kayıtsız e-postada da bir şifre özeti hesaplanır: cevabın süresinden adresin kayıtlı olduğu anlaşılmasın.
+            users.PasswordHasher.HashPassword(new ApplicationUser(), password);
+            return SignInOutcome.InvalidCredentials;
+        }
+
+        // Identity'nin hazır PasswordSignInAsync'i kilidi ve doğrulanmamış hesabı şifreye bakmadan söyler
+        // (kayıtlı olduğu sızar); sıra burada elle kurulur. Şifre kilitliyken de kontrol edilir ki süre aynı kalsın.
+        var lockedOut = await users.IsLockedOutAsync(user);
+        var passwordOk = await users.CheckPasswordAsync(user, password);
+        if (lockedOut)
+            return SignInOutcome.InvalidCredentials;
+        if (!passwordOk)
+        {
+            await users.AccessFailedAsync(user); // 5. hatada 15 dakika kilit
+            return SignInOutcome.InvalidCredentials;
+        }
+        if (!user.EmailConfirmed)
+            return SignInOutcome.EmailNotConfirmed;
+
+        await users.ResetAccessFailedCountAsync(user);
+        await signIn.SignInAsync(user, isPersistent: remember);
+        return SignInOutcome.Succeeded;
+    }
+
+    public Task SignOutAsync() => signIn.SignOutAsync();
+
+    public async Task<bool> ConfirmEmailAsync(Guid userId, string token, CancellationToken ct)
+    {
+        var user = await users.FindByIdAsync(userId.ToString());
+        if (user is null || Decode(token) is not { } decoded)
+            return false;
+        return (await users.ConfirmEmailAsync(user, decoded)).Succeeded;
+    }
+
+    public async Task ResendEmailConfirmationAsync(string email, CancellationToken ct)
+    {
+        var user = await users.FindByEmailAsync((email ?? "").Trim());
+        if (user is null || user.EmailConfirmed)
+            return;
+
+        // Oturum yokken çağrılır; kiracı filtresi bilerek kapatılır, e-posta atölyenin dilinde gider.
+        var locale = await db.Staff.IgnoreQueryFilters()
+            .Where(s => s.UserId == user.Id)
+            .Join(db.Shops.IgnoreQueryFilters(), s => s.ShopId, shop => shop.Id, (_, shop) => shop.Locale)
+            .FirstOrDefaultAsync(ct);
+        await SendConfirmationAsync(user, locale ?? "tr", ct);
+    }
+
+    private async Task SendConfirmationAsync(ApplicationUser user, string locale, CancellationToken ct)
+    {
+        var token = await users.GenerateEmailConfirmationTokenAsync(user);
+        var link = Link("/account/confirm-email", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) });
+        await SendAsync(AccountEmails.Confirmation(user.Email!, locale, link), "doğrulama", ct);
     }
 
     /// <summary>
@@ -81,4 +143,16 @@ internal sealed class AccountService(
 
     // Token içinde '+' ve '/' olabilir; linkte bozulmasın diye Base64Url.
     private static string Encode(string token) => WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+    private static string? Decode(string? token)
+    {
+        try
+        {
+            return Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token ?? ""));
+        }
+        catch (FormatException)
+        {
+            return null; // linkle oynanmış
+        }
+    }
 }

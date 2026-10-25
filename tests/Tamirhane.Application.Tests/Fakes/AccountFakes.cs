@@ -36,6 +36,17 @@ public sealed class FakeAccounts : IAccountService
         AlreadyRegisteredSent.Add((email, locale));
         return Task.CompletedTask;
     }
+
+    // Oturum işleri kullanım senaryolarında yok; gerçek Identity ile Web testlerinde denenir.
+    public Task<SignInOutcome> SignInAsync(string email, string password, bool remember, CancellationToken ct) =>
+        throw new NotSupportedException();
+
+    public Task SignOutAsync() => throw new NotSupportedException();
+
+    public Task<bool> ConfirmEmailAsync(Guid userId, string token, CancellationToken ct) =>
+        throw new NotSupportedException();
+
+    public Task ResendEmailConfirmationAsync(string email, CancellationToken ct) => throw new NotSupportedException();
 }
 
 public sealed class FakeShops : IShopRepository
