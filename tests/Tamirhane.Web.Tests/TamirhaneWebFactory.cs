@@ -39,17 +39,27 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
         // Program.cs bağlantıyı önce DATABASE_URL'den okur; böylece appsettings.Development.json'daki yerel veritabanı kullanılmaz.
         builder.UseSetting("DATABASE_URL", _container!.GetConnectionString());
         builder.ConfigureTestServices(services => services.AddSingleton<IEmailSender>(Emails));
+        // Yayındaki CF-Connecting-IP'nin yerine: her tarayıcı kendi IP'siyle gelir, testler birbirinin sınırını yemez.
+        builder.UseSetting("CLIENT_IP_HEADER", ClientIpHeader);
     }
 
+    public const string ClientIpHeader = "X-Test-Client-IP";
+
     /// <summary>
-    /// Kendi çerezleri olan yeni bir tarayıcı. Adres https: oturum ve CSRF çerezleri Secure, http'de gönderilmezdi.
-    /// Yönlendirmeler izlenmez; testler nereye yönlendirildiğine bakar.
+    /// Kendi çerezleri ve kendi IP'si olan yeni bir tarayıcı. Adres https: oturum ve CSRF çerezleri Secure, http'de
+    /// gönderilmezdi. Yönlendirmeler izlenmez; testler nereye yönlendirildiğine bakar.
     /// </summary>
-    public Browser NewBrowser() => new(CreateClient(new WebApplicationFactoryClientOptions
+    public Browser NewBrowser()
     {
-        BaseAddress = new Uri("https://localhost"),
-        AllowAutoRedirect = false,
-    }));
+        var client = CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = false,
+        });
+        var ip = $"10.{Random.Shared.Next(256)}.{Random.Shared.Next(256)}.{Random.Shared.Next(1, 255)}";
+        client.DefaultRequestHeaders.Add(ClientIpHeader, ip);
+        return new Browser(client);
+    }
 
     /// <summary>
     /// İşi, uygulamanın ayarlarıyla ve verilen atölyenin personeli gibi çalışan bir DbContext ile yapar.
