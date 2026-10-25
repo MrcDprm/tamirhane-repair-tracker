@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,11 +48,35 @@ public static class DependencyInjection
         return services;
     }
 
-    /// <summary>Hesap servisi ve e-posta gönderimi.</summary>
+    /// <summary>Oturum (çerez), oturumdaki personel, hesap servisi ve e-posta gönderimi.</summary>
     public static IServiceCollection AddAccounts(this IServiceCollection services, AccountOptions options)
     {
         services.AddSingleton(options);
         services.AddScoped<IAccountService, AccountService>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, HttpCurrentUser>();
+
+        new IdentityBuilder(typeof(ApplicationUser), services)
+            .AddSignInManager()
+            .AddClaimsPrincipalFactory<ShopClaimsPrincipalFactory>();
+
+        services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+        services.ConfigureApplicationCookie(cookie =>
+        {
+            // __Host- öneki tarayıcıya şunu zorunlu kılar: sadece HTTPS, Domain yok, Path=/; alt alan adı çerezi ezemez.
+            cookie.Cookie.Name = "__Host-tamirhane";
+            cookie.Cookie.HttpOnly = true; // JavaScript okuyamaz (XSS olsa bile oturum çalınamaz)
+            cookie.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            cookie.Cookie.SameSite = SameSiteMode.Lax; // başka siteden gelen POST'ta çerez gitmez
+            cookie.Cookie.Path = "/";
+            cookie.LoginPath = "/account/login";
+            cookie.LogoutPath = "/account/logout";
+            cookie.AccessDeniedPath = "/account/access-denied";
+            cookie.ExpireTimeSpan = TimeSpan.FromDays(14);
+            cookie.SlidingExpiration = true;
+        });
+        // Güvenlik damgası her istekte kontrol edilir: şifre değişince ya da oturumlar kapatılınca diğer cihazlar hemen düşer.
+        services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.Zero);
 
         if (string.IsNullOrWhiteSpace(options.ResendApiKey))
         {
