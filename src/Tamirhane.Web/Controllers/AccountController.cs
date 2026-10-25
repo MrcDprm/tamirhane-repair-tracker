@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Accounts;
+using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Shops;
 using Tamirhane.Web.Models.Account;
 
@@ -29,6 +30,8 @@ public sealed class AccountController(IAccountService accounts) : Controller
         [AccountErrors.PasswordRepetitive.Code] = (nameof(RegisterInput.Password), "Şifrede en az 4 farklı karakter olmalı."),
         [AccountErrors.PasswordTooCommon.Code] = (nameof(RegisterInput.Password),
             "Bu şifre sızıntı listelerinde çok sık geçiyor, kolay tahmin edilir. Başka bir şifre seçin."),
+        [AccountErrors.InvalidResetLink.Code] = ("",
+            "Bu sıfırlama linki geçersiz: süresi dolmuş, daha önce kullanılmış ya da eksik kopyalanmış. Yeni bir link iste."),
     };
 
     [HttpGet("register")]
@@ -44,10 +47,7 @@ public sealed class AccountController(IAccountService accounts) : Controller
             new RegisterShopCommand(input.ShopName, input.OwnerName, input.Email, input.Password, input.Locale), ct);
         if (result.IsFailure)
         {
-            var (field, message) = Errors.TryGetValue(result.Error!.Code, out var known)
-                ? known
-                : ("", "Kayıt tamamlanamadı. Bilgileri kontrol edip tekrar deneyin.");
-            ModelState.AddModelError(field, message);
+            AddError(result.Error!);
             return View(input);
         }
 
@@ -102,6 +102,45 @@ public sealed class AccountController(IAccountService accounts) : Controller
         }
     }
 
+    [HttpGet("forgot-password")]
+    public IActionResult ForgotPassword() => View(new EmailInput());
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(EmailInput input, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+            return View(input);
+
+        // Kayıtlı olsun olmasın aynı sayfa: form "bu e-posta kayıtlı mı" sorusuna cevap vermez.
+        await accounts.SendPasswordResetAsync(input.Email, ct);
+        return RedirectToAction(nameof(ForgotPasswordSent));
+    }
+
+    [HttpGet("forgot-password-sent")]
+    public IActionResult ForgotPasswordSent() => View();
+
+    [HttpGet("reset-password")]
+    public IActionResult ResetPassword(Guid userId, string? token) =>
+        View(new ResetPasswordInput { UserId = userId, Token = token ?? "" });
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordInput input, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+            return View(input);
+
+        var result = await accounts.ResetPasswordAsync(input.UserId, input.Token, input.Password, ct);
+        if (result.IsFailure)
+        {
+            AddError(result.Error!);
+            return View(input);
+        }
+        return RedirectToAction(nameof(ResetPasswordDone));
+    }
+
+    [HttpGet("reset-password-done")]
+    public IActionResult ResetPasswordDone() => View();
+
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -111,6 +150,14 @@ public sealed class AccountController(IAccountService accounts) : Controller
 
     [HttpGet("access-denied")]
     public IActionResult AccessDenied() => View();
+
+    private void AddError(Error error)
+    {
+        var (field, message) = Errors.TryGetValue(error.Code, out var known)
+            ? known
+            : ("", "İşlem tamamlanamadı. Bilgileri kontrol edip tekrar deneyin.");
+        ModelState.AddModelError(field, message);
+    }
 
     private bool SignedIn => User.Identity?.IsAuthenticated == true;
 

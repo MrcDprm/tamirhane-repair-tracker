@@ -55,6 +55,26 @@ public sealed class LoginInput
     public string? ReturnUrl { get; set; }
 }
 
+/// <summary>Yeni şifre formu. Hesap ve token e-postadaki linkten gizli alanlara gelir; doğruluğuna Identity bakar.</summary>
+public sealed class ResetPasswordInput
+{
+    public Guid UserId { get; set; }
+
+    public string Token { get; set; } = "";
+
+    [Display(Name = "Yeni şifre")]
+    [Required(ErrorMessage = "Yeni şifreni yaz.")]
+    [StringLength(128, ErrorMessage = "Şifre en fazla 128 karakter olabilir.")]
+    [DataType(DataType.Password)]
+    public string Password { get; set; } = "";
+
+    [Display(Name = "Yeni şifre (tekrar)")]
+    [Required(ErrorMessage = "Yeni şifreni bir kez daha yaz.")]
+    [Compare(nameof(Password), ErrorMessage = "İki şifre aynı değil.")]
+    [DataType(DataType.Password)]
+    public string ConfirmPassword { get; set; } = "";
+}
+
 public sealed class EmailInput
 {
     [Display(Name = "E-posta")]
