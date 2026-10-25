@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Tamirhane.Web.Tests;
 
@@ -156,6 +157,61 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
         Assert.Contains("Yeni link iste", await page.Content.ReadAsStringAsync());
     }
 
+    [DockerFact]
+    public async Task Forgotten_password_is_reset_by_email_and_other_devices_are_signed_out()
+    {
+        var laptop = app.NewBrowser();
+        await RegisterAsync(laptop, "unuttum@example.com");
+        await laptop.GetAsync(ConfirmationLink("unuttum@example.com"));
+        await LoginAsync(laptop, "unuttum@example.com", Password);
+        var phone = app.NewBrowser();
+
+        Assert.Equal("/account/forgot-password-sent", Browser.RedirectOf(await ForgotPasswordAsync(phone, "unuttum@example.com")));
+        Assert.Equal("/account/reset-password-done",
+            Browser.RedirectOf(await ResetPasswordAsync(phone, "unuttum@example.com", "yeni-mavi-kalem-7")));
+
+        // Güvenlik damgası değişti: dizüstündeki eski oturum bir sonraki istekte düşer.
+        Assert.StartsWith("/account/login", Browser.RedirectOf(await laptop.GetAsync("/panel")));
+        Assert.Contains(InvalidLogin, await BodyOf(LoginAsync(phone, "unuttum@example.com", Password)));
+        Assert.Equal("/panel", Browser.RedirectOf(await LoginAsync(phone, "unuttum@example.com", "yeni-mavi-kalem-7")));
+    }
+
+    [DockerFact]
+    public async Task Reset_link_also_confirms_an_unconfirmed_account()
+    {
+        var browser = app.NewBrowser();
+        await RegisterAsync(browser, "linki-kaybetti@example.com");
+        await ForgotPasswordAsync(browser, "linki-kaybetti@example.com");
+
+        await ResetPasswordAsync(browser, "linki-kaybetti@example.com", "yeni-mavi-kalem-7");
+
+        Assert.Equal("/panel", Browser.RedirectOf(await LoginAsync(browser, "linki-kaybetti@example.com", "yeni-mavi-kalem-7")));
+    }
+
+    [DockerFact]
+    public async Task Forgot_password_looks_the_same_for_an_unknown_address()
+    {
+        var response = await ForgotPasswordAsync(app.NewBrowser(), "hic-kaydolmadi@example.com");
+
+        Assert.Equal("/account/forgot-password-sent", Browser.RedirectOf(response));
+        Assert.Empty(app.Emails.SentTo("hic-kaydolmadi@example.com"));
+    }
+
+    [DockerFact]
+    public async Task Used_reset_link_and_mismatched_passwords_are_explained_on_the_form()
+    {
+        var browser = app.NewBrowser();
+        await RegisterAsync(browser, "iki-kez@example.com");
+        await ForgotPasswordAsync(browser, "iki-kez@example.com");
+
+        var mismatch = await BodyOf(ResetPasswordAsync(browser, "iki-kez@example.com", "yeni-mavi-kalem-7", "yeni-mavi-kalem-8"));
+        await ResetPasswordAsync(browser, "iki-kez@example.com", "yeni-mavi-kalem-7");
+        var reused = await BodyOf(ResetPasswordAsync(browser, "iki-kez@example.com", "baska-yesil-kalem-9"));
+
+        Assert.Contains("İki şifre aynı değil.", mismatch);
+        Assert.Contains("Bu sıfırlama linki geçersiz", reused);
+    }
+
     private static Task<HttpResponseMessage> RegisterAsync(Browser browser, string email, string password = Password) =>
         browser.SubmitAsync("/account/register", "/account/register", new()
         {
@@ -180,13 +236,32 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
     private static async Task<string> BodyOf(Task<HttpResponseMessage> response) =>
         await (await response).Content.ReadAsStringAsync();
 
-    /// <summary>Adrese giden son doğrulama e-postasındaki link (sadece yol ve sorgu; adresin başı PUBLIC_ORIGIN).</summary>
-    private string ConfirmationLink(string email)
+    private string ConfirmationLink(string email) => LinkIn(email, "/account/confirm-email");
+
+    /// <summary>Adrese giden, verilen sayfaya işaret eden son linkin yolu ve sorgusu (adresin başı PUBLIC_ORIGIN).</summary>
+    private string LinkIn(string email, string path)
     {
-        var mail = app.Emails.SentTo(email).Last(m => m.Text.Contains("/account/confirm-email"));
-        return new Uri(LinkPattern().Match(mail.Text).Value).PathAndQuery;
+        var mail = app.Emails.SentTo(email).Last(m => m.Text.Contains(path));
+        return new Uri(LinkPattern().Matches(mail.Text).Single(m => m.Value.Contains(path)).Value).PathAndQuery;
     }
 
-    [GeneratedRegex(@"https?://\S+/account/confirm-email\S+")]
+    /// <summary>E-postadaki sıfırlama linkini açar ve yeni şifre formunu gönderir; gizli alanlar linkten gelir.</summary>
+    private async Task<HttpResponseMessage> ResetPasswordAsync(Browser browser, string email, string password, string? confirm = null)
+    {
+        var link = LinkIn(email, "/account/reset-password");
+        var query = QueryHelpers.ParseQuery(new Uri(new Uri("https://localhost"), link).Query);
+        return await browser.SubmitAsync(link, "/account/reset-password", new()
+        {
+            ["UserId"] = query["userId"].ToString(),
+            ["Token"] = query["token"].ToString(),
+            ["Password"] = password,
+            ["ConfirmPassword"] = confirm ?? password,
+        });
+    }
+
+    private static Task<HttpResponseMessage> ForgotPasswordAsync(Browser browser, string email) =>
+        browser.SubmitAsync("/account/forgot-password", "/account/forgot-password", new() { ["Email"] = email });
+
+    [GeneratedRegex(@"https?://\S+")]
     private static partial Regex LinkPattern();
 }
