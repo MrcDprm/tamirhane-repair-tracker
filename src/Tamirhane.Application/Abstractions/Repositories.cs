@@ -1,11 +1,18 @@
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.Inventory;
+using Tamirhane.Domain.Shops;
 using Tamirhane.Domain.WorkOrders;
 
 namespace Tamirhane.Application.Abstractions;
 
 // Depolar sadece mevcut atölyenin kayıtlarını görür (kiracı filtresi Infrastructure'da).
 // Başka atölyenin kaydı istenirse "yok" döner; varlığı bile sızmaz.
+
+public interface IShopRepository
+{
+    /// <summary>Yeni atölye ve sahibi; kayıt oturum açılmadan yapılır.</summary>
+    void Add(Shop shop, Staff owner);
+}
 
 public interface IWorkOrderRepository
 {
