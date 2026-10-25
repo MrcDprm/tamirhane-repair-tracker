@@ -23,11 +23,26 @@ public sealed class FakeSettings(ShopSettings settings) : IShopSettings
 public sealed class FakeUnitOfWork : IUnitOfWork
 {
     public int Saves { get; private set; }
+    public int Commits { get; private set; }
 
     public Task SaveChangesAsync(CancellationToken ct)
     {
         Saves++;
         return Task.CompletedTask;
+    }
+
+    public Task<ITransaction> BeginTransactionAsync(CancellationToken ct) =>
+        Task.FromResult<ITransaction>(new FakeTransaction(this));
+
+    private sealed class FakeTransaction(FakeUnitOfWork owner) : ITransaction
+    {
+        public Task CommitAsync(CancellationToken ct)
+        {
+            owner.Commits++;
+            return Task.CompletedTask;
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }
 

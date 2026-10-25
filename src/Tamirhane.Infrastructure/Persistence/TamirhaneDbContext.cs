@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Domain.Customers;
@@ -34,6 +35,9 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
     private Guid CurrentShopId => currentUser.ShopId;
 
     Task IUnitOfWork.SaveChangesAsync(CancellationToken ct) => SaveChangesAsync(ct);
+
+    async Task<ITransaction> IUnitOfWork.BeginTransactionAsync(CancellationToken ct) =>
+        new EfTransaction(await Database.BeginTransactionAsync(ct));
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -108,6 +112,14 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
         builder.Properties<Enum>().HaveConversion<string>().HaveMaxLength(32);
         builder.Properties<decimal>().HavePrecision(18, 2);
         builder.Properties<string>().HaveMaxLength(1000);
+    }
+
+    private sealed class EfTransaction(IDbContextTransaction transaction) : ITransaction
+    {
+        public Task CommitAsync(CancellationToken ct) => transaction.CommitAsync(ct);
+
+        // Commit edilmeden kapatılan transaction geri alınır.
+        public ValueTask DisposeAsync() => transaction.DisposeAsync();
     }
 
     private sealed class UtcConverter() : ValueConverter<DateTimeOffset, DateTimeOffset>(

@@ -45,6 +45,27 @@ public sealed class ShopPersistenceTests(PostgresFixture db)
         await Assert.ThrowsAsync<DbUpdateException>(() => RegisterAsync("ayni@example.com"));
     }
 
+    [DockerFact]
+    public async Task Uncommitted_transaction_leaves_nothing_behind()
+    {
+        var user = new ApplicationUser { UserName = "yarim@example.com", Email = "yarim@example.com" };
+        var shop = Shop.Create("Yarım Kayıt", "tr", Now).Value;
+
+        using (var anonymous = db.AsShop(Guid.Empty))
+        {
+            await using var transaction = await anonymous.UnitOfWork.BeginTransactionAsync(default);
+            anonymous.Db.Users.Add(user);
+            await anonymous.UnitOfWork.SaveChangesAsync(default); // Identity'nin hesabı ayrı kaydetmesi gibi
+            anonymous.Db.AddRange(shop, Staff.Create(shop.Id, user.Id, StaffRole.Owner, "Ayşe Kaya").Value);
+            await anonymous.UnitOfWork.SaveChangesAsync(default);
+            // CommitAsync yok: ör. e-posta gönderilemeden istek düştü
+        }
+
+        using var check = db.AsShop(shop.Id);
+        Assert.False(await check.Db.Users.AnyAsync(u => u.Id == user.Id));
+        Assert.Empty(await check.Db.Shops.ToListAsync());
+    }
+
     private async Task<(Shop Shop, Staff Staff)> RegisterAsync(string email)
     {
         using var anonymous = db.AsShop(Guid.Empty);
