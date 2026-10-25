@@ -5,6 +5,7 @@ using Microsoft.Extensions.WebEncoders;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Identity;
+using Tamirhane.Web.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,7 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
     builder.Configuration["EMAIL_FROM"] ?? AccountOptions.DefaultFrom));
+builder.Services.AddAccountRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 
 // AddApplication() henüz çağrılamaz: bazı senaryoların bağımlılıkları (IShopSettings #18, INotificationQueue #19) yok,
 // açılıştaki servis doğrulaması patlar. O zamana kadar ekranı olan senaryolar tek tek kaydedilir.
@@ -53,6 +55,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

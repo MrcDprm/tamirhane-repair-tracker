@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Shops;
 using Tamirhane.Web.Models.Account;
+using Tamirhane.Web.RateLimiting;
 
 namespace Tamirhane.Web.Controllers;
 
@@ -38,6 +40,7 @@ public sealed class AccountController(IAccountService accounts) : Controller
     public IActionResult Register() => SignedIn ? RedirectToPanel() : View(new RegisterInput());
 
     [HttpPost("register")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
     public async Task<IActionResult> Register(RegisterInput input, [FromServices] RegisterShop registerShop, CancellationToken ct)
     {
         if (!ModelState.IsValid)
@@ -69,6 +72,7 @@ public sealed class AccountController(IAccountService accounts) : Controller
     public IActionResult ResendConfirmation() => View(new EmailInput());
 
     [HttpPost("resend-confirmation")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
     public async Task<IActionResult> ResendConfirmation(EmailInput input, CancellationToken ct)
     {
         if (!ModelState.IsValid)
@@ -83,6 +87,7 @@ public sealed class AccountController(IAccountService accounts) : Controller
         SignedIn ? RedirectToPanel() : View(new LoginInput { ReturnUrl = returnUrl });
 
     [HttpPost("login")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
     public async Task<IActionResult> Login(LoginInput input, CancellationToken ct)
     {
         if (!ModelState.IsValid)
@@ -106,6 +111,7 @@ public sealed class AccountController(IAccountService accounts) : Controller
     public IActionResult ForgotPassword() => View(new EmailInput());
 
     [HttpPost("forgot-password")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
     public async Task<IActionResult> ForgotPassword(EmailInput input, CancellationToken ct)
     {
         if (!ModelState.IsValid)
@@ -124,6 +130,7 @@ public sealed class AccountController(IAccountService accounts) : Controller
         View(new ResetPasswordInput { UserId = userId, Token = token ?? "" });
 
     [HttpPost("reset-password")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
     public async Task<IActionResult> ResetPassword(ResetPasswordInput input, CancellationToken ct)
     {
         if (!ModelState.IsValid)
