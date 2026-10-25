@@ -1,7 +1,10 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Infrastructure;
+using Tamirhane.Infrastructure.Email;
+using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
 
@@ -13,8 +16,12 @@ namespace Tamirhane.Infrastructure.Tests;
 /// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
+    public static readonly Uri PublicOrigin = new("https://tamirhane.test/");
+
     private PostgreSqlContainer? _container;
     private ServiceProvider _services = null!;
+
+    public CapturingEmailSender Emails { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -26,7 +33,10 @@ public sealed class PostgresFixture : IAsyncLifetime
         await _container.StartAsync();
 
         var services = new ServiceCollection();
+        services.AddLogging();
         services.AddInfrastructure(_container.GetConnectionString());
+        services.AddAccounts(new AccountOptions(PublicOrigin, null, AccountOptions.DefaultFrom));
+        services.AddSingleton<IEmailSender>(Emails); // gönderilen e-postalar testte okunur
         services.AddScoped<TestUser>();
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<TestUser>());
         _services = services.BuildServiceProvider();
@@ -75,8 +85,10 @@ public sealed class ShopScope(IServiceScope scope) : IDisposable
     public IPartRepository Parts => Get<IPartRepository>();
     public IStockRepository Stock => Get<IStockRepository>();
     public IUnitOfWork UnitOfWork => Get<IUnitOfWork>();
+    public IAccountService Accounts => Get<IAccountService>();
+    public UserManager<ApplicationUser> Users => Get<UserManager<ApplicationUser>>();
 
-    private T Get<T>() where T : notnull => scope.ServiceProvider.GetRequiredService<T>();
+    public T Get<T>() where T : notnull => scope.ServiceProvider.GetRequiredService<T>();
 
     public void Dispose() => scope.Dispose();
 }

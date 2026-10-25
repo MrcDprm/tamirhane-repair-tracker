@@ -2,9 +2,19 @@ using Microsoft.EntityFrameworkCore;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.Inventory;
+using Tamirhane.Domain.Shops;
 using Tamirhane.Domain.WorkOrders;
 
 namespace Tamirhane.Infrastructure.Persistence;
+
+internal sealed class ShopRepository(TamirhaneDbContext db) : IShopRepository
+{
+    public void Add(Shop shop, Staff owner)
+    {
+        db.Shops.Add(shop);
+        db.Staff.Add(owner);
+    }
+}
 
 internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRepository
 {

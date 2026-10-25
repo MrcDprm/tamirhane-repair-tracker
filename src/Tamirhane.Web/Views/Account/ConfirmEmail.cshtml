@@ -1,0 +1,21 @@
+@model bool
+@{
+    ViewData["Title"] = Model ? "E-posta doğrulandı" : "Link geçersiz";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+        @if (Model)
+        {
+            <h1 class="h3 mb-3">E-posta doğrulandı</h1>
+            <p>Hesabın hazır. Artık atölyene giriş yapabilirsin.</p>
+            <a asp-action="Login" class="btn btn-primary">Giriş yap</a>
+        }
+        else
+        {
+            <h1 class="h3 mb-3">Link geçersiz</h1>
+            <p>Bu doğrulama linkinin süresi dolmuş ya da link eksik kopyalanmış.</p>
+            <a asp-action="ResendConfirmation" class="btn btn-primary">Yeni link iste</a>
+        }
+    </div>
+</div>

@@ -1,0 +1,53 @@
+@model RegisterInput
+@{
+    ViewData["Title"] = "Atölyeni kaydet";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+        <h1 class="h3 mb-3">Atölyeni kaydet</h1>
+        <p class="text-body-secondary">Atölyen ve sahip hesabın tek adımda açılır. Ardından e-postana bir doğrulama linki gelir.</p>
+
+        <form asp-action="Register" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="ShopName" class="form-label"></label>
+                <input asp-for="ShopName" class="form-control" autocomplete="organization" />
+                <span asp-validation-for="ShopName" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="OwnerName" class="form-label"></label>
+                <input asp-for="OwnerName" class="form-control" autocomplete="name" />
+                <span asp-validation-for="OwnerName" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" aria-describedby="password-help" />
+                <div id="password-help" class="form-text">En az 10 karakter; içinde harf ve rakam olsun. Uzun bir cümle de olur.</div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <div class="mb-4">
+                <label asp-for="Locale" class="form-label"></label>
+                <select asp-for="Locale" class="form-select">
+                    <option value="tr">Türkçe</option>
+                    <option value="en">English</option>
+                </select>
+                <span asp-validation-for="Locale" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Atölyeyi kaydet</button>
+        </form>
+
+        <p class="mt-3">Hesabın var mı? <a asp-action="Login">Giriş yap</a></p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

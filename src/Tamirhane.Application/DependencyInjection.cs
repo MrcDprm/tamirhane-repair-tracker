@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Tamirhane.Application.Accounts;
 using Tamirhane.Application.Customers;
 using Tamirhane.Application.Inventory;
 using Tamirhane.Application.WorkOrders;
@@ -10,6 +11,7 @@ public static class DependencyInjection
     /// <summary>Kullanım senaryolarını kaydeder; her istek kendi örneğini alır.</summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
+        services.AddScoped<RegisterShop>();
         services.AddScoped<ReceiveDevice>();
         services.AddScoped<FindCustomerByPhone>();
         services.AddScoped<UpdateIntakeDetails>();
