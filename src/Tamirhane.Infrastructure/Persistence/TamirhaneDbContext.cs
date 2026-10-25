@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -16,11 +17,13 @@ namespace Tamirhane.Infrastructure.Persistence;
 /// rol domain'deki Staff'ta), böylece hesap ve atölye aynı transaction'da kaydedilebilir.
 /// </summary>
 public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> options, ICurrentUser currentUser)
-    : IdentityUserContext<ApplicationUser, Guid>(options), IUnitOfWork
+    : IdentityUserContext<ApplicationUser, Guid>(options), IUnitOfWork, IDataProtectionKeyContext
 {
     /// <summary>Stok tablolarında ShopId domain'de yok; atölyeyi Infrastructure gölge sütunla tutar.</summary>
     internal const string ShopIdColumn = "ShopId";
 
+    /// <summary>Çerez ve e-posta token'larını imzalayan anahtarlar (Data Protection).</summary>
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<Shop> Shops => Set<Shop>();
     public DbSet<Staff> Staff => Set<Staff>();
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
