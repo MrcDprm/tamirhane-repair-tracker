@@ -88,7 +88,7 @@ public sealed class ShopScope(IServiceScope scope) : IDisposable
     public IAccountService Accounts => Get<IAccountService>();
     public UserManager<ApplicationUser> Users => Get<UserManager<ApplicationUser>>();
 
-    private T Get<T>() where T : notnull => scope.ServiceProvider.GetRequiredService<T>();
+    public T Get<T>() where T : notnull => scope.ServiceProvider.GetRequiredService<T>();
 
     public void Dispose() => scope.Dispose();
 }
