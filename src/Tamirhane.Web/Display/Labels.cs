@@ -1,3 +1,4 @@
+using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.WorkOrders;
 
@@ -30,6 +31,20 @@ public static class Labels
         WorkOrderStatus.Declined => "Onarım istenmedi",
         WorkOrderStatus.Cancelled => "İptal",
         _ => status.ToString(),
+    };
+
+    /// <summary>İş emri sayfasındaki düğmelerin metni: ne olacağını söyler.</summary>
+    public static string Of(WorkOrderAction action) => action switch
+    {
+        WorkOrderAction.StartDiagnosis => "İncelemeye başla",
+        WorkOrderAction.SendQuote => "Teklifi müşteriye gönder",
+        WorkOrderAction.StartRepair => "Teklifsiz onarıma başla",
+        WorkOrderAction.RecordApproval => "Müşteri onayladı",
+        WorkOrderAction.RecordDecline => "Müşteri reddetti",
+        WorkOrderAction.MarkReady => "Onarım bitti, teslime hazır",
+        WorkOrderAction.Deliver => "Müşteriye teslim et",
+        WorkOrderAction.Cancel => "İş emrini iptal et",
+        _ => action.ToString(),
     };
 
     /// <summary>"+905321234567" → "0532 123 45 67"; yurt dışı numaralar olduğu gibi.</summary>

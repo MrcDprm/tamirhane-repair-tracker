@@ -473,6 +473,26 @@ legend { padding: 0; }
 .intake-preview { position: sticky; top: 96px; }
 .intake-preview > p { font-size: 0.9rem; color: var(--lead-text); }
 
+/* İş emri: kaşeler etikete üst üste basılmış gibi, her biri biraz farklı açıyla. */
+.ticket-stamps { gap: 10px 14px; }
+.ticket-stamps .stamp { font-size: 0.85rem; opacity: 0.55; }
+.ticket-stamps .stamp:nth-child(even) { transform: rotate(3deg); }
+.ticket-stamps .stamp.is-current { font-size: 1.15rem; opacity: 1; }
+.other-step { margin-top: 10px; }
+.cancel { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
+.cancel summary { cursor: pointer; color: var(--warn-text); font-weight: 600; min-height: var(--touch); display: flex; align-items: center; }
+.work-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-top: 8px; }
+.timeline { list-style: none; margin: 0; padding: 8px 20px 16px; }
+.timeline li { position: relative; display: grid; gap: 2px; padding: 10px 0 10px 22px; border-left: 2px solid var(--line); }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: 15px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--stamp); }
+.timeline li:first-child::before { background: var(--stamp); }
+.notes h3 { font-size: 1.05rem; margin: 0 0 10px; }
+.notes h3 + form { margin-bottom: 8px; }
+.note-list { list-style: none; margin: 0 0 22px; padding: 0; }
+.note-list li { padding: 10px 12px; border-left: 3px solid var(--lead); background: var(--bench); border-radius: 0 var(--radius-control) var(--radius-control) 0; margin-top: 8px; }
+.note-list li .muted { display: block; font-size: 0.85rem; }
+.note-list.is-customer li { border-left-color: var(--stamp); }
+
 /* ---------- Kaşe (tek cesur öğe) ---------- */
 
 .stamp {
@@ -533,6 +553,7 @@ legend { padding: 0; }
   .scene { width: calc(100% + 40px); margin: 12px -20px 0; }
   .auth-art h2 { margin-top: 16px; }
   .work-layout { grid-template-columns: 1fr; }
+  .work-columns { grid-template-columns: 1fr; }
   .empty { grid-template-columns: 1fr; }
   .empty svg { width: 120px; }
 }

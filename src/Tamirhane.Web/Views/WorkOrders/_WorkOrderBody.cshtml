@@ -1,0 +1,219 @@
+@using Tamirhane.Application.WorkOrders
+@using Tamirhane.Domain.WorkOrders
+@using Tamirhane.Web.Display
+@model WorkOrderView
+@{
+    // İşlemden sonra htmx sadece bu bölümü değiştirir; son kaşe "basılır" (motion.js).
+    var pressed = ViewData["Pressed"] is true;
+    var created = ViewData["Created"] is true;
+    var error = ViewData["Error"] as string;
+    var turkey = TimeSpan.FromHours(3);
+    var next = Model.NextAction;
+    var others = Model.Actions.Where(a => a != next && a != WorkOrderAction.Cancel).ToList();
+    var stamps = Model.History.Select(h => h.Status).ToList();
+    var workshopNotes = Model.Notes.Where(n => !n.VisibleToCustomer).ToList();
+    var customerNotes = Model.Notes.Where(n => n.VisibleToCustomer).ToList();
+    string Hx(string path) => $"/work-orders/{Model.Id}/{path}";
+}
+
+<div id="work-order">
+    @if (error is not null)
+    {
+        <div class="notice notice-error" role="alert">@error</div>
+    }
+    else if (created)
+    {
+        <div class="notice notice-ok" role="status">İş emri @Model.Number açıldı. Fişi yazdırıp müşteriye ver; takip kodu fişte yazar.</div>
+    }
+    else if (pressed)
+    {
+        <div class="notice notice-ok" role="status">Durum güncellendi: @Labels.Of(Model.Status).</div>
+    }
+
+    <div class="work-layout">
+        <article class="ticket" aria-label="İş emri etiketi">
+            <span class="work-no">@Model.Number</span>
+            <dl>
+                <dt>Müşteri</dt><dd>@Model.CustomerName</dd>
+                <dt>Cihaz</dt><dd>@Model.Brand @Model.Model <span class="is-empty">(@Labels.Of(Model.DeviceKind))</span></dd>
+                @if (Model.Imei is not null)
+                {
+                    <dt>IMEI</dt><dd><code>@Model.Imei</code></dd>
+                }
+                @if (Model.Serial is not null)
+                {
+                    <dt>Seri no</dt><dd><code>@Model.Serial</code></dd>
+                }
+                <dt>Şikâyet</dt><dd>@Model.Complaint</dd>
+                @if (Model.Condition is not null)
+                {
+                    <dt>Durum</dt><dd>@Model.Condition</dd>
+                }
+                @if (Model.Accessories is not null)
+                {
+                    <dt>Aksesuar</dt><dd>@Model.Accessories</dd>
+                }
+            </dl>
+            @* Geçilen her durum etikete bir kaşe; sonuncusu az önce basıldıysa hareketle gelir. *@
+            <p class="ticket-stamps" aria-label="Durum kaşeleri">
+                @for (var i = 0; i < stamps.Count; i++)
+                {
+                    var last = i == stamps.Count - 1;
+                    var tone = stamps[i] is WorkOrderStatus.Cancelled or WorkOrderStatus.Declined ? " stamp-warn"
+                        : stamps[i] is WorkOrderStatus.Ready or WorkOrderStatus.Delivered ? " stamp-ok" : "";
+                    <span class="stamp@(tone)@(last ? " is-current" : "")@(last && pressed ? " is-pressed" : "")">@Labels.Of(stamps[i])</span>
+                }
+            </p>
+        </article>
+
+        <div>
+            @if (Model.Actions.Count > 0)
+            {
+                <section class="panel" aria-labelledby="next-heading">
+                    <div class="panel-head"><h2 id="next-heading">Sıradaki adım</h2></div>
+                    <div class="panel-body">
+                        @if (next is WorkOrderAction.RecordApproval)
+                        {
+                            @* Müşteri kararını telefonla bildirdi; personel onun adına kaydeder. *@
+                            <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML">
+                                <div class="field">
+                                    <label for="decided-by">Kararı veren</label>
+                                    <input id="decided-by" name="DecidedBy" value="@Model.CustomerName" maxlength="100" autocomplete="off" />
+                                </div>
+                                <div class="inline-form">
+                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordApproval" class="btn btn-primary">@Labels.Of(WorkOrderAction.RecordApproval)</button>
+                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordDecline" class="btn">@Labels.Of(WorkOrderAction.RecordDecline)</button>
+                                </div>
+                            </form>
+                        }
+                        else if (next is { } step)
+                        {
+                            <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML">
+                                @if (step == WorkOrderAction.Deliver && Model.Balance > 0)
+                                {
+                                    <p class="warn-text">Kalan borç @Model.Balance.ToString("C")</p>
+                                    @if (User.IsInRole("Owner"))
+                                    {
+                                        <div class="check">
+                                            <input type="checkbox" id="allow-balance" name="AllowBalanceDue" value="true" />
+                                            <label for="allow-balance">Borçlu teslim et (sahip onayı)</label>
+                                        </div>
+                                    }
+                                }
+                                <button type="submit" name="Step" value="@step" class="btn btn-primary btn-block">@Labels.Of(step)</button>
+                            </form>
+                            @foreach (var other in others)
+                            {
+                                <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML" class="other-step">
+                                    <button type="submit" name="Step" value="@other" class="btn btn-block">@Labels.Of(other)</button>
+                                </form>
+                            }
+                        }
+
+                        @if (Model.Actions.Contains(WorkOrderAction.Cancel))
+                        {
+                            <details class="cancel">
+                                <summary>@Labels.Of(WorkOrderAction.Cancel)</summary>
+                                <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML">
+                                    <div class="field">
+                                        <label for="cancel-reason">Neden?</label>
+                                        <textarea id="cancel-reason" name="Reason" rows="2" maxlength="1000" placeholder="ör. Müşteri onarımdan vazgeçti"></textarea>
+                                    </div>
+                                    <button type="submit" name="Step" value="@WorkOrderAction.Cancel" class="btn btn-danger">İptal et</button>
+                                </form>
+                            </details>
+                        }
+                    </div>
+                </section>
+            }
+            else if (Model.Status == WorkOrderStatus.Delivered)
+            {
+                <section class="panel panel-body">
+                    <p>Cihaz teslim edildi.
+                        @if (Model.WarrantyUntil is { } until)
+                        {
+                            @:Garanti @until.ToOffset(turkey).ToString("d MMMM yyyy") tarihine kadar.
+                        }
+                    </p>
+                </section>
+            }
+
+            <section class="panel" aria-labelledby="customer-heading">
+                <div class="panel-head"><h2 id="customer-heading">Müşteri</h2></div>
+                <div class="panel-body">
+                    <p>
+                        <strong>@Model.CustomerName</strong><br />
+                        <a href="tel:@Model.CustomerPhone">@Labels.Phone(Model.CustomerPhone)</a>
+                        @if (Model.CustomerEmail is not null)
+                        {
+                            <br /><a href="mailto:@Model.CustomerEmail">@Model.CustomerEmail</a>
+                        }
+                    </p>
+                    <p class="muted">
+                        Takip kodu <code>@Model.TrackingCode</code>
+                        @if (Model.HasPasscode)
+                        {
+                            <br />@:Cihaz şifresi kayıtlı; iş emri kapanınca silinir.
+                        }
+                    </p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="work-columns">
+        <section class="panel" aria-labelledby="history-heading">
+            <div class="panel-head"><h2 id="history-heading">Geçmiş</h2></div>
+            <ol class="timeline">
+                @foreach (var h in Model.History.Reverse())
+                {
+                    <li>
+                        <strong>@Labels.Of(h.Status)</strong>
+                        <span class="muted">@h.At.ToOffset(turkey).ToString("d MMMM HH:mm"), @(h.By ?? "müşteri (takip sayfasından)")</span>
+                        @if (h.Note is not null)
+                        {
+                            <span>@h.Note</span>
+                        }
+                    </li>
+                }
+            </ol>
+        </section>
+
+        <section class="panel" aria-labelledby="notes-heading">
+            <div class="panel-head"><h2 id="notes-heading">Notlar</h2></div>
+            <div class="panel-body notes">
+                <h3>Atölye notları <span class="muted">(sadece personel görür)</span></h3>
+                <form method="post" asp-action="Note" asp-route-id="@Model.Id" hx-post="@Hx("notes")" hx-target="#work-order" hx-swap="outerHTML" class="inline-form">
+                    <input type="hidden" name="VisibleToCustomer" value="false" />
+                    <div class="grow">
+                        <label for="note-workshop" class="visually-hidden">Atölye notu</label>
+                        <input id="note-workshop" name="Text" maxlength="1000" placeholder="ör. Anakart nemli, kurutmaya alındı" autocomplete="off" />
+                    </div>
+                    <button type="submit" class="btn">Ekle</button>
+                </form>
+                <ul class="note-list">
+                    @foreach (var n in workshopNotes)
+                    {
+                        <li>@n.Text <span class="muted">@n.By, @n.At.ToOffset(turkey).ToString("d MMMM HH:mm")</span></li>
+                    }
+                </ul>
+
+                <h3>Müşteriye görünen notlar <span class="muted">(takip sayfasında çıkar)</span></h3>
+                <form method="post" asp-action="Note" asp-route-id="@Model.Id" hx-post="@Hx("notes")" hx-target="#work-order" hx-swap="outerHTML" class="inline-form">
+                    <input type="hidden" name="VisibleToCustomer" value="true" />
+                    <div class="grow">
+                        <label for="note-customer" class="visually-hidden">Müşteriye görünen not</label>
+                        <input id="note-customer" name="Text" maxlength="1000" placeholder="ör. Parça siparişi verildi, Perşembe gelecek" autocomplete="off" />
+                    </div>
+                    <button type="submit" class="btn">Ekle</button>
+                </form>
+                <ul class="note-list is-customer">
+                    @foreach (var n in customerNotes)
+                    {
+                        <li>@n.Text <span class="muted">@n.By, @n.At.ToOffset(turkey).ToString("d MMMM HH:mm")</span></li>
+                    }
+                </ul>
+            </div>
+        </section>
+    </div>
+</div>

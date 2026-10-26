@@ -73,3 +73,28 @@ public sealed class IntakeInput
 /// Kabul sayfası. Searched=false: sadece telefon adımı. Searched=true: Customer doluysa kayıtlı müşteri, boşsa yeni müşteri.
 /// </summary>
 public sealed record IntakePage(bool Searched, CustomerLookup? Customer, IntakeInput Input);
+
+/// <summary>İş emri sayfasındaki işlem düğmeleri. Hangi alanın kullanılacağı işleme göre değişir.</summary>
+public sealed class StepInput
+{
+    public Tamirhane.Application.WorkOrders.WorkOrderAction Step { get; set; }
+
+    /// <summary>İptal nedeni.</summary>
+    [StringLength(1000)]
+    public string? Reason { get; set; }
+
+    /// <summary>Teklifi onaylayan ya da reddeden kişi (telefonla bildiren müşteri).</summary>
+    [StringLength(100)]
+    public string? DecidedBy { get; set; }
+
+    /// <summary>Borçlu teslim (sadece sahip; senaryo da denetler).</summary>
+    public bool AllowBalanceDue { get; set; }
+}
+
+public sealed class NoteInput
+{
+    [StringLength(1000)]
+    public string? Text { get; set; }
+
+    public bool VisibleToCustomer { get; set; }
+}

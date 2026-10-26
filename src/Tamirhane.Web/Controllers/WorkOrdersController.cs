@@ -5,6 +5,7 @@ using Tamirhane.Application.Customers;
 using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Customers;
+using Tamirhane.Domain.Inventory;
 using Tamirhane.Domain.WorkOrders;
 using Tamirhane.Web.Models.WorkOrders;
 
@@ -96,6 +97,75 @@ public sealed class WorkOrdersController : Controller
         var order = await get.HandleAsync(id, ct);
         return order.IsFailure ? NotFound() : View(order.Value);
     }
+
+    /// <summary>
+    /// Durum geçişi. Hangi geçişin geçerli olduğuna domain karar verir; sayfa sadece geçerli olanları gösterir ama
+    /// elle gönderilen geçersiz istek de reddedilir. htmx isteğinde sadece iş emri bölümü döner (sayfa yenilenmez),
+    /// JavaScript yoksa sayfa yeniden yüklenir.
+    /// </summary>
+    [HttpPost("{id:guid}/steps")]
+    public async Task<IActionResult> Step(Guid id, StepInput input, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        var services = HttpContext.RequestServices;
+        Result result = input.Step switch
+        {
+            WorkOrderAction.StartDiagnosis => await services.GetRequiredService<StartDiagnosis>().HandleAsync(id, ct),
+            WorkOrderAction.SendQuote => await services.GetRequiredService<SendQuote>().HandleAsync(id, ct),
+            WorkOrderAction.StartRepair => await services.GetRequiredService<StartRepair>().HandleAsync(id, ct),
+            WorkOrderAction.RecordApproval => await services.GetRequiredService<RecordQuoteDecision>().HandleAsync(id, true, input.DecidedBy ?? "", ct),
+            WorkOrderAction.RecordDecline => await services.GetRequiredService<RecordQuoteDecision>().HandleAsync(id, false, input.DecidedBy ?? "", ct),
+            WorkOrderAction.MarkReady => await services.GetRequiredService<MarkReady>().HandleAsync(id, ct),
+            WorkOrderAction.Deliver => await services.GetRequiredService<DeliverWorkOrder>().HandleAsync(id, input.AllowBalanceDue, ct),
+            WorkOrderAction.Cancel => await services.GetRequiredService<CancelWorkOrder>().HandleAsync(id, input.Reason ?? "", ct),
+            _ => WorkOrderErrors.InvalidTransition,
+        };
+        return await AfterChangeAsync(id, result, pressed: true, get, ct);
+    }
+
+    /// <summary>Not: atölye notu sadece içeride, müşteriye görünen not takip sayfasında da çıkar.</summary>
+    [HttpPost("{id:guid}/notes")]
+    public async Task<IActionResult> Note(Guid id, NoteInput input, [FromServices] AddNote add, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        Result result = await add.HandleAsync(id, input.Text ?? "", input.VisibleToCustomer, ct);
+        return await AfterChangeAsync(id, result, pressed: false, get, ct);
+    }
+
+    private async Task<IActionResult> AfterChangeAsync(Guid id, Result result, bool pressed, GetWorkOrder get, CancellationToken ct)
+    {
+        if (result.Error == ApplicationErrors.WorkOrderNotFound)
+            return NotFound();
+        var error = result.IsFailure ? StepMessage(result.Error!) : null;
+
+        if (Request.Headers.ContainsKey("HX-Request"))
+        {
+            var order = await get.HandleAsync(id, ct);
+            ViewData["Pressed"] = pressed && result.IsSuccess;
+            ViewData["Error"] = error;
+            return PartialView("_WorkOrderBody", order.Value);
+        }
+
+        TempData[result.IsSuccess ? "Pressed" : "Error"] = result.IsSuccess ? pressed : error;
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    private static readonly Dictionary<string, string> StepMessages = new()
+    {
+        [WorkOrderErrors.InvalidTransition.Code] = "Bu işlem iş emrinin şu anki durumunda yapılamaz; sayfa güncellendi.",
+        [WorkOrderErrors.CancelReasonRequired.Code] = "İptalin nedenini yaz; müşteriye ve geçmişe bu yazılır.",
+        [WorkOrderErrors.NoteRequired.Code] = "Notu yaz.",
+        [WorkOrderErrors.TextTooLong.Code] = "Metin en fazla 1000 karakter olabilir.",
+        [QuoteErrors.Empty.Code] = "Teklifi göndermek için önce teklife kalem ekle.",
+        [QuoteErrors.DeciderNameRequired.Code] = "Kararı veren kişinin adını yaz.",
+        [InventoryErrors.InsufficientStock.Code] = "Teklifteki parçalardan stokta yeterince yok. Önce stok girişi yap, sonra tekrar dene.",
+        [InventoryErrors.WrongBranch.Code] = "Bu iş emri başka bir şubenin; o şubeye geçip tekrar dene.",
+        [PaymentErrors.BalanceDue.Code] = "Kalan borç var. Önce tahsilatı kaydet; borçlu teslimi sadece atölye sahibi onaylayabilir.",
+        [PaymentErrors.RefundDue.Code] = "Müşteriden fazla ödeme alınmış; teslimden önce iadeyi kaydet.",
+        [PaymentErrors.RefundRequired.Code] = "İptalden önce alınan ödemeyi iade et.",
+        [ApplicationErrors.OwnerOnly.Code] = "Borçlu teslimi sadece atölye sahibi onaylayabilir.",
+    };
+
+    private static string StepMessage(Error error) =>
+        StepMessages.GetValueOrDefault(error.Code, "İşlem yapılamadı. Sayfayı yenileyip tekrar dene.");
 
     private void AddError(Error error)
     {

@@ -39,11 +39,18 @@
       { delay: 0.08 * i, duration: 1.2, ease: "easeOut" });
   });
 
-  // 3. Basılan kaşe (kabul ve durum değişikliği sonrası): büyükten iner, hafif ezilip oturur.
-  document.querySelectorAll(".stamp.is-pressed").forEach(function (el) {
-    el.classList.remove("is-pressed"); // CSS yedeği yerine Motion'ın yaylı hareketi
-    animate(el, { scale: [1.7, 0.92, 1], opacity: [0, 1, 1], rotate: [-10, -3, -4] }, { duration: 0.42, ease: [0.2, 0.8, 0.2, 1] });
-  });
+  // 3. Basılan kaşe (kabul ve durum değişikliği sonrası): büyükten iner, hafif ezilip oturur, etiket hafifçe sarsılır.
+  function pressStamps(root) {
+    root.querySelectorAll(".stamp.is-pressed").forEach(function (el) {
+      el.classList.remove("is-pressed"); // CSS yedeği yerine Motion'ın yaylı hareketi
+      animate(el, { scale: [1.8, 0.9, 1], opacity: [0, 1, 1], rotate: [-12, -3, -4] }, { duration: 0.45, ease: [0.2, 0.8, 0.2, 1] });
+      var ticket = el.closest(".ticket");
+      if (ticket) animate(ticket, { y: [0, 3, 0] }, { delay: 0.16, duration: 0.22 });
+    });
+  }
+  pressStamps(document);
+  // htmx sayfanın sadece bir bölümünü değiştirdiğinde (iş emrinde durum geçişi) yeni kaşe orada basılır.
+  document.addEventListener("htmx:afterSwap", function (event) { pressStamps(event.detail.target.ownerDocument); });
 
   // 4. Panodaki aletler (yan menü): fareyle üstüne gelince alet kancasında hafifçe sallanır.
   document.querySelectorAll(".side-tools [data-anim=tool]").forEach(function (el) {
