@@ -35,6 +35,10 @@ public sealed class BranchInput
     [Display(Name = "Adres")]
     [StringLength(300, ErrorMessage = "Adres en fazla 300 karakter olabilir.")]
     public string? Address { get; set; }
+
+    [Display(Name = "Telefon")]
+    [StringLength(30, ErrorMessage = "Telefonu 0532 123 45 67 gibi yaz.")]
+    public string? Phone { get; set; }
 }
 
 public sealed record SettingsPage(ShopSettingsInput Shop, IReadOnlyList<BranchItem> Branches, BranchInput NewBranch);

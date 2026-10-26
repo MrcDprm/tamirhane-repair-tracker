@@ -77,6 +77,10 @@
                         <label class="visually-hidden" for="address-@branch.Id">Adres</label>
                         <input id="address-@branch.Id" name="Address" value="@branch.Address" maxlength="300" placeholder="Adres (isteğe bağlı)" />
                     </div>
+                    <div class="grow">
+                        <label class="visually-hidden" for="phone-@branch.Id">Telefon</label>
+                        <input id="phone-@branch.Id" name="Phone" type="tel" inputmode="tel" value="@(branch.Phone is { } p ? Tamirhane.Web.Display.Labels.Phone(p) : null)" maxlength="30" placeholder="Telefon (isteğe bağlı)" />
+                    </div>
                     <button type="submit" class="btn">Kaydet</button>
                 </form>
             </li>
@@ -92,6 +96,11 @@
             <label asp-for="NewBranch.Address" class="visually-hidden"></label>
             <input asp-for="NewBranch.Address" placeholder="Adres (isteğe bağlı)" />
             <span asp-validation-for="NewBranch.Address"></span>
+        </div>
+        <div class="grow">
+            <label asp-for="NewBranch.Phone" class="visually-hidden"></label>
+            <input asp-for="NewBranch.Phone" type="tel" inputmode="tel" placeholder="Telefon (isteğe bağlı)" />
+            <span asp-validation-for="NewBranch.Phone"></span>
         </div>
         <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Şube ekle</button>
     </form>

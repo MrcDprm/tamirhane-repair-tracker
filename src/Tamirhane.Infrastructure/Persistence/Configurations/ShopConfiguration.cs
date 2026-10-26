@@ -40,6 +40,7 @@ internal sealed class BranchConfiguration : IEntityTypeConfiguration<Branch>
         b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.Name).HasMaxLength(Branch.MaxNameLength);
         b.Property(x => x.Address).HasMaxLength(Branch.MaxAddressLength);
+        b.Property(x => x.Phone).HasMaxLength(16);
         b.HasIndex(x => new { x.ShopId, x.CreatedAt });
         b.HasOne<Shop>().WithMany().HasForeignKey(x => x.ShopId).OnDelete(DeleteBehavior.Cascade);
     }

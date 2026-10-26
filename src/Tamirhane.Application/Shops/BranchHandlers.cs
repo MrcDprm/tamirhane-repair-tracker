@@ -5,18 +5,18 @@ using Tamirhane.Domain.Shops;
 
 namespace Tamirhane.Application.Shops;
 
-public sealed record BranchItem(Guid Id, string Name, string? Address, bool IsCurrent);
+public sealed record BranchItem(Guid Id, string Name, string? Address, string? Phone, bool IsCurrent);
 
 /// <summary>Atölyenin şubeleri; personelin çalıştığı şube işaretli. Menüdeki şube seçici ve ayarlar sayfası için.</summary>
 public sealed class ListBranches(IBranchRepository branches, ICurrentUser user)
 {
     public async Task<IReadOnlyList<BranchItem>> HandleAsync(CancellationToken ct) =>
         (await branches.ListAsync(ct))
-            .Select(b => new BranchItem(b.Id, b.Name, b.Address, b.Id == user.BranchId))
+            .Select(b => new BranchItem(b.Id, b.Name, b.Address, b.Phone, b.Id == user.BranchId))
             .ToList();
 }
 
-public sealed record BranchCommand(string Name, string? Address);
+public sealed record BranchCommand(string Name, string? Address, string? Phone = null);
 
 /// <summary>Yeni şube; sadece sahip. Şubesi olmayan iş emri ve stok olmaz, bu yüzden şube silinmez.</summary>
 public sealed class AddBranch(IBranchRepository branches, IUnitOfWork unitOfWork, ICurrentUser user, TimeProvider clock)
@@ -28,7 +28,7 @@ public sealed class AddBranch(IBranchRepository branches, IUnitOfWork unitOfWork
         if ((await branches.ListAsync(ct)).Count >= Branch.MaxPerShop)
             return ShopErrors.TooManyBranches;
 
-        var branch = Branch.Create(user.ShopId, c.Name, c.Address, TurkeyTime.Now(clock));
+        var branch = Branch.Create(user.ShopId, c.Name, c.Address, TurkeyTime.Now(clock), c.Phone);
         if (branch.IsFailure)
             return branch.Error!;
 
@@ -49,7 +49,7 @@ public sealed class UpdateBranch(IBranchRepository branches, IUnitOfWork unitOfW
         if (branch is null)
             return ShopErrors.BranchNotFound;
 
-        var updated = branch.Update(c.Name, c.Address);
+        var updated = branch.Update(c.Name, c.Address, c.Phone);
         if (updated.IsFailure)
             return updated;
 

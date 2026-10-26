@@ -10,6 +10,7 @@ public static class ShopErrors
     public static readonly Error InvalidVatRate = Error.Validation("shop.invalid_vat_rate");
     public static readonly Error InvalidBranchName = Error.Validation("branch.invalid_name");
     public static readonly Error InvalidBranchAddress = Error.Validation("branch.invalid_address");
+    public static readonly Error InvalidBranchPhone = Error.Validation("branch.invalid_phone");
     public static readonly Error BranchNotFound = Error.NotFound("branch.not_found");
     public static readonly Error TooManyBranches = Error.Conflict("branch.too_many");
     public static readonly Error InvalidDisplayName = Error.Validation("staff.invalid_display_name");

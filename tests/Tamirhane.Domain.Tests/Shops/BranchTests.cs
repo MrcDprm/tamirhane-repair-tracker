@@ -49,7 +49,7 @@ public class BranchTests
     {
         var branch = Branch.Create(ShopId, "Merkez", "Moda Cd.", Now).Value;
 
-        Assert.Equal(ShopErrors.InvalidBranchName, branch.Update("", "Yeni adres").Error);
+        Assert.Equal(ShopErrors.InvalidBranchName, branch.Update("", "Yeni adres", null).Error);
 
         Assert.Equal(("Merkez", "Moda Cd."), (branch.Name, branch.Address));
     }
@@ -59,9 +59,29 @@ public class BranchTests
     {
         var branch = Branch.Create(ShopId, "Merkez", "Moda Cd.", Now).Value;
 
-        Assert.True(branch.Update("Kadıköy", null).IsSuccess);
+        Assert.True(branch.Update("Kadıköy", null, null).IsSuccess);
 
         Assert.Equal(("Kadıköy", (string?)null), (branch.Name, branch.Address));
+    }
+
+    [Fact]
+    public void Phone_is_stored_in_one_format_and_can_be_cleared()
+    {
+        var branch = Branch.Create(ShopId, "Merkez", null, Now, "0216 345 67 89").Value;
+        Assert.Equal("+902163456789", branch.Phone);
+
+        Assert.True(branch.Update("Merkez", null, " ").IsSuccess);
+        Assert.Null(branch.Phone);
+    }
+
+    [Fact]
+    public void Invalid_phone_is_rejected_and_changes_nothing()
+    {
+        var branch = Branch.Create(ShopId, "Merkez", "Moda Cd.", Now, "0216 345 67 89").Value;
+
+        Assert.Equal(ShopErrors.InvalidBranchPhone, branch.Update("Kadıköy", "Yeni adres", "12ab").Error);
+
+        Assert.Equal(("Merkez", "Moda Cd.", "+902163456789"), (branch.Name, branch.Address, branch.Phone));
     }
 
     [Theory]

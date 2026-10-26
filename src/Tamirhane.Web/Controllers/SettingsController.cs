@@ -22,6 +22,7 @@ public sealed class SettingsController(ListBranches listBranches) : Controller
         [ShopErrors.InvalidLocale.Code] = ("Shop.Locale", "Listeden bir dil seç."),
         [ShopErrors.InvalidBranchName.Code] = ("NewBranch.Name", "Şube adı 2 ile 100 karakter arasında olmalı."),
         [ShopErrors.InvalidBranchAddress.Code] = ("NewBranch.Address", "Adres en fazla 300 karakter olabilir."),
+        [ShopErrors.InvalidBranchPhone.Code] = ("NewBranch.Phone", "Telefonu 0532 123 45 67 gibi yaz."),
         [ShopErrors.TooManyBranches.Code] = ("", $"Bir atölyenin en fazla {Branch.MaxPerShop} şubesi olabilir."),
         [ShopErrors.BranchNotFound.Code] = ("", "Bu şube bulunamadı."),
     };
@@ -63,7 +64,7 @@ public sealed class SettingsController(ListBranches listBranches) : Controller
         if (!ModelState.IsValid)
             return await PageAsync(await CurrentSettingsAsync(get, ct), input, ct);
 
-        var result = await add.HandleAsync(new BranchCommand(input.Name, input.Address), ct);
+        var result = await add.HandleAsync(new BranchCommand(input.Name, input.Address, input.Phone), ct);
         if (result.IsFailure)
             return await FailAsync(result.Error!, await CurrentSettingsAsync(get, ct), input, ct);
 
@@ -76,7 +77,7 @@ public sealed class SettingsController(ListBranches listBranches) : Controller
     public async Task<IActionResult> UpdateBranch(Guid id, BranchInput input, [FromServices] UpdateBranch update, CancellationToken ct)
     {
         var result = ModelState.IsValid
-            ? await update.HandleAsync(id, new BranchCommand(input.Name, input.Address), ct)
+            ? await update.HandleAsync(id, new BranchCommand(input.Name, input.Address, input.Phone), ct)
             : ShopErrors.InvalidBranchName;
         if (result.Error?.Kind == ErrorKind.Forbidden)
             return Forbid();

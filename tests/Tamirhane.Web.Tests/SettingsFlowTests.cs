@@ -119,6 +119,23 @@ public sealed partial class SettingsFlowTests(TamirhaneWebFactory app)
         Assert.Contains("value=\"Kadıköy Merkez\"", page);
     }
 
+    [DockerFact]
+    public async Task Branch_phone_is_saved_in_one_format_and_bad_phone_is_explained()
+    {
+        var owner = await _flows.OwnerAsync("sube-tel@example.com");
+        var id = UpdateBranchAction().Match(await BodyAsync(owner, "/settings")).Groups[1].Value;
+
+        await owner.SubmitAsync("/settings", $"/settings/branches/{id}", new() { ["Name"] = "Merkez", ["Phone"] = "+90 216 345 6789" });
+        var page = await BodyAsync(owner, "/settings");
+        Assert.Contains("Şube güncellendi.", page);
+        Assert.Contains("value=\"0216 345 67 89\"", page);
+
+        await owner.SubmitAsync("/settings", $"/settings/branches/{id}", new() { ["Name"] = "Merkez", ["Phone"] = "12ab" });
+        page = await BodyAsync(owner, "/settings");
+        Assert.Contains("Telefonu 0532 123 45 67 gibi yaz.", page);
+        Assert.Contains("value=\"0216 345 67 89\"", page);
+    }
+
     private static Task<HttpResponseMessage> UpdateSettingsAsync(Browser owner, string name, string warranty, string vat, string locale) =>
         owner.SubmitAsync("/settings", "/settings", new()
         {
