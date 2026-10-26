@@ -5,7 +5,7 @@ using Tamirhane.Domain.Shops;
 
 namespace Tamirhane.Application.Accounts;
 
-/// <summary>Atölye kaydı: atölye ve sahibinin hesabı tek adımda açılır.</summary>
+/// <summary>Atölye kaydı: atölye, ilk şubesi ve sahibinin hesabı tek adımda açılır.</summary>
 public sealed record RegisterShopCommand(string ShopName, string OwnerName, string Email, string Password, string Locale);
 
 public sealed class RegisterShop(IAccountService accounts, IShopRepository shops, IUnitOfWork unitOfWork, TimeProvider clock)
@@ -33,11 +33,12 @@ public sealed class RegisterShop(IAccountService accounts, IShopRepository shops
             if (account.IsFailure)
                 return account.Error!;
 
-            var owner = Staff.Create(shop.Value.Id, account.Value, StaffRole.Owner, c.OwnerName);
+            var branch = Branch.Create(shop.Value.Id, Branch.DefaultName(shop.Value.Locale), null, shop.Value.CreatedAt).Value;
+            var owner = Staff.Create(shop.Value.Id, account.Value, StaffRole.Owner, c.OwnerName, branch.Id);
             if (owner.IsFailure)
                 return owner.Error!;
 
-            shops.Add(shop.Value, owner.Value);
+            shops.Add(shop.Value, branch, owner.Value);
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
             userId = account.Value;

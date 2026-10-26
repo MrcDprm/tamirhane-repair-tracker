@@ -11,11 +11,30 @@ internal sealed class ShopRepository(TamirhaneDbContext db) : IShopRepository
 {
     public Task<Shop?> GetAsync(Guid id, CancellationToken ct) => db.Shops.FirstOrDefaultAsync(s => s.Id == id, ct);
 
-    public void Add(Shop shop, Staff owner)
+    public void Add(Shop shop, Branch firstBranch, Staff owner)
     {
         db.Shops.Add(shop);
+        db.Branches.Add(firstBranch);
         db.Staff.Add(owner);
     }
+}
+
+internal sealed class BranchRepository(TamirhaneDbContext db) : IBranchRepository
+{
+    public Task<Branch?> GetAsync(Guid id, CancellationToken ct) => db.Branches.FirstOrDefaultAsync(b => b.Id == id, ct);
+
+    public async Task<IReadOnlyList<Branch>> ListAsync(CancellationToken ct) =>
+        await db.Branches.OrderBy(b => b.CreatedAt).ThenBy(b => b.Id).ToListAsync(ct);
+
+    public void Add(Branch branch) => db.Branches.Add(branch);
+}
+
+/// <summary>İş kurallarını etkileyen atölye ayarları (garanti süresi, varsayılan KDV).</summary>
+internal sealed class ShopSettingsReader(TamirhaneDbContext db) : IShopSettings
+{
+    public async Task<ShopSettings> GetAsync(Guid shopId, CancellationToken ct) =>
+        await db.Shops.Where(s => s.Id == shopId).Select(s => new ShopSettings(s.WarrantyDays, s.DefaultVatRate)).SingleOrDefaultAsync(ct)
+        ?? throw new InvalidOperationException("Oturumun atölyesi yok.");
 }
 
 internal sealed class StaffRepository(TamirhaneDbContext db) : IStaffRepository
@@ -37,9 +56,16 @@ internal sealed class InvitationRepository(TamirhaneDbContext db) : IInvitationR
     {
         var row = await db.Invitations.IgnoreQueryFilters()
             .Where(i => i.TokenHash == tokenHash)
-            .Join(db.Shops.IgnoreQueryFilters(), i => i.ShopId, s => s.Id, (i, s) => new { Invitation = i, s.Name, s.Locale })
+            .Join(db.Shops.IgnoreQueryFilters(), i => i.ShopId, s => s.Id, (i, s) => new
+            {
+                Invitation = i,
+                s.Name,
+                s.Locale,
+                FirstBranchId = db.Branches.IgnoreQueryFilters().Where(b => b.ShopId == s.Id)
+                    .OrderBy(b => b.CreatedAt).ThenBy(b => b.Id).Select(b => b.Id).First(),
+            })
             .FirstOrDefaultAsync(ct);
-        return row is null ? null : new InvitationWithShop(row.Invitation, row.Name, row.Locale);
+        return row is null ? null : new InvitationWithShop(row.Invitation, row.Name, row.Locale, row.FirstBranchId);
     }
 
     public async Task<IReadOnlyList<Invitation>> ListPendingAsync(DateTimeOffset now, string? email, CancellationToken ct) =>

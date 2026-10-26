@@ -376,6 +376,40 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                     b.ToTable("stock_movements", (string)null);
                 });
 
+            modelBuilder.Entity("Tamirhane.Domain.Shops.Branch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("address");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shop_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_branches");
+
+                    b.HasIndex("ShopId", "CreatedAt")
+                        .HasDatabaseName("ix_branches_shop_id_created_at");
+
+                    b.ToTable("branches", (string)null);
+                });
+
             modelBuilder.Entity("Tamirhane.Domain.Shops.Invitation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -474,6 +508,10 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -500,6 +538,9 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_staff");
+
+                    b.HasIndex("BranchId")
+                        .HasDatabaseName("ix_staff_branch_id");
 
                     b.HasIndex("ShopId")
                         .HasDatabaseName("ix_staff_shop_id");
@@ -966,6 +1007,16 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_stock_levels_parts_part_id");
                 });
 
+            modelBuilder.Entity("Tamirhane.Domain.Shops.Branch", b =>
+                {
+                    b.HasOne("Tamirhane.Domain.Shops.Shop", null)
+                        .WithMany()
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_branches_shops_shop_id");
+                });
+
             modelBuilder.Entity("Tamirhane.Domain.Shops.Invitation", b =>
                 {
                     b.HasOne("Tamirhane.Domain.Shops.Shop", null)
@@ -978,6 +1029,13 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Tamirhane.Domain.Shops.Staff", b =>
                 {
+                    b.HasOne("Tamirhane.Domain.Shops.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_staff_branches_branch_id");
+
                     b.HasOne("Tamirhane.Domain.Shops.Shop", null)
                         .WithMany()
                         .HasForeignKey("ShopId")

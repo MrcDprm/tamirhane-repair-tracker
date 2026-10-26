@@ -26,12 +26,14 @@ public sealed class Staff : Entity
     public Guid? UserId { get; private set; }
     public StaffRole Role { get; private set; }
     public string DisplayName { get; private set; } = "";
+    /// <summary>Çalıştığı şube: yeni iş emirleri ve stok işlemleri buraya yazılır.</summary>
+    public Guid BranchId { get; private set; }
     public DateTimeOffset? RemovedAt { get; private set; }
 
     public bool IsOwner => Role == StaffRole.Owner;
     public bool IsActive => RemovedAt is null;
 
-    public static Result<Staff> Create(Guid shopId, Guid userId, StaffRole role, string displayName)
+    public static Result<Staff> Create(Guid shopId, Guid userId, StaffRole role, string displayName, Guid branchId)
     {
         displayName = string.Join(' ', (displayName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries));
         if (displayName.Length < 2 || displayName.Length > MaxDisplayNameLength)
@@ -39,7 +41,16 @@ public sealed class Staff : Entity
         if (!Enum.IsDefined(role))
             return ShopErrors.InvalidRole;
 
-        return new Staff { ShopId = shopId, UserId = userId, Role = role, DisplayName = displayName };
+        return new Staff { ShopId = shopId, UserId = userId, Role = role, DisplayName = displayName, BranchId = branchId };
+    }
+
+    /// <summary>Çalıştığı şubeyi değiştirir (birden çok şubesi olan atölyede menüden).</summary>
+    public Result MoveTo(Branch branch)
+    {
+        if (branch.ShopId != ShopId)
+            return ShopErrors.BranchNotFound;
+        BranchId = branch.Id;
+        return Result.Success();
     }
 
     /// <summary>

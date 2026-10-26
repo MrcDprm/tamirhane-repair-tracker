@@ -28,6 +28,20 @@ internal sealed class StaffConfiguration : IEntityTypeConfiguration<Staff>
         // Hesap silinince personel kaydı kalır (iş emri geçmişindeki adı için), bağ boşalır.
         b.HasOne<ApplicationUser>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(s => s.UserId).IsUnique();
+        b.HasOne<Branch>().WithMany().HasForeignKey(s => s.BranchId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+internal sealed class BranchConfiguration : IEntityTypeConfiguration<Branch>
+{
+    public void Configure(EntityTypeBuilder<Branch> b)
+    {
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Name).HasMaxLength(Branch.MaxNameLength);
+        b.Property(x => x.Address).HasMaxLength(Branch.MaxAddressLength);
+        b.HasIndex(x => new { x.ShopId, x.CreatedAt });
+        b.HasOne<Shop>().WithMany().HasForeignKey(x => x.ShopId).OnDelete(DeleteBehavior.Cascade);
     }
 }
 

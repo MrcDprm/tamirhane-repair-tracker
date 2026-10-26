@@ -13,7 +13,7 @@ public sealed record ReopenUnderWarrantyCommand(
 /// önceki iş emri bu atölyenin olmalı, teslim edilmiş ve garantisi sürüyor olmalı.
 /// </summary>
 public sealed class ReopenUnderWarranty(
-    IWorkOrderRepository orders, IShopSettings settings, IUnitOfWork unitOfWork, INotificationQueue notifications,
+    IWorkOrderRepository orders, IUnitOfWork unitOfWork, INotificationQueue notifications,
     ICurrentUser user, TimeProvider clock)
 {
     public async Task<Result<ReceivedWorkOrder>> HandleAsync(ReopenUnderWarrantyCommand c, CancellationToken ct)
@@ -23,9 +23,8 @@ public sealed class ReopenUnderWarranty(
             return ApplicationErrors.WorkOrderNotFound;
 
         var now = TurkeyTime.Now(clock);
-        var shop = await settings.GetAsync(user.ShopId, ct);
         var number = WorkOrderNumber.Format(now.Year, await orders.NextSequenceAsync(user.ShopId, now.Year, ct));
-        var order = WorkOrder.ReceiveUnderWarranty(previous, shop.DefaultBranchId, number, TrackingCode.Generate(),
+        var order = WorkOrder.ReceiveUnderWarranty(previous, user.BranchId, number, TrackingCode.Generate(),
             c.Complaint, c.Condition, c.Accessories, c.Passcode, user.StaffId, now);
         if (order.IsFailure)
             return order.Error!;

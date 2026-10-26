@@ -13,6 +13,7 @@ public sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUse
 {
     public Guid ShopId => Read(ShopClaims.ShopId);
     public Guid StaffId => Read(ShopClaims.StaffId);
+    public Guid BranchId => Read(ShopClaims.BranchId);
     public bool IsOwner => User?.IsInRole(nameof(StaffRole.Owner)) == true;
 
     private ClaimsPrincipal? User => accessor.HttpContext?.User;

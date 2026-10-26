@@ -26,6 +26,7 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<Shop> Shops => Set<Shop>();
     public DbSet<Staff> Staff => Set<Staff>();
+    public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
     public DbSet<Customer> Customers => Set<Customer>();
@@ -64,6 +65,7 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
         // İş emrinin alt kayıtları (geçmiş, kalemler, ödemeler, notlar) sadece iş emri üzerinden yüklenir.
         modelBuilder.Entity<Shop>().HasQueryFilter(s => s.Id == CurrentShopId);
         modelBuilder.Entity<Staff>().HasQueryFilter(s => s.ShopId == CurrentShopId);
+        modelBuilder.Entity<Branch>().HasQueryFilter(b => b.ShopId == CurrentShopId);
         modelBuilder.Entity<Invitation>().HasQueryFilter(i => i.ShopId == CurrentShopId);
         modelBuilder.Entity<WorkOrder>().HasQueryFilter(o => o.ShopId == CurrentShopId);
         modelBuilder.Entity<Customer>().HasQueryFilter(c => c.ShopId == CurrentShopId);
@@ -76,7 +78,7 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
     /// <summary>
     /// Yeni kayıtların atölyesi her zaman oturumdan gelir. Stok kayıtlarına burada yazılır;
     /// ShopId'yi kendisi taşıyan kayıtlar başka atölyeye aitse kayıt hiç yapılmaz.
-    /// Atölye kaydı oturum açılmadan yapılır: aynı kayıtta eklenen yeni atölyenin kendisine ve personeline izin verilir.
+    /// Atölye kaydı oturum açılmadan yapılır: aynı kayıtta eklenen yeni atölyenin kendisine, ilk şubesine ve sahibine izin verilir.
     /// Davet kabulü de oturumsuzdur: aynı kayıtta kabul edilen davetin atölyesine sadece personel eklenebilir.
     /// </summary>
     private void StampShop()
@@ -102,6 +104,7 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
             {
                 Shop s => s.Id,
                 Staff s => s.ShopId,
+                Branch b => b.ShopId,
                 Invitation i => i.ShopId,
                 WorkOrder o => o.ShopId,
                 Customer c => c.ShopId,
