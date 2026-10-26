@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Tamirhane.Application.Abstractions;
+using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
@@ -29,6 +30,8 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
 
         using var scope = Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<TamirhaneDbContext>().Database.MigrateAsync();
+        var queue = Services.GetRequiredService<BackgroundJobQueue>();
+        Emails.BeforeRead = () => queue.WhenIdleAsync(TimeSpan.FromSeconds(10));
     }
 
     /// <summary>Uygulamanın gönderdiği e-postalar (doğrulama linki buradan okunur).</summary>
@@ -38,7 +41,11 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
     {
         // Program.cs bağlantıyı önce DATABASE_URL'den okur; böylece appsettings.Development.json'daki yerel veritabanı kullanılmaz.
         builder.UseSetting("DATABASE_URL", _container!.GetConnectionString());
-        builder.ConfigureTestServices(services => services.AddSingleton<IEmailSender>(Emails));
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<IEmailSender>(Emails);
+            services.AddSingleton(new BackgroundJobOptions([TimeSpan.Zero, TimeSpan.Zero])); // testte denemeler arası beklenmez
+        });
         // Yayındaki CF-Connecting-IP'nin yerine: her tarayıcı kendi IP'siyle gelir, testler birbirinin sınırını yemez.
         builder.UseSetting("CLIENT_IP_HEADER", ClientIpHeader);
     }
