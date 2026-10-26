@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.WebEncoders;
 using Tamirhane.Application.Accounts;
@@ -7,6 +9,7 @@ using Tamirhane.Application.Shops;
 using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Web.Authorization;
+using Tamirhane.Web.ModelBinding;
 using Tamirhane.Web.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,8 +31,12 @@ if (string.IsNullOrWhiteSpace(resendApiKey) && !builder.Environment.IsDevelopmen
     throw new InvalidOperationException("RESEND_API_KEY ortam değişkeni yok; doğrulama e-postaları gönderilemez.");
 
 builder.Services.AddControllersWithViews(options =>
+{
     // Her POST, PUT ve DELETE CSRF token'ı taşımak zorunda; bir action'da [ValidateAntiForgeryToken] unutulsa da açık kalmaz.
-    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    // Ondalık alanlar sayfanın kültüründen bağımsız okunur (type="number" her dilde noktayla gönderir).
+    options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider());
+});
 // Türkçe harfler sayfaya "&#x15F;" gibi kodlanmadan yazılsın; <, >, &, " gibi HTML karakterleri yine kodlanır.
 builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
 builder.Services.AddAntiforgery(options =>
@@ -43,7 +50,7 @@ builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
 builder.Services.AddAccountRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddShopPolicies();
 
-// AddApplication() henüz çağrılamaz: bazı senaryoların bağımlılıkları (IShopSettings #18, INotificationQueue #19) yok,
+// AddApplication() henüz çağrılamaz: bazı senaryoların bağımlılığı (INotificationQueue, #19) yok,
 // açılıştaki servis doğrulaması patlar. O zamana kadar ekranı olan senaryolar tek tek kaydedilir.
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<RegisterShop>();
@@ -53,6 +60,12 @@ builder.Services.AddScoped<AcceptInvitation>();
 builder.Services.AddScoped<RevokeInvitation>();
 builder.Services.AddScoped<RemoveStaff>();
 builder.Services.AddScoped<ListStaff>();
+builder.Services.AddScoped<ListBranches>();
+builder.Services.AddScoped<AddBranch>();
+builder.Services.AddScoped<UpdateBranch>();
+builder.Services.AddScoped<SwitchBranch>();
+builder.Services.AddScoped<GetShopSettings>();
+builder.Services.AddScoped<UpdateShopSettings>();
 
 var app = builder.Build();
 
@@ -63,6 +76,14 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+// Tarih ve sayı biçimi sunucunun işletim sistemine bağlı kalmasın (yayındaki Linux konteyneri kültürsüz çalışır):
+// arayüz Türkçe. İngilizce arayüz #35'te eklenir.
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("tr-TR"),
+    SupportedCultures = [new CultureInfo("tr-TR")],
+    SupportedUICultures = [new CultureInfo("tr-TR")],
+});
 app.UseRouting();
 app.UseRateLimiter();
 
