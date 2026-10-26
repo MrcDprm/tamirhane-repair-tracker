@@ -114,8 +114,9 @@ public static class DependencyInjection
                 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ResendApiKey);
                 http.Timeout = TimeSpan.FromSeconds(15);
             });
+            var from = EmailFrom.Parse(options.EmailFrom); // bozuksa uygulama açılırken durur
             services.AddSingleton<IEmailSender>(sp => new ResendEmailSender(
-                sp.GetRequiredService<IHttpClientFactory>().CreateClient("resend"), options.EmailFrom));
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient("resend"), from));
         }
         return services;
     }
