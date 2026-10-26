@@ -12,4 +12,6 @@ public static class ApplicationErrors
     public static readonly Error OwnerOnly = Error.Forbidden("auth.owner_only");
     public static readonly Error DuplicateSku = Error.Conflict("inventory.duplicate_sku");
     public static readonly Error DuplicatePhone = Error.Conflict("customer.duplicate_phone");
+    public static readonly Error InvitationNotFound = Error.NotFound("invitation.not_found");
+    public static readonly Error TooManyInvitations = Error.Conflict("invitation.too_many");
 }

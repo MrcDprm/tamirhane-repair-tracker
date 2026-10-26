@@ -11,7 +11,7 @@ namespace Tamirhane.Application.Tests.Fakes;
 public sealed class FakeUser(Guid shopId, bool isOwner = true) : ICurrentUser
 {
     public Guid ShopId { get; } = shopId;
-    public Guid StaffId { get; } = Guid.NewGuid();
+    public Guid StaffId { get; set; } = Guid.NewGuid();
     public bool IsOwner { get; set; } = isOwner;
 }
 

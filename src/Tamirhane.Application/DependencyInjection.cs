@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Application.Customers;
 using Tamirhane.Application.Inventory;
+using Tamirhane.Application.Shops;
 using Tamirhane.Application.WorkOrders;
 
 namespace Tamirhane.Application;
@@ -12,6 +13,12 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<RegisterShop>();
+        services.AddScoped<InviteStaff>();
+        services.AddScoped<GetInvitation>();
+        services.AddScoped<AcceptInvitation>();
+        services.AddScoped<RevokeInvitation>();
+        services.AddScoped<RemoveStaff>();
+        services.AddScoped<ListStaff>();
         services.AddScoped<ReceiveDevice>();
         services.AddScoped<FindCustomerByPhone>();
         services.AddScoped<UpdateIntakeDetails>();

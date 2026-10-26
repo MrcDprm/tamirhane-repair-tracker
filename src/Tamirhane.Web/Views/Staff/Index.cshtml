@@ -1,0 +1,91 @@
+@using Tamirhane.Domain.Shops
+@model StaffPage
+@{
+    ViewData["Title"] = "Personel";
+    var turkey = TimeSpan.FromHours(3);
+}
+
+<h1 class="h3 mb-3">Personel</h1>
+
+@if (TempData["Status"] is string status)
+{
+    <div class="alert alert-success" role="status">@status</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger" role="alert">@error</div>
+}
+
+<table class="table align-middle">
+    <thead>
+        <tr><th scope="col">Ad</th><th scope="col">Rol</th><th scope="col"><span class="visually-hidden">İşlem</span></th></tr>
+    </thead>
+    <tbody>
+        @foreach (var member in Model.Overview.Members)
+        {
+            <tr>
+                <td>
+                    @member.DisplayName
+                    @if (member.IsYou)
+                    {
+                        <span class="text-body-secondary">(sen)</span>
+                    }
+                </td>
+                <td>@(member.Role == StaffRole.Owner ? "Sahip" : "Teknisyen")</td>
+                <td class="text-end">
+                    @if (member.Role != StaffRole.Owner)
+                    {
+                        @* Onay metni data özelliğinde: ad JavaScript içine yazılmaz, Razor onu HTML olarak kaçışlar. *@
+                        <form asp-action="Remove" asp-route-id="@member.Id" method="post" class="d-inline"
+                              data-confirm="@member.DisplayName atölyeden çıkarılsın mı? Hesabı silinir, iş emri geçmişinde adı kalır."
+                              onsubmit="return confirm(this.dataset.confirm)">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Çıkar</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h2 class="h5 mt-4">Teknisyen davet et</h2>
+<p class="text-body-secondary">
+    Davet linki e-postayla gider; 7 gün geçerli ve bir kez kullanılabilir.
+    Teknisyen iş emri ve stokla çalışır; ayarları, personeli ve ciroyu göremez.
+</p>
+<form asp-action="Invite" method="post" novalidate>
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <div class="row g-2 align-items-start">
+        <div class="col-sm-8">
+            <label asp-for="Invite.Email" class="visually-hidden"></label>
+            <input asp-for="Invite.Email" class="form-control" placeholder="teknisyen@ornek.com" autocomplete="off" />
+            <span asp-validation-for="Invite.Email" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-4">
+            <button type="submit" class="btn btn-primary w-100">Davet gönder</button>
+        </div>
+    </div>
+</form>
+
+@if (Model.Overview.Invitations.Count > 0)
+{
+    <h2 class="h5 mt-4">Bekleyen davetler</h2>
+    <ul class="list-group">
+        @foreach (var invitation in Model.Overview.Invitations)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                <span>
+                    @invitation.Email
+                    <span class="text-body-secondary small">· @invitation.ExpiresAt.ToOffset(turkey).ToString("d MMMM HH:mm") tarihine kadar</span>
+                </span>
+                <form asp-action="Revoke" asp-route-id="@invitation.Id" method="post">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Geri al</button>
+                </form>
+            </li>
+        }
+    </ul>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

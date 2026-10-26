@@ -10,8 +10,40 @@ namespace Tamirhane.Application.Abstractions;
 
 public interface IShopRepository
 {
+    Task<Shop?> GetAsync(Guid id, CancellationToken ct);
+
     /// <summary>Yeni atölye ve sahibi; kayıt oturum açılmadan yapılır.</summary>
     void Add(Shop shop, Staff owner);
+}
+
+public interface IStaffRepository
+{
+    /// <summary>Çıkarılmış personel de döner; çağıran <see cref="Staff.IsActive"/>'e bakar.</summary>
+    Task<Staff?> GetAsync(Guid id, CancellationToken ct);
+
+    /// <summary>Atölyede çalışan (çıkarılmamış) personel; önce sahip, sonra ada göre.</summary>
+    Task<IReadOnlyList<Staff>> ListActiveAsync(CancellationToken ct);
+
+    void Add(Staff staff);
+}
+
+/// <summary>Davet ve davet eden atölyenin adı, dili; davet sayfası oturum olmadan açılır.</summary>
+public sealed record InvitationWithShop(Invitation Invitation, string ShopName, string ShopLocale);
+
+public interface IInvitationRepository
+{
+    Task<Invitation?> GetAsync(Guid id, CancellationToken ct);
+
+    /// <summary>
+    /// Linkteki token'ın özetiyle; kiracı filtresi olmadan (davet edilen kişinin oturumu yok).
+    /// Token 256 bit rastgele olduğu için tahminle başka atölyenin davetine ulaşılamaz.
+    /// </summary>
+    Task<InvitationWithShop?> FindByTokenHashAsync(byte[] tokenHash, CancellationToken ct);
+
+    /// <summary>Atölyenin bekleyen davetleri; <paramref name="email"/> verilirse sadece o adresinkiler.</summary>
+    Task<IReadOnlyList<Invitation>> ListPendingAsync(DateTimeOffset now, string? email, CancellationToken ct);
+
+    void Add(Invitation invitation);
 }
 
 public interface IWorkOrderRepository

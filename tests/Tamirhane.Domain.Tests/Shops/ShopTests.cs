@@ -62,6 +62,37 @@ public class ShopTests
     }
 
     [Fact]
+    public void Removed_technician_keeps_the_record_but_loses_the_account_link()
+    {
+        var technician = Staff.Create(Guid.NewGuid(), Guid.NewGuid(), StaffRole.Technician, "Mehmet Demir").Value;
+
+        Assert.True(technician.Remove(Now).IsSuccess);
+
+        Assert.False(technician.IsActive);
+        Assert.Equal(Now, technician.RemovedAt);
+        Assert.Null(technician.UserId);
+        Assert.Equal("Mehmet Demir", technician.DisplayName);
+    }
+
+    [Fact]
+    public void Owner_cannot_be_removed()
+    {
+        var owner = Staff.Create(Guid.NewGuid(), Guid.NewGuid(), StaffRole.Owner, "Ayşe Kaya").Value;
+
+        Assert.Equal(ShopErrors.CannotRemoveOwner, owner.Remove(Now).Error);
+        Assert.True(owner.IsActive);
+    }
+
+    [Fact]
+    public void Removed_staff_cannot_be_removed_again()
+    {
+        var technician = Staff.Create(Guid.NewGuid(), Guid.NewGuid(), StaffRole.Technician, "Mehmet Demir").Value;
+        technician.Remove(Now);
+
+        Assert.Equal(ShopErrors.StaffNotFound, technician.Remove(Now.AddMinutes(1)).Error);
+    }
+
+    [Fact]
     public void Unknown_role_is_rejected()
     {
         Assert.Equal(ShopErrors.InvalidRole, Staff.Create(Guid.NewGuid(), Guid.NewGuid(), (StaffRole)7, "Ayşe Kaya").Error);

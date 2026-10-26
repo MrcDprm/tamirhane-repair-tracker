@@ -29,7 +29,7 @@ public class RegisterShopTests
         Assert.Equal(StaffRole.Owner, owner.Role);
         Assert.Equal(_accounts.Users["ayse@example.com"], owner.UserId);
         Assert.Equal(1, _unitOfWork.Commits);
-        Assert.Equal([(owner.UserId, "tr")], _accounts.ConfirmationsSent);
+        Assert.Equal([(owner.UserId!.Value, "tr")], _accounts.ConfirmationsSent);
     }
 
     [Fact]

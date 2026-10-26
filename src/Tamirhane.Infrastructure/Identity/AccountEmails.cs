@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Net;
+using Tamirhane.Application.Abstractions;
 using Tamirhane.Infrastructure.Email;
 
 namespace Tamirhane.Infrastructure.Identity;
@@ -35,6 +37,23 @@ internal static class AccountEmails
             "Yeni bir şifre belirlemek için aşağıdaki linke tıkla. Link 1 saat geçerli ve sadece bir kez kullanılabilir.",
             "Yeni şifre belirle", link,
             "Bunu sen istemediysen e-postayı yok sayabilirsin; şifren değişmedi.");
+
+    public static EmailMessage Invitation(StaffInvitationEmail invitation, Uri link)
+    {
+        var culture = CultureInfo.GetCultureInfo(invitation.Locale == "en" ? "en-GB" : "tr-TR");
+        var expires = invitation.ExpiresAt.ToString("d MMMM yyyy HH:mm", culture);
+        return invitation.Locale == "en"
+            ? Build(invitation.Email, $"{invitation.ShopName} invited you to Tamirhane",
+                $"{invitation.InvitedBy} invited you to join {invitation.ShopName} on Tamirhane as a technician. " +
+                $"Choose your name and password with the link below. The link works once and is valid until {expires}.",
+                "Accept the invitation", link,
+                "If you don't know this shop, you can ignore this email; no account is created without the link.")
+            : Build(invitation.Email, $"{invitation.ShopName} seni Tamirhane'ye davet etti",
+                $"{invitation.InvitedBy}, seni Tamirhane'de {invitation.ShopName} atölyesine teknisyen olarak davet etti. " +
+                $"Aşağıdaki linkle adını ve şifreni belirle. Link bir kez kullanılabilir ve {expires} tarihine kadar geçerli.",
+                "Daveti kabul et", link,
+                "Bu atölyeyi tanımıyorsan e-postayı yok sayabilirsin; link kullanılmadan hesap açılmaz.");
+    }
 
     private static EmailMessage Build(string to, string subject, string intro, string action, Uri link, string footer)
     {
