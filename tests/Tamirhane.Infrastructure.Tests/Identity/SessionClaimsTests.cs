@@ -21,6 +21,7 @@ public sealed class SessionClaimsTests(PostgresFixture db)
 
         Assert.Equal(shop.Id, current.ShopId);
         Assert.Equal(staff.Id, current.StaffId);
+        Assert.Equal(staff.BranchId, current.BranchId);
         Assert.True(current.IsOwner);
     }
 
@@ -68,8 +69,9 @@ public sealed class SessionClaimsTests(PostgresFixture db)
         var user = new ApplicationUser { UserName = email, Email = email };
         Assert.True((await scope.Users.CreateAsync(user)).Succeeded);
         var shop = Shop.Create("Kaya Telefon", "tr", Now).Value;
-        var staff = Staff.Create(shop.Id, user.Id, role, "Ayşe Kaya").Value;
-        scope.Db.AddRange(shop, staff);
+        var branch = Branch.Create(shop.Id, "Merkez", null, Now).Value;
+        var staff = Staff.Create(shop.Id, user.Id, role, "Ayşe Kaya", branch.Id).Value;
+        scope.Db.AddRange(shop, branch, staff);
         await scope.Db.SaveChangesAsync();
         return (shop, staff, user);
     }

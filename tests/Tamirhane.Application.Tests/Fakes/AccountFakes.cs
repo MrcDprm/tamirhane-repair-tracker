@@ -81,12 +81,25 @@ public sealed class FakeAccounts : IAccountService
 
 public sealed class FakeShops : IShopRepository
 {
-    public List<(Shop Shop, Staff Owner)> Items { get; } = [];
+    public List<(Shop Shop, Branch Branch, Staff Owner)> Items { get; } = [];
 
     public Task<Shop?> GetAsync(Guid id, CancellationToken ct) =>
         Task.FromResult(Items.Select(i => i.Shop).FirstOrDefault(s => s.Id == id));
 
-    public void Add(Shop shop, Staff owner) => Items.Add((shop, owner));
+    public void Add(Shop shop, Branch firstBranch, Staff owner) => Items.Add((shop, firstBranch, owner));
+}
+
+public sealed class FakeBranches(ICurrentUser user) : IBranchRepository
+{
+    public List<Branch> Items { get; } = [];
+
+    public Task<Branch?> GetAsync(Guid id, CancellationToken ct) =>
+        Task.FromResult(Items.FirstOrDefault(b => b.Id == id && b.ShopId == user.ShopId));
+
+    public Task<IReadOnlyList<Branch>> ListAsync(CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Branch>>(Items.Where(b => b.ShopId == user.ShopId).ToList());
+
+    public void Add(Branch branch) => Items.Add(branch);
 }
 
 public sealed class FakeStaff(ICurrentUser user) : IStaffRepository
@@ -114,8 +127,10 @@ public sealed class FakeInvitations(ICurrentUser user, FakeShops shops) : IInvit
     public Task<InvitationWithShop?> FindByTokenHashAsync(byte[] tokenHash, CancellationToken ct)
     {
         var invitation = Items.FirstOrDefault(i => i.TokenHash.SequenceEqual(tokenHash));
-        var shop = shops.Items.Select(s => s.Shop).FirstOrDefault(s => s.Id == invitation?.ShopId);
-        return Task.FromResult(invitation is null || shop is null ? null : new InvitationWithShop(invitation, shop.Name, shop.Locale));
+        var shop = shops.Items.FirstOrDefault(s => s.Shop.Id == invitation?.ShopId);
+        return Task.FromResult(invitation is null || shop.Shop is null
+            ? null
+            : new InvitationWithShop(invitation, shop.Shop.Name, shop.Shop.Locale, shop.Branch.Id));
     }
 
     public Task<IReadOnlyList<Invitation>> ListPendingAsync(DateTimeOffset now, string? email, CancellationToken ct) =>

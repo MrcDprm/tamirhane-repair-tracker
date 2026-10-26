@@ -12,6 +12,7 @@ public sealed class FakeUser(Guid shopId, bool isOwner = true) : ICurrentUser
 {
     public Guid ShopId { get; } = shopId;
     public Guid StaffId { get; set; } = Guid.NewGuid();
+    public Guid BranchId { get; set; } = Guid.NewGuid();
     public bool IsOwner { get; set; } = isOwner;
 }
 

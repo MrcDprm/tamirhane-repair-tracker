@@ -13,7 +13,7 @@ public sealed class TestShop
     public TestShop(bool isOwner = true)
     {
         User = new FakeUser(Guid.NewGuid(), isOwner);
-        Settings = new ShopSettings(WarrantyDays: 90, DefaultVatRate: 20, DefaultBranchId: Guid.NewGuid());
+        Settings = new ShopSettings(WarrantyDays: 90, DefaultVatRate: 20);
         Orders = new FakeWorkOrders(User);
         Customers = new FakeCustomers(User);
         Devices = new FakeDevices(User);
@@ -32,7 +32,7 @@ public sealed class TestShop
     public FakeUnitOfWork UnitOfWork { get; } = new();
     public FakeQueue Queue { get; } = new();
 
-    public ReceiveDevice ReceiveDevice() => new(Customers, Devices, Orders, new FakeSettings(Settings), UnitOfWork, Queue, User, Clock);
+    public ReceiveDevice ReceiveDevice() => new(Customers, Devices, Orders, UnitOfWork, Queue, User, Clock);
     public FindCustomerByPhone FindCustomerByPhone() => new(Customers, Devices);
     public StartDiagnosis StartDiagnosis() => new(Orders, UnitOfWork, Queue, User, Clock);
     public StartRepair StartRepair() => new(Orders, UnitOfWork, Queue, User, Clock);
@@ -49,11 +49,11 @@ public sealed class TestShop
     public RecordPayment RecordPayment() => new(Orders, UnitOfWork, Queue, User, Clock);
     public RecordRefund RecordRefund() => new(Orders, UnitOfWork, Queue, User, Clock);
     public SetDiagnosisFee SetDiagnosisFee() => new(Orders, UnitOfWork, Queue, User, Clock);
-    public ReopenUnderWarranty ReopenUnderWarranty() => new(Orders, new FakeSettings(Settings), UnitOfWork, Queue, User, Clock);
-    public AddPart AddPart() => new(Parts, Stock, new FakeSettings(Settings), UnitOfWork, User, Clock);
+    public ReopenUnderWarranty ReopenUnderWarranty() => new(Orders, UnitOfWork, Queue, User, Clock);
+    public AddPart AddPart() => new(Parts, Stock, UnitOfWork, User, Clock);
     public UpdatePart UpdatePart() => new(Parts, UnitOfWork);
-    public ChangeStock ChangeStock() => new(Parts, Stock, new FakeSettings(Settings), UnitOfWork, User, Clock);
-    public ListLowStock ListLowStock() => new(Parts, new FakeSettings(Settings), User);
+    public ChangeStock ChangeStock() => new(Parts, Stock, UnitOfWork, User, Clock);
+    public ListLowStock ListLowStock() => new(Parts, User);
 
     public static ReceiveDeviceCommand NewCustomerCommand(string phone = "0532 123 45 67", string complaint = "Ekran kırık") =>
         new(null, "Ayşe Kaya", phone, "ayse@example.com", true,

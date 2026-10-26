@@ -73,6 +73,7 @@ public sealed class TestUser : ICurrentUser
 {
     public Guid ShopId { get; set; }
     public Guid StaffId { get; set; } = Guid.NewGuid();
+    public Guid BranchId { get; set; } = Guid.NewGuid();
     public bool IsOwner => true;
 }
 

@@ -21,7 +21,7 @@ public class ReceiveDeviceTests
         Assert.Equal("2026-0001", received.Number);
         Assert.Equal(TrackingCode.Length, received.TrackingCode.Length);
         Assert.Equal(shop.User.ShopId, order.ShopId);
-        Assert.Equal(shop.Settings.DefaultBranchId, order.BranchId);
+        Assert.Equal(shop.User.BranchId, order.BranchId);
         Assert.Equal(customer.Id, order.CustomerId);
         Assert.Equal(device.Id, order.DeviceId);
         Assert.Equal(customer.Id, device.CustomerId);

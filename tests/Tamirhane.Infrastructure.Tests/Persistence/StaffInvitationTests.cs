@@ -60,6 +60,7 @@ public sealed class StaffInvitationTests(PostgresFixture db)
         Assert.True(user.EmailConfirmed);
         var technician = await check.Db.Staff.SingleAsync(s => s.UserId == user.Id);
         Assert.Equal(StaffRole.Technician, technician.Role);
+        Assert.Equal((await check.Db.Branches.SingleAsync()).Id, technician.BranchId); // ilk şubeye bağlanır
         Assert.NotNull((await check.Db.Invitations.SingleAsync()).AcceptedAt);
 
         using (var again = db.AsShop(Guid.Empty))
@@ -79,7 +80,7 @@ public sealed class StaffInvitationTests(PostgresFixture db)
         invitation.Accept(DateTimeOffset.UtcNow);
         var user = new ApplicationUser { UserName = "kotu-usta@example.com", Email = "kotu-usta@example.com" };
         anonymous.Db.Users.Add(user);
-        anonymous.Db.Staff.Add(Staff.Create(victim.ShopId, user.Id, StaffRole.Technician, "Sızan Usta").Value);
+        anonymous.Db.Staff.Add(Staff.Create(victim.ShopId, user.Id, StaffRole.Technician, "Sızan Usta", Guid.NewGuid()).Value);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => anonymous.Db.SaveChangesAsync());
     }

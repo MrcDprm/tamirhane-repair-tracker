@@ -85,6 +85,7 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
     {
         public Guid ShopId => shopId;
         public Guid StaffId { get; } = Guid.NewGuid();
+        public Guid BranchId { get; } = Guid.NewGuid();
         public bool IsOwner => true;
     }
 }

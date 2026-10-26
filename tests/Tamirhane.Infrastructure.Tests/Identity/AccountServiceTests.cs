@@ -208,7 +208,8 @@ public sealed class AccountServiceTests(PostgresFixture db)
         using var scope = db.AsShop(Guid.Empty);
         var userId = (await scope.Accounts.CreateAsync(email, Password, default)).Value;
         var shop = Shop.Create("Kaya Telefon", locale, Now).Value;
-        scope.Db.AddRange(shop, Staff.Create(shop.Id, userId, StaffRole.Owner, "Ayşe Kaya").Value);
+        var branch = Branch.Create(shop.Id, "Merkez", null, Now).Value;
+        scope.Db.AddRange(shop, branch, Staff.Create(shop.Id, userId, StaffRole.Owner, "Ayşe Kaya", branch.Id).Value);
         await scope.Db.SaveChangesAsync();
         return (shop, userId);
     }

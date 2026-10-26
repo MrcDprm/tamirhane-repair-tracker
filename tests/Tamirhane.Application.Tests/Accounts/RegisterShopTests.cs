@@ -23,10 +23,11 @@ public class RegisterShopTests
         var result = await Handler().HandleAsync(Command(), default);
 
         Assert.True(result.IsSuccess);
-        var (shop, owner) = Assert.Single(_shops.Items);
+        var (shop, branch, owner) = Assert.Single(_shops.Items);
         Assert.Equal("Kaya Telefon", shop.Name);
         Assert.Equal(shop.Id, owner.ShopId);
         Assert.Equal(StaffRole.Owner, owner.Role);
+        Assert.Equal((shop.Id, "Merkez", branch.Id), (branch.ShopId, branch.Name, owner.BranchId));
         Assert.Equal(_accounts.Users["ayse@example.com"], owner.UserId);
         Assert.Equal(1, _unitOfWork.Commits);
         Assert.Equal([(owner.UserId!.Value, "tr")], _accounts.ConfirmationsSent);

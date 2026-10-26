@@ -32,7 +32,7 @@ public sealed class ShopPersistenceTests(PostgresFixture db)
         using var anonymous = db.AsShop(Guid.Empty);
         var user = new ApplicationUser { UserName = "yabanci@example.com", Email = "yabanci@example.com" };
         anonymous.Db.Users.Add(user);
-        anonymous.Db.Staff.Add(Staff.Create(shop.Id, user.Id, StaffRole.Owner, "Yabancı").Value);
+        anonymous.Db.Staff.Add(Staff.Create(shop.Id, user.Id, StaffRole.Owner, "Yabancı", Guid.NewGuid()).Value);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => anonymous.Db.SaveChangesAsync());
     }
@@ -56,7 +56,8 @@ public sealed class ShopPersistenceTests(PostgresFixture db)
             await using var transaction = await anonymous.UnitOfWork.BeginTransactionAsync(default);
             anonymous.Db.Users.Add(user);
             await anonymous.UnitOfWork.SaveChangesAsync(default); // Identity'nin hesabı ayrı kaydetmesi gibi
-            anonymous.Db.AddRange(shop, Staff.Create(shop.Id, user.Id, StaffRole.Owner, "Ayşe Kaya").Value);
+            var branch = Branch.Create(shop.Id, "Merkez", null, Now).Value;
+            anonymous.Db.AddRange(shop, branch, Staff.Create(shop.Id, user.Id, StaffRole.Owner, "Ayşe Kaya", branch.Id).Value);
             await anonymous.UnitOfWork.SaveChangesAsync(default);
             // CommitAsync yok: ör. e-posta gönderilemeden istek düştü
         }
@@ -75,8 +76,9 @@ public sealed class ShopPersistenceTests(PostgresFixture db)
             Email = email, NormalizedEmail = email.ToUpperInvariant(),
         };
         var shop = Shop.Create("Kaya Telefon", "tr", Now).Value;
-        var staff = Staff.Create(shop.Id, user.Id, StaffRole.Owner, "Ayşe Kaya").Value;
-        anonymous.Db.AddRange(user, shop, staff);
+        var branch = Branch.Create(shop.Id, "Merkez", null, Now).Value;
+        var staff = Staff.Create(shop.Id, user.Id, StaffRole.Owner, "Ayşe Kaya", branch.Id).Value;
+        anonymous.Db.AddRange(user, shop, branch, staff);
         await anonymous.Db.SaveChangesAsync();
         return (shop, staff);
     }

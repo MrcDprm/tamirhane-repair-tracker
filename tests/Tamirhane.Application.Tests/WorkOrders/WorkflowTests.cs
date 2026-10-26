@@ -140,7 +140,7 @@ public class WorkflowTests
         var (shop, id) = await DiagnosingAsync();
         var part = Part.Create(shop.User.ShopId, "IP13-SCR", "iPhone 13 ekran", 1800m, 2500m, 1).Value;
         shop.Parts.Items.Add(part);
-        var level = StockLevel.Create(part.Id, shop.Settings.DefaultBranchId);
+        var level = StockLevel.Create(part.Id, shop.User.BranchId);
         level.Receive(2, shop.User.StaffId, DateTimeOffset.UtcNow, null);
         shop.Stock.Levels.Add(level);
         await shop.AddQuoteLine().HandleAsync(new(id, QuoteLineKind.Part, part.Id, null, 1, 2500m, 20, 0), default);
