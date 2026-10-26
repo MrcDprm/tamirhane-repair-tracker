@@ -14,8 +14,8 @@
         <p>@Model.Brand @Model.Model, @Model.CustomerName</p>
     </div>
     <div class="inline-form">
-        @* Yazdırma sayfası #26'da. *@
-        <a class="btn" href="/work-orders/@Model.Id/receipt"><svg class="icon"><use href="/img/icons.svg#i-printer" /></svg>Fişi yazdır</a>
+        <a class="btn" asp-action="Receipt" asp-route-id="@Model.Id"><svg class="icon"><use href="/img/icons.svg#i-printer" /></svg>Fişi yazdır</a>
+        <a class="btn" asp-action="Label" asp-route-id="@Model.Id"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>Etiketi yazdır</a>
     </div>
 </div>
 

@@ -1,0 +1,108 @@
+@using Tamirhane.Web.Display
+@model Tamirhane.Application.WorkOrders.ReceiptView
+@{
+    Layout = "_PrintLayout";
+    ViewData["Title"] = $"Kabul fişi {Model.Number}";
+    ViewData["Back"] = Url.Action("Details", new { id = ViewContext.RouteData.Values["id"] });
+    ViewData["Hint"] = "A5 kâğıt, dikey. İki nüsha bas: biri müşteriye, biri atölyeye.";
+    var turkey = TimeSpan.FromHours(3);
+    var id = ViewContext.RouteData.Values["id"];
+}
+
+<article class="sheet receipt" aria-label="Kabul fişi">
+    <header class="receipt-head">
+        <div>
+            <h1>@Model.ShopName</h1>
+            <p>
+                @Model.BranchName
+                @if (Model.BranchAddress is not null)
+                {
+                    <br />@Model.BranchAddress
+                }
+            </p>
+        </div>
+        <div class="receipt-no">
+            <span>Kabul fişi</span>
+            <strong>@Model.Number</strong>
+            <span>@Model.CreatedAt.ToOffset(turkey).ToString("d MMMM yyyy HH:mm")</span>
+        </div>
+    </header>
+
+    <div class="receipt-grid">
+        <section>
+            <h2>Müşteri</h2>
+            <p>
+                <strong>@Model.CustomerName</strong><br />
+                @Labels.Phone(Model.CustomerPhone)
+                @if (Model.CustomerEmail is not null)
+                {
+                    <br />@Model.CustomerEmail
+                }
+            </p>
+        </section>
+        <section>
+            <h2>Cihaz</h2>
+            <p>
+                <strong>@Model.Brand @Model.Model</strong> (@Labels.Of(Model.DeviceKind))
+                @if (Model.Imei is not null)
+                {
+                    <br />@:IMEI <code>@Model.Imei</code>
+                }
+                @if (Model.Serial is not null)
+                {
+                    <br />@:Seri no <code>@Model.Serial</code>
+                }
+            </p>
+        </section>
+    </div>
+
+    <section>
+        <h2>Müşterinin şikâyeti</h2>
+        <p>@Model.Complaint</p>
+    </section>
+    <div class="receipt-grid">
+        <section>
+            <h2>Görünür durum</h2>
+            <p>@(Model.Condition ?? "Belirtilmedi")</p>
+        </section>
+        <section>
+            <h2>Teslim alınanlar</h2>
+            <p>@(Model.Accessories ?? "Sadece cihaz")</p>
+            @if (Model.HasPasscode)
+            {
+                <p class="small">Cihaz şifresi alındı; iş emri kapanınca silinir.</p>
+            }
+        </section>
+    </div>
+
+    <section class="receipt-track">
+        <img src="/work-orders/@id/qr.svg" alt="Takip sayfasının QR kodu" width="96" height="96" />
+        <div>
+            <h2>Cihazının durumunu takip et</h2>
+            <p>Telefonunla QR kodu okut ya da adresi aç. Teklif onayı da bu sayfadan.</p>
+            <p><span class="url">@Model.TrackingUrl.AbsoluteUri</span><br />Takip kodu <code>@Model.TrackingCode</code></p>
+        </div>
+    </section>
+
+    <section class="terms">
+        <h2>Şartlar</h2>
+        <ol>
+            <li>Teklif onaylanmadan onarıma başlanmaz. Onarım sırasında tutar değişirse yeniden onay alınır.</li>
+            @if (Model.WarrantyDays > 0)
+            {
+                <li>Onarılan cihazda değişen parça ve işçilik, teslimden itibaren @Model.WarrantyDays gün garantilidir. Sıvı teması, düşme ve başka yerde açılma garanti dışıdır.</li>
+            }
+            else
+            {
+                <li>Bu atölye onarım için ayrıca garanti vermez.</li>
+            }
+            <li>Cihazdaki verilerin yedeği müşteriye aittir; onarım sırasında veri kaybolabilir.</li>
+            <li>Cihaz teslim alınırken bu fiş ya da takip kodu gösterilir.</li>
+        </ol>
+    </section>
+
+    <footer class="signatures">
+        <div><span class="line"></span>Teslim eden: @Model.CustomerName</div>
+        <div><span class="line"></span>Teslim alan: @(Model.ReceivedBy ?? Model.ShopName)</div>
+    </footer>
+</article>

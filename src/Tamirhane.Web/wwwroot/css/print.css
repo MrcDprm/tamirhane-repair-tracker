@@ -1,0 +1,54 @@
+/*
+  Yazdırma sayfaları: A5 kabul fişi ve 62 × 40 mm cihaz etiketi. Kâğıt her zaman beyaz ve mürekkep siyaha yakın
+  (koyu tema yazdırmaya taşınmaz). Ekranda kâğıt tezgâh üstünde durur; yazdırırken sadece kâğıt basılır.
+*/
+
+@page receipt { size: A5 portrait; margin: 9mm; }
+@page label { size: 62mm 40mm; margin: 0; }
+
+.print-page { background: var(--bench); color: #1f2a30; }
+.print-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 20px; }
+
+.sheet {
+  background: #ffffff; color: #1f2a30;
+  margin: 8px auto 40px; box-shadow: 0 10px 30px rgb(31 42 48 / 0.18);
+}
+.sheet h1, .sheet h2 { color: #1f2a30; }
+.sheet code { font-family: var(--font-code); }
+
+/* A5 = 148 × 210 mm */
+.receipt { page: receipt; width: 148mm; min-height: 210mm; padding: 10mm; font-size: 9.5pt; line-height: 1.4; }
+.receipt p { margin: 0 0 4px; max-width: none; }
+.receipt h2 { font-size: 8.5pt; font-family: var(--font-body); font-weight: 700; color: #586069; margin: 0 0 2px; letter-spacing: 0.02em; }
+.receipt section { margin-bottom: 5mm; }
+.receipt-head { display: flex; justify-content: space-between; gap: 6mm; padding-bottom: 4mm; margin-bottom: 5mm; border-bottom: 2px solid #1f2a30; }
+.receipt-head h1 { font-size: 17pt; margin: 0 0 2px; }
+.receipt-no { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.receipt-no strong { font-family: var(--font-display); font-weight: 700; font-size: 18pt; line-height: 1.1; }
+.receipt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+.receipt .small { font-size: 8pt; color: #586069; }
+.receipt-track { display: grid; grid-template-columns: 26mm 1fr; gap: 4mm; align-items: center; padding: 3mm; border: 1px dashed #69707a; border-radius: 3mm; }
+.receipt-track img { width: 26mm; height: 26mm; }
+.receipt-track .url { font-family: var(--font-code); font-size: 8pt; word-break: break-all; }
+.terms ol { margin: 0; padding-left: 4mm; font-size: 8pt; color: #3a444b; }
+.terms li { margin-bottom: 1mm; }
+.signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; margin-top: 10mm; font-size: 8.5pt; }
+.signatures .line { display: block; border-bottom: 1px solid #1f2a30; height: 14mm; margin-bottom: 1.5mm; }
+
+/* Cihaz etiketi: 62 × 40 mm termal etiket */
+.device-label {
+  page: label; width: 62mm; height: 40mm; padding: 2.5mm 2.5mm 2.5mm 3.5mm;
+  display: grid; grid-template-columns: minmax(0, 1fr) 30mm; gap: 2mm; align-items: center;
+  font-size: 8pt; line-height: 1.25; overflow: hidden;
+}
+.device-label div { display: flex; flex-direction: column; gap: 0.6mm; min-width: 0; }
+.device-label span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.label-no { font-family: var(--font-display); font-weight: 700; font-size: 15pt; line-height: 1; }
+.device-label img { width: 30mm; height: 30mm; }
+
+@media print {
+  .print-page { background: #ffffff; }
+  .print-toolbar { display: none; }
+  .sheet { margin: 0; box-shadow: none; }
+  .receipt { width: auto; min-height: 0; padding: 0; }
+}

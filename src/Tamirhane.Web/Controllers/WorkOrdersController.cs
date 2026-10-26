@@ -98,6 +98,36 @@ public sealed class WorkOrdersController : Controller
         return order.IsFailure ? NotFound() : View(order.Value);
     }
 
+    /// <summary>A5 kabul fişi: tarayıcının yazdırma özelliğiyle basılır (PDF kütüphanesi yok).</summary>
+    [HttpGet("{id:guid}/receipt")]
+    public async Task<IActionResult> Receipt(Guid id, [FromServices] GetReceipt get, CancellationToken ct)
+    {
+        var receipt = await get.HandleAsync(id, ct);
+        return receipt.IsFailure ? NotFound() : View(receipt.Value);
+    }
+
+    /// <summary>Cihaza yapıştırılan küçük etiket: numara ve QR.</summary>
+    [HttpGet("{id:guid}/label")]
+    public async Task<IActionResult> Label(Guid id, [FromServices] GetReceipt get, CancellationToken ct)
+    {
+        var receipt = await get.HandleAsync(id, ct);
+        return receipt.IsFailure ? NotFound() : View(receipt.Value);
+    }
+
+    /// <summary>
+    /// Takip linkinin QR'ı, ayrı bir SVG dosyası olarak (img etiketiyle): sayfaya ham HTML gömülmez, CSP sıkı kalır.
+    /// Sadece oturumdaki atölyenin iş emri için üretilir.
+    /// </summary>
+    [HttpGet("{id:guid}/qr.svg")]
+    public async Task<IActionResult> Qr(Guid id, [FromServices] GetReceipt get, [FromServices] IQrCodeGenerator qr, CancellationToken ct)
+    {
+        var receipt = await get.HandleAsync(id, ct);
+        if (receipt.IsFailure)
+            return NotFound();
+        Response.Headers.CacheControl = "private, max-age=3600";
+        return Content(qr.Svg(receipt.Value.TrackingUrl.AbsoluteUri), "image/svg+xml; charset=utf-8");
+    }
+
     /// <summary>
     /// Durum geçişi. Hangi geçişin geçerli olduğuna domain karar verir; sayfa sadece geçerli olanları gösterir ama
     /// elle gönderilen geçersiz istek de reddedilir. htmx isteğinde sadece iş emri bölümü döner (sayfa yenilenmez),
