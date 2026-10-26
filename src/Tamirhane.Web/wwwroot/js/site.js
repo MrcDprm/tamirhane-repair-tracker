@@ -1,4 +1,4 @@
-﻿// Tezgâh kısayolları ve tema düğmesi. Satır içi betik yok (CSP); her şey bu dosyada.
+﻿// Tezgâh kısayolları, tema ve dar ekran menüsü. Satır içi betik yok (CSP); her şey bu dosyada.
 
 // "/" aramaya odaklanır, "N" yeni cihaz kabulünü açar. Bir alana yazarken ya da Ctrl/Alt/Cmd ile basılınca çalışmaz.
 document.addEventListener("keydown", function (event) {
@@ -28,18 +28,32 @@ document.addEventListener("submit", function (event) {
   if (message && !confirm(message)) event.preventDefault();
 });
 
+// Dar ekranda yan menü (pano) katlanır; düğme açar ve kapatır.
+var sideToggle = document.querySelector(".side-toggle");
+if (sideToggle) {
+  sideToggle.addEventListener("click", function () {
+    var side = sideToggle.closest(".side");
+    var open = side.classList.toggle("is-open");
+    sideToggle.setAttribute("aria-expanded", String(open));
+  });
+}
+
 // Tema: açık ↔ koyu; seçim bu cihazda hatırlanır.
 var themeButton = document.getElementById("theme-toggle");
 if (themeButton) {
-  var label = function () {
-    var dark = document.documentElement.dataset.theme === "dark" ||
+  var isDark = function () {
+    return document.documentElement.dataset.theme === "dark" ||
       (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
-    themeButton.textContent = dark ? "Açık temaya geç" : "Koyu temaya geç";
-    return dark;
+  };
+  // Düğmede sadece ikon var; ne yapacağı ekran okuyucuya ve fare ipucuna yazılır.
+  var label = function () {
+    var text = isDark() ? "Açık tema" : "Koyu tema";
+    themeButton.setAttribute("aria-label", text);
+    themeButton.title = text;
   };
   label();
   themeButton.addEventListener("click", function () {
-    var next = label() ? "light" : "dark";
+    var next = isDark() ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem("tamirhane-theme", next); } catch (e) { /* depolama kapalı: sadece bu sayfa */ }
     label();

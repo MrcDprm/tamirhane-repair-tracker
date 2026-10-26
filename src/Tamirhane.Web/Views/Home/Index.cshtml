@@ -1,10 +1,14 @@
 ﻿@{
+    Layout = "_AuthLayout";
     ViewData["Title"] = "Teknik servis iş emri takibi";
 }
 
-@* Asıl tanıtım sayfası #37'de. *@
+@* Asıl tanıtım sayfası #37'de; şimdilik pano çizimiyle kısa bir giriş. *@
 <div class="narrow">
-    <h1>Tamirhane</h1>
-    <p>Telefon, bilgisayar ve küçük ev aleti tamir eden atölyeler için iş emri takibi: cihaz kabulü, teklif onayı, parça stoku ve müşterinin telefonundan takip.</p>
-    <p><a class="btn btn-primary" asp-controller="Account" asp-action="Register">Atölyeni kaydet</a></p>
+    <h1>Tamir atölyesi için iş emri takibi</h1>
+    <p>Telefon, bilgisayar ve küçük ev aleti tamir eden atölyeler için: cihaz kabulü ve fişi, teklif onayı, parça stoku, tahsilat. Müşterin cihazının durumunu telefonundan takip eder.</p>
+    <p class="inline-form">
+        <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Atölyeni kaydet</a>
+        <a class="btn" asp-controller="Account" asp-action="Login">Giriş yap</a>
+    </p>
 </div>

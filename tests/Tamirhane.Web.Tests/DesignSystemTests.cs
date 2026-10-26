@@ -57,7 +57,7 @@ public sealed partial class DesignSystemTests
         var dark = Tokens(Regex.Match(Css, @":root\[data-theme=""dark""\] \{(?<b>[^}]+)\}").Groups["b"].Value);
 
         Assert.Empty(light.Where(t => t.StartsWith("--") && !t.StartsWith("--font") && !t.StartsWith("--radius")
-            && t is not "--touch" and not "--gap").Except(dark));
+            && t is not "--touch" and not "--gap" and not "--side").Except(dark));
     }
 
     private static IEnumerable<string> Tokens(string block) => Regex.Matches(block, @"(--[a-z-]+):").Select(m => m.Groups[1].Value);

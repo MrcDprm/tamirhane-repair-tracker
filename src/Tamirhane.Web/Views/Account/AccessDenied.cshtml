@@ -1,7 +1,13 @@
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "Yetkin yok";
 }
 
-<h1>Bu sayfaya yetkin yok</h1>
-<p>Bu sayfayı sadece atölyenin sahibi açabilir.</p>
-<a asp-controller="Panel" asp-action="Index">Panele dön</a>
+<section class="panel empty">
+    <partial name="_EmptyHook" />
+    <div>
+        <h1>Bu sayfaya yetkin yok</h1>
+        <p>Bu sayfayı sadece atölyenin sahibi açabilir. Bir şey değişmesi gerekiyorsa atölye sahibine söyle.</p>
+        <a class="btn" asp-controller="Panel" asp-action="Index">Panele dön</a>
+    </div>
+</section>
