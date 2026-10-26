@@ -12,8 +12,18 @@ public interface IShopRepository
 {
     Task<Shop?> GetAsync(Guid id, CancellationToken ct);
 
-    /// <summary>Yeni atölye ve sahibi; kayıt oturum açılmadan yapılır.</summary>
-    void Add(Shop shop, Staff owner);
+    /// <summary>Yeni atölye, ilk şubesi ve sahibi; kayıt oturum açılmadan yapılır.</summary>
+    void Add(Shop shop, Branch firstBranch, Staff owner);
+}
+
+public interface IBranchRepository
+{
+    Task<Branch?> GetAsync(Guid id, CancellationToken ct);
+
+    /// <summary>Atölyenin şubeleri, açılış sırasıyla (ilk şube başta).</summary>
+    Task<IReadOnlyList<Branch>> ListAsync(CancellationToken ct);
+
+    void Add(Branch branch);
 }
 
 public interface IStaffRepository
@@ -27,8 +37,11 @@ public interface IStaffRepository
     void Add(Staff staff);
 }
 
-/// <summary>Davet ve davet eden atölyenin adı, dili; davet sayfası oturum olmadan açılır.</summary>
-public sealed record InvitationWithShop(Invitation Invitation, string ShopName, string ShopLocale);
+/// <summary>
+/// Davet ve davet eden atölyenin adı, dili ve ilk şubesi (yeni teknisyen oraya bağlanır);
+/// davet sayfası oturum olmadan açılır.
+/// </summary>
+public sealed record InvitationWithShop(Invitation Invitation, string ShopName, string ShopLocale, Guid FirstBranchId);
 
 public interface IInvitationRepository
 {

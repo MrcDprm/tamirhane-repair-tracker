@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using static Tamirhane.Web.Tests.ShopFlows;
 
 namespace Tamirhane.Web.Tests;
 
@@ -11,24 +12,23 @@ namespace Tamirhane.Web.Tests;
 [Collection(WebCollection.Name)]
 public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
 {
-    private const string Password = "kirmizi-kalem-42";
-    private const string TechnicianPassword = "mavi-tornavida-17";
     private const string AccessDenied = "/account/access-denied";
+    private readonly ShopFlows _flows = new(app);
 
     [DockerFact]
     public async Task Invited_technician_joins_and_lands_in_the_panel()
     {
-        var owner = await OwnerAsync("katil-sahip@example.com");
+        var owner = await _flows.OwnerAsync("katil-sahip@example.com");
 
         var invited = await InviteAsync(owner, "katil-usta@example.com");
         Assert.Equal("/staff", Browser.RedirectOf(invited));
         Assert.Contains("katil-usta@example.com adresine davet gönderildi", await BodyAsync(owner, "/staff"));
 
         var technician = app.NewBrowser();
-        var invitationPage = await BodyAsync(technician, InvitationLink("katil-usta@example.com"));
+        var invitationPage = await BodyAsync(technician, _flows.InvitationLink("katil-usta@example.com"));
         Assert.Contains("Kaya Telefon seni davet etti", invitationPage);
 
-        Assert.Equal("/panel", Browser.RedirectOf(await AcceptAsync(technician, "katil-usta@example.com")));
+        Assert.Equal("/panel", Browser.RedirectOf(await _flows.AcceptAsync(technician, "katil-usta@example.com")));
         Assert.Equal(HttpStatusCode.OK, (await technician.GetAsync("/panel")).StatusCode);
         Assert.Contains("Mehmet Demir", await BodyAsync(owner, "/staff"));
     }
@@ -36,10 +36,8 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task Technician_cannot_open_or_use_owner_pages()
     {
-        var owner = await OwnerAsync("rol-sahip@example.com");
-        await InviteAsync(owner, "rol-usta@example.com");
-        var technician = app.NewBrowser();
-        await AcceptAsync(technician, "rol-usta@example.com");
+        var owner = await _flows.OwnerAsync("rol-sahip@example.com");
+        var technician = await _flows.TechnicianAsync(owner, "rol-usta@example.com");
 
         Assert.StartsWith(AccessDenied, Browser.RedirectOf(await technician.GetAsync("/staff")));
         // Form sayfası açılmadığı için CSRF token'ı sahibin sayfasından değil panelin çıkış formundan alınır.
@@ -58,10 +56,8 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task Removed_technician_is_signed_out_on_the_next_request()
     {
-        var owner = await OwnerAsync("cikar-sahip@example.com");
-        await InviteAsync(owner, "cikar-usta@example.com");
-        var technician = app.NewBrowser();
-        await AcceptAsync(technician, "cikar-usta@example.com");
+        var owner = await _flows.OwnerAsync("cikar-sahip@example.com");
+        var technician = await _flows.TechnicianAsync(owner, "cikar-usta@example.com");
 
         var removed = await owner.SubmitAsync("/staff", $"/staff/{StaffIdOf(await BodyAsync(owner, "/staff"))}/remove", new());
 
@@ -76,7 +72,7 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task Owner_has_no_remove_button_and_cannot_remove_themselves()
     {
-        var owner = await OwnerAsync("kendi-sahip@example.com");
+        var owner = await _flows.OwnerAsync("kendi-sahip@example.com");
         Assert.DoesNotContain("/remove", await BodyAsync(owner, "/staff"));
 
         // Butonu olmasa da istek elle gönderilebilir; kural sunucuda.
@@ -91,17 +87,17 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task Invitation_link_works_once_and_revoked_link_is_invalid()
     {
-        var owner = await OwnerAsync("link-sahip@example.com");
+        var owner = await _flows.OwnerAsync("link-sahip@example.com");
         await InviteAsync(owner, "link-usta@example.com");
-        var link = InvitationLink("link-usta@example.com");
-        await AcceptAsync(app.NewBrowser(), "link-usta@example.com");
+        var link = _flows.InvitationLink("link-usta@example.com");
+        await _flows.AcceptAsync(app.NewBrowser(), "link-usta@example.com");
 
         Assert.Contains("Davet linki geçersiz", await BodyAsync(app.NewBrowser(), link));
 
         await InviteAsync(owner, "geri-usta@example.com");
         var revokeAction = RevokePattern().Match(await BodyAsync(owner, "/staff")).Groups[1].Value;
         Assert.Equal("/staff", Browser.RedirectOf(await owner.SubmitAsync("/staff", revokeAction, new())));
-        Assert.Contains("Davet linki geçersiz", await BodyAsync(app.NewBrowser(), InvitationLink("geri-usta@example.com")));
+        Assert.Contains("Davet linki geçersiz", await BodyAsync(app.NewBrowser(), _flows.InvitationLink("geri-usta@example.com")));
     }
 
     [DockerFact]
@@ -114,68 +110,27 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task Weak_password_is_explained_and_the_link_stays_usable()
     {
-        var owner = await OwnerAsync("zayif-sahip@example.com");
+        var owner = await _flows.OwnerAsync("zayif-sahip@example.com");
         await InviteAsync(owner, "zayif-usta@example.com");
 
-        var weak = await AcceptAsync(app.NewBrowser(), "zayif-usta@example.com", "password123");
+        var weak = await _flows.AcceptAsync(app.NewBrowser(), "zayif-usta@example.com", "password123");
 
         Assert.Equal(HttpStatusCode.OK, weak.StatusCode);
         Assert.Contains("sızıntı listelerinde çok sık geçiyor", await weak.Content.ReadAsStringAsync());
-        Assert.Equal("/panel", Browser.RedirectOf(await AcceptAsync(app.NewBrowser(), "zayif-usta@example.com")));
+        Assert.Equal("/panel", Browser.RedirectOf(await _flows.AcceptAsync(app.NewBrowser(), "zayif-usta@example.com")));
     }
 
     [DockerFact]
     public async Task Address_with_an_account_gets_a_clear_message()
     {
-        var owner = await OwnerAsync("iki-sahip@example.com");
-        await OwnerAsync("iki-usta@example.com"); // bu adres başka atölyenin sahibi
+        var owner = await _flows.OwnerAsync("iki-sahip@example.com");
+        await _flows.OwnerAsync("iki-usta@example.com"); // bu adres başka atölyenin sahibi
         await InviteAsync(owner, "iki-usta@example.com");
 
-        var response = await AcceptAsync(app.NewBrowser(), "iki-usta@example.com");
+        var response = await _flows.AcceptAsync(app.NewBrowser(), "iki-usta@example.com");
 
         Assert.Contains("zaten bir Tamirhane hesabı var", await response.Content.ReadAsStringAsync());
     }
-
-    /// <summary>Atölye kaydı + e-posta doğrulama + giriş; sahibin tarayıcısını döner.</summary>
-    private async Task<Browser> OwnerAsync(string email)
-    {
-        var browser = app.NewBrowser();
-        await browser.SubmitAsync("/account/register", "/account/register", new()
-        {
-            ["ShopName"] = "Kaya Telefon", ["OwnerName"] = "Ayşe Kaya", ["Email"] = email, ["Password"] = Password, ["Locale"] = "tr",
-        });
-        await browser.GetAsync(LinkIn(email, "/account/confirm-email"));
-        var login = await browser.SubmitAsync("/account/login", "/account/login", new() { ["Email"] = email, ["Password"] = Password });
-        Assert.Equal("/panel", Browser.RedirectOf(login));
-        return browser;
-    }
-
-    private static Task<HttpResponseMessage> InviteAsync(Browser owner, string email) =>
-        owner.SubmitAsync("/staff", "/staff/invite", new() { ["Invite.Email"] = email });
-
-    private async Task<HttpResponseMessage> AcceptAsync(Browser browser, string email, string password = TechnicianPassword)
-    {
-        var link = InvitationLink(email);
-        var token = link[(link.IndexOf("token=", StringComparison.Ordinal) + "token=".Length)..];
-        return await browser.SubmitAsync(link, "/invitation", new()
-        {
-            ["Input.Token"] = Uri.UnescapeDataString(token),
-            ["Input.DisplayName"] = "Mehmet Demir",
-            ["Input.Password"] = password,
-            ["Input.ConfirmPassword"] = password,
-        });
-    }
-
-    private string InvitationLink(string email) => LinkIn(email, "/invitation");
-
-    private string LinkIn(string email, string path)
-    {
-        var mail = app.Emails.SentTo(email).Last(m => m.Text.Contains(path));
-        return new Uri(LinkPattern().Matches(mail.Text).Single(m => m.Value.Contains(path)).Value).PathAndQuery;
-    }
-
-    private static async Task<string> BodyAsync(Browser browser, string url) =>
-        await (await browser.GetAsync(url)).Content.ReadAsStringAsync();
 
     private static string StaffIdOf(string staffPage) => RemovePattern().Match(staffPage).Groups[1].Value;
 
@@ -190,9 +145,6 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
         });
         return id;
     }
-
-    [GeneratedRegex(@"https?://\S+")]
-    private static partial Regex LinkPattern();
 
     [GeneratedRegex(@"action=""/staff/([0-9a-f-]{36})/remove""")]
     private static partial Regex RemovePattern();

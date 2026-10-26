@@ -19,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<TamirhaneDbContext>());
         services.AddScoped<IShopRepository, ShopRepository>();
         services.AddScoped<IStaffRepository, StaffRepository>();
+        services.AddScoped<IBranchRepository, BranchRepository>();
+        services.AddScoped<IShopSettings, ShopSettingsReader>();
         services.AddScoped<IInvitationRepository, InvitationRepository>();
         services.AddScoped<IWorkOrderRepository, WorkOrderRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();

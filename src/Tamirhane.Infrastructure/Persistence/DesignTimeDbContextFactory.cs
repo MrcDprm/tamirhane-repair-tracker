@@ -24,6 +24,7 @@ internal sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<T
     {
         public Guid ShopId => Guid.Empty;
         public Guid StaffId => Guid.Empty;
+        public Guid BranchId => Guid.Empty;
         public bool IsOwner => false;
     }
 }

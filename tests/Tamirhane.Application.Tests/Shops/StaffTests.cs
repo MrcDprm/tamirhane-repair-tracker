@@ -17,13 +17,15 @@ public class StaffTests
     private readonly FakeStaff _staff;
     private readonly FakeInvitations _invitations;
     private readonly Shop _shop;
+    private readonly Branch _branch;
     private readonly Staff _owner;
 
     public StaffTests()
     {
         _shop = Shop.Create("Kaya Telefon", "tr", _clock.GetLocalNow()).Value;
-        _owner = Staff.Create(_shop.Id, Guid.NewGuid(), StaffRole.Owner, "Ayşe Kaya").Value;
-        _shops.Add(_shop, _owner);
+        _branch = Branch.Create(_shop.Id, "Merkez", null, _clock.GetLocalNow()).Value;
+        _owner = Staff.Create(_shop.Id, Guid.NewGuid(), StaffRole.Owner, "Ayşe Kaya", _branch.Id).Value;
+        _shops.Add(_shop, _branch, _owner);
         _user = new FakeUser(_shop.Id) { StaffId = _owner.Id };
         _staff = new FakeStaff(_user);
         _staff.Add(_owner);
@@ -130,7 +132,8 @@ public class StaffTests
         var userId = _accounts.Users["mehmet@example.com"];
         Assert.Contains(userId, _accounts.Confirmed);
         var technician = Assert.Single(_staff.Items, s => s.UserId == userId);
-        Assert.Equal((_shop.Id, StaffRole.Technician, "Mehmet Demir"), (technician.ShopId, technician.Role, technician.DisplayName));
+        Assert.Equal((_shop.Id, StaffRole.Technician, "Mehmet Demir", _branch.Id),
+            (technician.ShopId, technician.Role, technician.DisplayName, technician.BranchId));
         Assert.NotNull(Assert.Single(_invitations.Items).AcceptedAt);
         Assert.Equal(1, _unitOfWork.Commits);
     }
@@ -215,7 +218,7 @@ public class StaffTests
     [Fact]
     public async Task Staff_of_another_shop_is_not_found()
     {
-        var stranger = Staff.Create(Guid.NewGuid(), Guid.NewGuid(), StaffRole.Technician, "Başka Atölye").Value;
+        var stranger = Staff.Create(Guid.NewGuid(), Guid.NewGuid(), StaffRole.Technician, "Başka Atölye", Guid.NewGuid()).Value;
         _staff.Add(stranger);
 
         Assert.Equal(ShopErrors.StaffNotFound, (await Remove().HandleAsync(stranger.Id, default)).Error);

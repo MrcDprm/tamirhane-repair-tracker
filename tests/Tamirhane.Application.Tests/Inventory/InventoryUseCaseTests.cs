@@ -19,7 +19,7 @@ public class InventoryUseCaseTests
 
         var level = Assert.Single(shop.Stock.Levels);
         Assert.Equal(id, level.PartId);
-        Assert.Equal(shop.Settings.DefaultBranchId, level.BranchId);
+        Assert.Equal(shop.User.BranchId, level.BranchId);
         Assert.Equal(5, level.Quantity);
         Assert.Equal(StockMovementReason.Purchase, Assert.Single(shop.Stock.Movements).Reason);
         Assert.Equal(1, shop.UnitOfWork.Saves);

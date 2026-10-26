@@ -8,5 +8,7 @@ public interface ICurrentUser
 {
     Guid ShopId { get; }
     Guid StaffId { get; }
+    /// <summary>Personelin çalıştığı şube: yeni iş emirleri ve stok işlemleri buraya yazılır.</summary>
+    Guid BranchId { get; }
     bool IsOwner { get; }
 }

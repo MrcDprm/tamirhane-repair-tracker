@@ -7,8 +7,8 @@ namespace Tamirhane.Application.Inventory;
 
 public sealed record PartCommand(string Sku, string Name, decimal CostPrice, decimal SalePrice, int CriticalLevel);
 
-/// <summary>Yeni parça; isteğe bağlı açılış stoğu varsayılan şubeye "alış" olarak girer.</summary>
-public sealed class AddPart(IPartRepository parts, IStockRepository stock, IShopSettings settings, IUnitOfWork unitOfWork, ICurrentUser user, TimeProvider clock)
+/// <summary>Yeni parça; isteğe bağlı açılış stoğu personelin şubesine "alış" olarak girer.</summary>
+public sealed class AddPart(IPartRepository parts, IStockRepository stock, IUnitOfWork unitOfWork, ICurrentUser user, TimeProvider clock)
 {
     public async Task<Result<Guid>> HandleAsync(PartCommand c, int openingQuantity, CancellationToken ct)
     {
@@ -21,8 +21,7 @@ public sealed class AddPart(IPartRepository parts, IStockRepository stock, IShop
         if (await parts.SkuExistsAsync(part.Value.Sku, null, ct))
             return ApplicationErrors.DuplicateSku;
 
-        var shop = await settings.GetAsync(user.ShopId, ct);
-        var level = StockLevel.Create(part.Value.Id, shop.DefaultBranchId);
+        var level = StockLevel.Create(part.Value.Id, user.BranchId);
         if (openingQuantity > 0)
         {
             var movement = level.Receive(openingQuantity, user.StaffId, TurkeyTime.Now(clock), null);
@@ -57,8 +56,8 @@ public sealed class UpdatePart(IPartRepository parts, IUnitOfWork unitOfWork)
     }
 }
 
-/// <summary>Stok girişi ve sayım düzeltmesi; ikisi de varsayılan şubenin stok kaydına işlenir.</summary>
-public sealed class ChangeStock(IPartRepository parts, IStockRepository stock, IShopSettings settings, IUnitOfWork unitOfWork, ICurrentUser user, TimeProvider clock)
+/// <summary>Stok girişi ve sayım düzeltmesi; ikisi de personelin şubesinin stok kaydına işlenir.</summary>
+public sealed class ChangeStock(IPartRepository parts, IStockRepository stock, IUnitOfWork unitOfWork, ICurrentUser user, TimeProvider clock)
 {
     public Task<Result> ReceiveAsync(Guid partId, int quantity, string? note, CancellationToken ct) =>
         ApplyAsync(partId, (level, now) => level.Receive(quantity, user.StaffId, now, note), ct);
@@ -72,11 +71,10 @@ public sealed class ChangeStock(IPartRepository parts, IStockRepository stock, I
         if (part is null)
             return ApplicationErrors.PartNotFound;
 
-        var shop = await settings.GetAsync(user.ShopId, ct);
-        var level = await stock.GetLevelAsync(part.Id, shop.DefaultBranchId, ct);
+        var level = await stock.GetLevelAsync(part.Id, user.BranchId, ct);
         if (level is null)
         {
-            level = StockLevel.Create(part.Id, shop.DefaultBranchId);
+            level = StockLevel.Create(part.Id, user.BranchId);
             stock.AddLevel(level);
         }
 
@@ -92,13 +90,12 @@ public sealed class ChangeStock(IPartRepository parts, IStockRepository stock, I
 
 public sealed record LowStockItem(Guid PartId, string Sku, string Name, int Quantity, int CriticalLevel);
 
-/// <summary>Kritik seviyeye ya da altına inmiş parçalar, en az kalandan başlayarak.</summary>
-public sealed class ListLowStock(IPartRepository parts, IShopSettings settings, ICurrentUser user)
+/// <summary>Personelin şubesinde kritik seviyeye ya da altına inmiş parçalar, en az kalandan başlayarak.</summary>
+public sealed class ListLowStock(IPartRepository parts, ICurrentUser user)
 {
     public async Task<IReadOnlyList<LowStockItem>> HandleAsync(CancellationToken ct)
     {
-        var shop = await settings.GetAsync(user.ShopId, ct);
-        var all = await parts.ListActiveWithStockAsync(shop.DefaultBranchId, ct);
+        var all = await parts.ListActiveWithStockAsync(user.BranchId, ct);
         return all
             .Where(p => p.Part.IsLow(p.Quantity))
             .OrderBy(p => p.Quantity)

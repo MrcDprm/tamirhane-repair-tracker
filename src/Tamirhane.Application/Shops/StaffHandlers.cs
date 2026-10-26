@@ -87,7 +87,7 @@ public sealed class AcceptInvitation(
         if (account.IsFailure)
             return account.Error!;
 
-        var technician = Staff.Create(invitation.ShopId, account.Value, StaffRole.Technician, c.DisplayName);
+        var technician = Staff.Create(invitation.ShopId, account.Value, StaffRole.Technician, c.DisplayName, found.FirstBranchId);
         if (technician.IsFailure)
             return technician.Error!; // transaction commit edilmeden kapanır, hesap da geri alınır
 

@@ -19,6 +19,12 @@ public static class DependencyInjection
         services.AddScoped<RevokeInvitation>();
         services.AddScoped<RemoveStaff>();
         services.AddScoped<ListStaff>();
+        services.AddScoped<ListBranches>();
+        services.AddScoped<AddBranch>();
+        services.AddScoped<UpdateBranch>();
+        services.AddScoped<SwitchBranch>();
+        services.AddScoped<GetShopSettings>();
+        services.AddScoped<UpdateShopSettings>();
         services.AddScoped<ReceiveDevice>();
         services.AddScoped<FindCustomerByPhone>();
         services.AddScoped<UpdateIntakeDetails>();
