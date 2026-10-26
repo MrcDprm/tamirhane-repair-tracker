@@ -4,71 +4,69 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] · Tamirhane</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Tamirhane.Web.styles.css" asp-append-version="true" />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Tamirhane</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Menüyü aç">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav ms-auto align-items-sm-center">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">@await Component.InvokeAsync("BranchSwitcher")</li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Panel" asp-action="Index">Panel</a>
-                            </li>
-                            @if (User.IsInRole("Owner"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">Personel</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Settings" asp-action="Index">Ayarlar</a>
-                                </li>
-                            }
-                            <li class="nav-item">
-                                @* Çıkış POST'tur: bir resim etiketi ya da link ile kullanıcının oturumu dışarıdan kapatılamaz. *@
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="nav-link btn btn-link text-dark">Çıkış yap</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Giriş yap</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Atölyeni kaydet</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    <a class="skip-link" href="#main">İçeriğe geç</a>
+    @{
+        var signedIn = User.Identity?.IsAuthenticated == true;
+        var isOwner = User.IsInRole("Owner");
+        // Oturumdaki görünen ad (personel kaydından); yoksa e-posta.
+        var displayName = User.FindFirst("tamirhane:name")?.Value ?? User.Identity?.Name;
+    }
+    <header class="topbar">
+        <a class="brand" href="@(signedIn ? Url.Action("Index", "Panel") : Url.Action("Index", "Home"))">Tamirhane</a>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 Tamirhane
-        </div>
+        @if (signedIn)
+        {
+            @* Arama ve cihaz kabulü her ekranda; "/" aramaya, "N" kabule götürür (site.js). Sayfaları #21 ve #27'de. *@
+            <form class="topbar-search" role="search" method="get" action="/work-orders">
+                <label for="search" class="visually-hidden">Ad, telefon, IMEI ya da iş emri no ile ara</label>
+                <input id="search" name="q" type="search" placeholder="Ad, telefon, IMEI ya da iş emri no ara" autocomplete="off"
+                       aria-keyshortcuts="/" />
+            </form>
+            <div class="topbar-end">
+                <a id="intake-link" class="btn btn-primary" href="/work-orders/new" aria-keyshortcuts="N">Cihaz kabul et</a>
+                @await Component.InvokeAsync("BranchSwitcher")
+                <details class="menu">
+                    <summary>Menü</summary>
+                    <div class="menu-panel">
+                        <div class="menu-who">@displayName<br /><small>@User.Identity?.Name</small></div>
+                        <a asp-controller="Panel" asp-action="Index">Panel</a>
+                        @if (isOwner)
+                        {
+                            <a asp-controller="Staff" asp-action="Index">Personel</a>
+                            <a asp-controller="Settings" asp-action="Index">Ayarlar</a>
+                        }
+                        <hr />
+                        <button type="button" id="theme-toggle" class="menu-item">Koyu temaya geç</button>
+                        @* Çıkış POST'tur: bir resim etiketi ya da link ile kullanıcının oturumu dışarıdan kapatılamaz. *@
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit" class="menu-item">Çıkış yap</button>
+                        </form>
+                    </div>
+                </details>
+            </div>
+        }
+        else
+        {
+            <nav class="topbar-end" aria-label="Hesap">
+                <a class="btn" asp-controller="Account" asp-action="Login">Giriş yap</a>
+                <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Atölyeni kaydet</a>
+            </nav>
+        }
+    </header>
+
+    <main id="main" class="page">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        &copy; 2026 Tamirhane
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

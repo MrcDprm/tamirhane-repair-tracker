@@ -3,39 +3,33 @@
     ViewData["Title"] = "Daveti kabul et";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-7 col-lg-5">
-        <h1 class="h3 mb-3">@Model.Invitation.ShopName seni davet etti</h1>
-        <p class="text-body-secondary">
-            <strong>@Model.Invitation.Email</strong> adresiyle teknisyen olarak katılıyorsun. Adını ve şifreni belirle; hesabın hemen açılır.
-        </p>
+<div class="narrow">
+    <h1>@Model.Invitation.ShopName seni davet etti</h1>
+    <p class="muted">
+        <strong>@Model.Invitation.Email</strong> adresiyle teknisyen olarak katılıyorsun. Adını ve şifreni belirle; hesabın hemen açılır.
+    </p>
 
-        <form asp-action="Index" method="post" novalidate>
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-            <input asp-for="Input.Token" type="hidden" />
+    <form asp-action="Index" method="post" novalidate>
+        <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+        <input asp-for="Input.Token" type="hidden" />
 
-            <div class="mb-3">
-                <label asp-for="Input.DisplayName" class="form-label"></label>
-                <input asp-for="Input.DisplayName" class="form-control" autocomplete="name" />
-                <span asp-validation-for="Input.DisplayName" class="text-danger small"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Input.Password" class="form-label"></label>
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-describedby="password-help" />
-                <div id="password-help" class="form-text">En az 10 karakter; içinde harf ve rakam olsun. Uzun bir cümle de olur.</div>
-                <span asp-validation-for="Input.Password" class="text-danger small"></span>
-            </div>
-            <div class="mb-4">
-                <label asp-for="Input.ConfirmPassword" class="form-label"></label>
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" />
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
-            </div>
+        <div class="field">
+            <label asp-for="Input.DisplayName"></label>
+            <input asp-for="Input.DisplayName" autocomplete="name" />
+            <span asp-validation-for="Input.DisplayName"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Password"></label>
+            <input asp-for="Input.Password" autocomplete="new-password" aria-describedby="password-help" />
+            <div id="password-help" class="field-help">En az 10 karakter; içinde harf ve rakam olsun. Uzun bir cümle de olur.</div>
+            <span asp-validation-for="Input.Password"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.ConfirmPassword"></label>
+            <input asp-for="Input.ConfirmPassword" autocomplete="new-password" />
+            <span asp-validation-for="Input.ConfirmPassword"></span>
+        </div>
 
-            <button type="submit" class="btn btn-primary w-100">Katıl</button>
-        </form>
-    </div>
+        <button type="submit" class="btn btn-primary btn-block">Katıl</button>
+    </form>
 </div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
