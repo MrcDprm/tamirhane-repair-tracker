@@ -10,6 +10,7 @@ using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Infrastructure.Persistence;
+using Tamirhane.Infrastructure.Printing;
 
 namespace Tamirhane.Infrastructure;
 
@@ -76,6 +77,8 @@ public static class DependencyInjection
     public static IServiceCollection AddAccounts(this IServiceCollection services, AccountOptions options)
     {
         services.AddSingleton(options);
+        services.AddSingleton<ITrackingLinks>(new TrackingLinks(options.PublicOrigin));
+        services.AddSingleton<IQrCodeGenerator, QrCodeGenerator>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
