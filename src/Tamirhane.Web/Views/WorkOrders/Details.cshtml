@@ -6,6 +6,17 @@
 }
 
 @* Durum geçişleri, teklif, tahsilat ve notlar #22-#25'te; şimdilik kabulde yazılanlar. *@
+<div class="page-head">
+    <div>
+        <h1>@Model.Number</h1>
+        <p>@Model.Brand @Model.Model, @Model.CustomerName</p>
+    </div>
+    <div class="inline-form">
+        @* Yazdırma sayfası #26'da. *@
+        <a class="btn" href="/work-orders/@Model.Id/receipt"><svg class="icon"><use href="/img/icons.svg#i-printer" /></svg>Fişi yazdır</a>
+    </div>
+</div>
+
 @if (created)
 {
     <div class="notice notice-ok" role="status">
@@ -16,56 +27,52 @@
 <div class="work-layout">
     <article class="ticket" aria-label="İş emri etiketi">
         <span class="work-no">@Model.Number</span>
-        <p>
-            <strong>@Model.Brand @Model.Model</strong> <span>(@Labels.Of(Model.DeviceKind))</span>
+        <dl>
+            <dt>Müşteri</dt><dd>@Model.CustomerName</dd>
+            <dt>Cihaz</dt><dd>@Model.Brand @Model.Model <span class="is-empty">(@Labels.Of(Model.DeviceKind))</span></dd>
             @if (Model.Imei is not null)
             {
-                <br />@:IMEI <code>@Model.Imei</code>
+                <dt>IMEI</dt><dd><code>@Model.Imei</code></dd>
             }
             @if (Model.Serial is not null)
             {
-                <br />@:Seri no <code>@Model.Serial</code>
+                <dt>Seri no</dt><dd><code>@Model.Serial</code></dd>
             }
-        </p>
-        <p>@Model.Complaint</p>
-        @if (Model.Condition is not null)
-        {
-            <p><span class="ticket-label">Görünür durum:</span> @Model.Condition</p>
-        }
-        @if (Model.Accessories is not null)
-        {
-            <p><span class="ticket-label">Aksesuarlar:</span> @Model.Accessories</p>
-        }
+            <dt>Şikâyet</dt><dd>@Model.Complaint</dd>
+            @if (Model.Condition is not null)
+            {
+                <dt>Durum</dt><dd>@Model.Condition</dd>
+            }
+            @if (Model.Accessories is not null)
+            {
+                <dt>Aksesuar</dt><dd>@Model.Accessories</dd>
+            }
+        </dl>
         <p class="ticket-stamps">
             <span class="stamp@(created ? " is-pressed" : "")">@Labels.Of(Model.Status)</span>
         </p>
     </article>
 
-    <div>
-        <h2 class="first">Müşteri</h2>
-        <p>
-            <strong>@Model.CustomerName</strong><br />
-            <a href="tel:@Model.CustomerPhone">@Labels.Phone(Model.CustomerPhone)</a>
-            @if (Model.CustomerEmail is not null)
-            {
-                <br /><a href="mailto:@Model.CustomerEmail">@Model.CustomerEmail</a>
-            }
-        </p>
-
-        <h2>Kabul</h2>
-        <p>
-            @Model.CreatedAt.ToOffset(TimeSpan.FromHours(3)).ToString("d MMMM yyyy HH:mm")<br />
-            Takip kodu <code>@Model.TrackingCode</code>
-            @if (Model.HasPasscode)
-            {
-                <br /><span class="muted">Cihaz şifresi kayıtlı; iş emri kapanınca silinir.</span>
-            }
-        </p>
-
-        <div class="inline-form">
-            @* Yazdırma sayfası #26'da. *@
-            <a class="btn" href="/work-orders/@Model.Id/receipt">Fişi yazdır</a>
-            <a class="btn" asp-action="New">Başka cihaz kabul et</a>
+    <section class="panel" aria-labelledby="customer-heading">
+        <div class="panel-head"><h2 id="customer-heading">Müşteri</h2></div>
+        <div class="panel-body">
+            <p>
+                <strong>@Model.CustomerName</strong><br />
+                <a href="tel:@Model.CustomerPhone">@Labels.Phone(Model.CustomerPhone)</a>
+                @if (Model.CustomerEmail is not null)
+                {
+                    <br /><a href="mailto:@Model.CustomerEmail">@Model.CustomerEmail</a>
+                }
+            </p>
+            <p>
+                Kabul: @Model.CreatedAt.ToOffset(TimeSpan.FromHours(3)).ToString("d MMMM yyyy HH:mm")<br />
+                Takip kodu <code>@Model.TrackingCode</code>
+                @if (Model.HasPasscode)
+                {
+                    <br /><span class="muted">Cihaz şifresi kayıtlı; iş emri kapanınca silinir.</span>
+                }
+            </p>
+            <a class="btn" asp-action="New"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Başka cihaz kabul et</a>
         </div>
-    </div>
+    </section>
 </div>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Tamirhane</title>
+    <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+</head>
+<body>
+    @* Giriş, kayıt, şifre ve davet sayfaları: solda delikli pano ve tezgâh çizimi, sağda form. *@
+    <div class="auth">
+        <section class="auth-art pegboard">
+            <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
+            <h2>Tezgâhtaki her cihaz, bir etikette.</h2>
+            <p>Cihazı kabul et, etiketini bas, onarımın her adımını kaşele. Müşterin durumu telefonundan görür.</p>
+            <partial name="_WorkbenchScene" />
+        </section>
+        <main id="main" class="auth-form">
+            @RenderBody()
+        </main>
+    </div>
+    <script src="~/js/vendor/motion.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/motion.js" asp-append-version="true"></script>
+</body>
+</html>

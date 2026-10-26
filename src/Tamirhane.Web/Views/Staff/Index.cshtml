@@ -5,7 +5,12 @@
     var turkey = TimeSpan.FromHours(3);
 }
 
-<h1>Personel</h1>
+<div class="page-head">
+    <div>
+        <h1>Personel</h1>
+        <p>Teknisyenler iş emri ve stokla çalışır; ayarları, personeli ve ciroyu göremez.</p>
+    </div>
+</div>
 
 @if (TempData["Status"] is string status)
 {
@@ -16,71 +21,77 @@
     <div class="notice notice-error" role="alert">@error</div>
 }
 
-<div class="table-wrap">
-    <table class="data-table">
-        <thead>
-            <tr><th scope="col">Ad</th><th scope="col">Rol</th><th scope="col"><span class="visually-hidden">İşlem</span></th></tr>
-        </thead>
-        <tbody>
-            @foreach (var member in Model.Overview.Members)
-            {
-                <tr>
-                    <td>
-                        @member.DisplayName
-                        @if (member.IsYou)
-                        {
-                            <span class="muted">(sen)</span>
-                        }
-                    </td>
-                    <td>@(member.Role == StaffRole.Owner ? "Sahip" : "Teknisyen")</td>
-                    <td class="actions">
-                        @if (member.Role != StaffRole.Owner)
-                        {
-                            @* Onay metni data özelliğinde: ad JavaScript içine yazılmaz, Razor onu HTML olarak kaçışlar. *@
-                            <form asp-action="Remove" asp-route-id="@member.Id" method="post"
-                                  data-confirm="@member.DisplayName atölyeden çıkarılsın mı? Hesabı silinir, iş emri geçmişinde adı kalır.">
-                                <button type="submit" class="btn btn-danger">Çıkar</button>
-                            </form>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
-
-<h2>Teknisyen davet et</h2>
-<p class="muted">
-    Davet linki e-postayla gider; 7 gün geçerli ve bir kez kullanılabilir.
-    Teknisyen iş emri ve stokla çalışır; ayarları, personeli ve ciroyu göremez.
-</p>
-<form asp-action="Invite" method="post" novalidate>
-    <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
-    <div class="inline-form">
-        <div class="wide">
-            <label asp-for="Invite.Email" class="visually-hidden"></label>
-            <input asp-for="Invite.Email" placeholder="teknisyen@ornek.com" autocomplete="off" />
-            <span asp-validation-for="Invite.Email"></span>
-        </div>
-        <button type="submit" class="btn btn-primary">Davet gönder</button>
+<section class="panel" aria-labelledby="members-heading">
+    <div class="panel-head"><h2 id="members-heading">Çalışanlar</h2></div>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr><th scope="col">Ad</th><th scope="col">Rol</th><th scope="col"><span class="visually-hidden">İşlem</span></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var member in Model.Overview.Members)
+                {
+                    <tr>
+                        <td>
+                            <strong>@member.DisplayName</strong>
+                            @if (member.IsYou)
+                            {
+                                <span class="muted">(sen)</span>
+                            }
+                        </td>
+                        <td><span class="stamp stamp-sm@(member.Role == StaffRole.Owner ? "" : " stamp-ok")">@(member.Role == StaffRole.Owner ? "Sahip" : "Teknisyen")</span></td>
+                        <td class="actions">
+                            @if (member.Role != StaffRole.Owner)
+                            {
+                                @* Onay metni data özelliğinde: ad JavaScript içine yazılmaz, Razor onu HTML olarak kaçışlar. *@
+                                <form asp-action="Remove" asp-route-id="@member.Id" method="post"
+                                      data-confirm="@member.DisplayName atölyeden çıkarılsın mı? Hesabı silinir, iş emri geçmişinde adı kalır.">
+                                    <button type="submit" class="btn btn-danger">Çıkar</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-</form>
+</section>
+
+<section class="panel" aria-labelledby="invite-heading">
+    <div class="panel-head"><h2 id="invite-heading">Teknisyen davet et</h2></div>
+    <div class="panel-body">
+        <p class="muted">Davet linki e-postayla gider; 7 gün geçerli ve bir kez kullanılabilir.</p>
+        <form asp-action="Invite" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+            <div class="inline-form">
+                <div class="wide">
+                    <label asp-for="Invite.Email" class="visually-hidden"></label>
+                    <input asp-for="Invite.Email" placeholder="teknisyen@ornek.com" autocomplete="off" />
+                    <span asp-validation-for="Invite.Email"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Davet gönder</button>
+            </div>
+        </form>
+    </div>
+</section>
 
 @if (Model.Overview.Invitations.Count > 0)
 {
-    <h2>Bekleyen davetler</h2>
-    <ul class="plain-list">
-        @foreach (var invitation in Model.Overview.Invitations)
-        {
-            <li>
-                <span>
-                    @invitation.Email
-                    <span class="muted">, @invitation.ExpiresAt.ToOffset(turkey).ToString("d MMMM HH:mm") tarihine kadar geçerli</span>
-                </span>
-                <form asp-action="Revoke" asp-route-id="@invitation.Id" method="post">
-                    <button type="submit" class="btn">Geri al</button>
-                </form>
-            </li>
-        }
-    </ul>
+    <section class="panel" aria-labelledby="pending-heading">
+        <div class="panel-head"><h2 id="pending-heading">Bekleyen davetler</h2></div>
+        <ul class="plain-list">
+            @foreach (var invitation in Model.Overview.Invitations)
+            {
+                <li>
+                    <span>
+                        <strong>@invitation.Email</strong>
+                        <span class="muted">, @invitation.ExpiresAt.ToOffset(turkey).ToString("d MMMM HH:mm") tarihine kadar geçerli</span>
+                    </span>
+                    <form asp-action="Revoke" asp-route-id="@invitation.Id" method="post">
+                        <button type="submit" class="btn">Geri al</button>
+                    </form>
+                </li>
+            }
+        </ul>
+    </section>
 }

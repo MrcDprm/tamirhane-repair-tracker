@@ -3,7 +3,12 @@
     ViewData["Title"] = "Ayarlar";
 }
 
-<h1>Ayarlar</h1>
+<div class="page-head">
+    <div>
+        <h1>Ayarlar</h1>
+        <p>Atölyenin adı, garanti süresi, varsayılan KDV ve şubeler.</p>
+    </div>
+</div>
 
 @if (TempData["Status"] is string status)
 {
@@ -15,48 +20,50 @@
 }
 <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
 
-<section class="narrow" aria-labelledby="shop-heading">
-    <h2 id="shop-heading">Atölye</h2>
-    <form asp-action="Update" method="post" novalidate>
-        <div class="field">
-            <label asp-for="Shop.Name"></label>
-            <input asp-for="Shop.Name" autocomplete="organization" />
-            <span asp-validation-for="Shop.Name"></span>
+<section class="panel" aria-labelledby="shop-heading">
+    <div class="panel-head"><h2 id="shop-heading">Atölye</h2></div>
+    <form asp-action="Update" method="post" novalidate class="panel-body">
+        <div class="field-row">
+            <div class="field">
+                <label asp-for="Shop.Name"></label>
+                <input asp-for="Shop.Name" autocomplete="organization" />
+                <span asp-validation-for="Shop.Name"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Shop.Locale"></label>
+                <select asp-for="Shop.Locale">
+                    <option value="tr">Türkçe</option>
+                    <option value="en">English</option>
+                </select>
+                <span asp-validation-for="Shop.Locale"></span>
+            </div>
         </div>
-        <div class="field">
-            <label asp-for="Shop.WarrantyDays"></label>
-            <input asp-for="Shop.WarrantyDays" type="number" min="0" max="3650" step="1" inputmode="numeric" aria-describedby="warranty-help" />
-            <div id="warranty-help" class="field-help">Teslimden itibaren. 0, garanti yok demek.</div>
-            <span asp-validation-for="Shop.WarrantyDays"></span>
-        </div>
-        <div class="field">
-            <label asp-for="Shop.DefaultVatRate"></label>
-            @* type="number" tarayıcıda her zaman nokta ondalıkla gönderir; değer de kültürden bağımsız yazılır. *@
-            <input name="Shop.DefaultVatRate" id="Shop_DefaultVatRate" type="number" min="0" max="100" step="0.01" inputmode="decimal"
-                   value="@Model.Shop.DefaultVatRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                   aria-describedby="vat-help" />
-            <div id="vat-help" class="field-help">Yeni teklif kalemlerinde önerilen oran; kalem başına değiştirilebilir.</div>
-            <span asp-validation-for="Shop.DefaultVatRate"></span>
-        </div>
-        <div class="field">
-            <label asp-for="Shop.Locale"></label>
-            <select asp-for="Shop.Locale">
-                <option value="tr">Türkçe</option>
-                <option value="en">English</option>
-            </select>
-            <span asp-validation-for="Shop.Locale"></span>
+        <div class="field-row">
+            <div class="field">
+                <label asp-for="Shop.WarrantyDays"></label>
+                <input asp-for="Shop.WarrantyDays" type="number" min="0" max="3650" step="1" inputmode="numeric" aria-describedby="warranty-help" />
+                <div id="warranty-help" class="field-help">Teslimden itibaren. 0, garanti yok demek.</div>
+                <span asp-validation-for="Shop.WarrantyDays"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Shop.DefaultVatRate"></label>
+                @* type="number" tarayıcıda her zaman nokta ondalıkla gönderir; değer de kültürden bağımsız yazılır. *@
+                <input name="Shop.DefaultVatRate" id="Shop_DefaultVatRate" type="number" min="0" max="100" step="0.01" inputmode="decimal"
+                       value="@Model.Shop.DefaultVatRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                       aria-describedby="vat-help" />
+                <div id="vat-help" class="field-help">Yeni teklif kalemlerinde önerilen oran; kalem başına değiştirilebilir.</div>
+                <span asp-validation-for="Shop.DefaultVatRate"></span>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary">Ayarları kaydet</button>
     </form>
 </section>
 
-<section aria-labelledby="branches-heading">
-    <h2 id="branches-heading">Şubeler</h2>
-    <p class="muted">
-        İş emirleri ve parça stoku şubeye bağlıdır. Tek şuben varsa şube seçimi hiçbir ekranda çıkmaz;
-        ikinci şubeyi eklediğinde üst çubukta şube seçici görünür.
-    </p>
-
+<section class="panel" aria-labelledby="branches-heading">
+    <div class="panel-head">
+        <h2 id="branches-heading">Şubeler</h2>
+        <span class="muted">Tek şuben varsa şube seçimi hiçbir ekranda çıkmaz.</span>
+    </div>
     <ul class="plain-list">
         @foreach (var branch in Model.Branches)
         {
@@ -75,12 +82,10 @@
             </li>
         }
     </ul>
-
-    <h3>Şube ekle</h3>
-    <form asp-action="AddBranch" method="post" novalidate class="inline-form">
+    <form asp-action="AddBranch" method="post" novalidate class="panel-body inline-form">
         <div class="grow">
             <label asp-for="NewBranch.Name" class="visually-hidden"></label>
-            <input asp-for="NewBranch.Name" placeholder="Şube adı" />
+            <input asp-for="NewBranch.Name" placeholder="Yeni şubenin adı" />
             <span asp-validation-for="NewBranch.Name"></span>
         </div>
         <div class="wide">
@@ -88,6 +93,6 @@
             <input asp-for="NewBranch.Address" placeholder="Adres (isteğe bağlı)" />
             <span asp-validation-for="NewBranch.Address"></span>
         </div>
-        <button type="submit" class="btn btn-primary">Şube ekle</button>
+        <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Şube ekle</button>
     </form>
 </section>

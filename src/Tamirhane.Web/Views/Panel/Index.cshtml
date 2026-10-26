@@ -1,8 +1,22 @@
 @{
     ViewData["Title"] = "Panel";
+    var today = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(3));
 }
 
-@* Günün özeti ve iş emri tablosu #33'te; şimdilik boş durum. *@
-<h1>Bugün</h1>
-<p>Bugün açık iş yok. Yeni bir cihaz geldiğinde <strong>Cihaz kabul et</strong>'e bas ya da klavyede <kbd>N</kbd> tuşuna bas.</p>
-<p class="muted">Aramak için <kbd>/</kbd> tuşuna bas: ad, telefon, IMEI ya da iş emri numarası.</p>
+@* Günün sayıları (panoya asılı etiketler) ve açık işler tablosu #33'te; şimdilik boş durum. *@
+<div class="page-head">
+    <div>
+        <h1>Bugün</h1>
+        <p>@today.ToString("dddd, d MMMM")</p>
+    </div>
+</div>
+
+<section class="panel empty">
+    <partial name="_EmptyHook" />
+    <div>
+        <h2>Tezgâhta açık iş yok</h2>
+        <p>Yeni bir cihaz geldiğinde <strong>Cihaz kabul et</strong>'e bas ya da klavyede <kbd>N</kbd> tuşuna bas. Kabul ettiğin cihazlar burada, en uzun bekleyen başta görünür.</p>
+        <p class="muted">Aramak için <kbd>/</kbd>: ad, telefon, IMEI ya da iş emri numarası.</p>
+        <a class="btn btn-primary" asp-controller="WorkOrders" asp-action="New"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Cihaz kabul et</a>
+    </div>
+</section>
