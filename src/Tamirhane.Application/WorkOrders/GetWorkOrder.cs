@@ -23,6 +23,14 @@ public sealed record StatusStep(WorkOrderStatus Status, DateTimeOffset At, strin
 
 public sealed record NoteView(string Text, bool VisibleToCustomer, string By, DateTimeOffset At);
 
+/// <summary>Teklif kalemi; tutarlar domain'de hesaplanmış hâliyle (formdan gelen toplam kullanılmaz).</summary>
+public sealed record QuoteLineView(
+    Guid Id, QuoteLineKind Kind, bool FromStock, string Description, decimal Quantity, decimal UnitPrice,
+    decimal DiscountRate, decimal VatRate, decimal Total);
+
+/// <summary>Teklife eklenebilecek stok parçası: personelin şubesindeki adediyle.</summary>
+public sealed record QuotePartOption(Guid Id, string Sku, string Name, decimal SalePrice, int Quantity);
+
 /// <summary>
 /// İş emri sayfasının bilgileri (atölye içi; müşterinin tam adı ve telefonu görünür).
 /// Cihaz şifresi sayfaya gönderilmez, sadece kayıtlı olup olmadığı.
@@ -41,12 +49,21 @@ public sealed record WorkOrderView(
     public decimal AmountDue { get; init; }
     public decimal Balance { get; init; }
     public DateTimeOffset? WarrantyUntil { get; init; }
+    public IReadOnlyList<QuoteLineView> QuoteLines { get; init; } = [];
+    public QuoteTotals QuoteTotals { get; init; } = QuoteTotals.Of([]);
+    /// <summary>Kalem eklenip çıkarılabilir mi (inceleme ya da kararsız onarım sırasında).</summary>
+    public bool IsQuoteEditable { get; init; }
+    /// <summary>Kalem ekleme formu için; teklif düzenlenemiyorsa boş.</summary>
+    public IReadOnlyList<QuotePartOption> PartOptions { get; init; } = [];
+    public decimal DefaultVatRate { get; init; }
+    public QuoteDecision? QuoteDecision { get; init; }
 
     public WorkOrderAction? NextAction => Actions.Count > 0 && Actions[0] != WorkOrderAction.Cancel ? Actions[0] : null;
 }
 
 public sealed class GetWorkOrder(
-    IWorkOrderRepository orders, ICustomerRepository customers, IDeviceRepository devices, IStaffRepository staff)
+    IWorkOrderRepository orders, ICustomerRepository customers, IDeviceRepository devices, IStaffRepository staff,
+    IPartRepository parts, IShopSettings settings, ICurrentUser user)
 {
     public async Task<Result<WorkOrderView>> HandleAsync(Guid id, CancellationToken ct)
     {
@@ -60,6 +77,13 @@ public sealed class GetWorkOrder(
         // Çıkarılmış personelin adı da gelir: geçmişte kimin ne yaptığı kaybolmaz.
         var names = await staff.NamesAsync(
             order.History.Select(h => h.StaffId).OfType<Guid>().Concat(order.Notes.Select(n => n.StaffId)), ct);
+        var editable = order.IsQuoteEditable;
+        // Parça seçimi iş emrinin şubesinin stoğundan (onarım bitince stok oradan düşer).
+        var options = editable
+            ? (await parts.ListActiveWithStockAsync(order.BranchId, ct))
+                .OrderBy(p => p.Part.Name, StringComparer.Create(new System.Globalization.CultureInfo("tr-TR"), true))
+                .Select(p => new QuotePartOption(p.Part.Id, p.Part.Sku, p.Part.Name, p.Part.SalePrice, p.Quantity)).ToList()
+            : [];
 
         return new WorkOrderView(
             order.Id, order.Number, order.TrackingCode, order.Status, order.CreatedAt,
@@ -76,6 +100,13 @@ public sealed class GetWorkOrder(
             AmountDue = order.AmountDue,
             Balance = order.Balance,
             WarrantyUntil = order.WarrantyUntil,
+            QuoteLines = order.QuoteLines.Select(l => new QuoteLineView(
+                l.Id, l.Kind, l.PartId is not null, l.Description, l.Quantity, l.UnitPrice, l.DiscountRate, l.VatRate, l.Total)).ToList(),
+            QuoteTotals = order.QuoteTotals,
+            IsQuoteEditable = editable,
+            PartOptions = options,
+            DefaultVatRate = editable ? (await settings.GetAsync(user.ShopId, ct)).DefaultVatRate : 0,
+            QuoteDecision = order.QuoteDecision,
         };
     }
 
