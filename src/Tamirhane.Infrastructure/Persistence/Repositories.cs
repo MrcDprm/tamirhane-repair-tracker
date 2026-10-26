@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Tamirhane.Application.Abstractions;
+using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.Inventory;
 using Tamirhane.Domain.Shops;
@@ -113,6 +114,42 @@ internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRep
             RETURNING value AS "Value"
             """).ToListAsync(ct);
         return values[0];
+    }
+
+    public async Task<IReadOnlyList<WorkOrderRow>> SearchAsync(
+        WorkOrderCriteria? criteria, IReadOnlyCollection<WorkOrderStatus>? statuses, DateTimeOffset? createdBefore, int take, CancellationToken ct)
+    {
+        var query =
+            from o in db.WorkOrders
+            join c in db.Customers on o.CustomerId equals c.Id
+            join d in db.Devices on o.DeviceId equals d.Id
+            select new { o, c, d };
+
+        if (statuses is not null)
+            query = query.Where(x => statuses.Contains(x.o.Status));
+        if (createdBefore is { } before)
+            query = query.Where(x => x.o.CreatedAt < before);
+
+        if (criteria is not null)
+        {
+            // Kullanıcının yazdığı metin LIKE desenine parametre olarak gider; % ve _ kaçışlanır (joker olarak çalışmasın).
+            var like = criteria.Text is { } t ? "%" + t.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_") + "%" : null;
+            var suffix = criteria.NumberSuffix is { } s ? "%-" + s : null;
+            var serial = criteria.Text?.ToUpperInvariant();
+            query = query.Where(x =>
+                (like != null && (EF.Functions.ILike(x.c.Name, like) || EF.Functions.ILike(x.d.Brand + " " + x.d.Model, like) || x.d.Serial == serial))
+                || (criteria.Number != null && x.o.Number == criteria.Number)
+                || (suffix != null && EF.Functions.Like(x.o.Number, suffix))
+                || (criteria.Phone != null && x.c.Phone == criteria.Phone)
+                || (criteria.Imei != null && x.d.Imei == criteria.Imei)
+                || (criteria.TrackingCode != null && x.o.TrackingCode == criteria.TrackingCode));
+        }
+
+        return await query
+            .OrderBy(x => x.o.CreatedAt)
+            .Take(take)
+            .Select(x => new WorkOrderRow(x.o.Id, x.o.Number, x.d.Brand, x.d.Model, x.o.Complaint, x.c.Name, x.o.Status, x.o.CreatedAt, x.o.DeliveredAt))
+            .ToListAsync(ct);
     }
 
     public async Task<IReadOnlyDictionary<Guid, string>> NumbersAsync(IEnumerable<Guid> ids, CancellationToken ct)

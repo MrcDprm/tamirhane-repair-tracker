@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<ReceiveDevice>();
         services.AddScoped<GetWorkOrder>();
         services.AddScoped<GetReceipt>();
+        services.AddScoped<ListWorkOrders>();
         services.AddScoped<FindCustomerByPhone>();
         services.AddScoped<UpdateIntakeDetails>();
         services.AddScoped<AddNote>();
