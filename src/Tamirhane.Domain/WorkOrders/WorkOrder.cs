@@ -11,6 +11,8 @@ public sealed class WorkOrder : Entity
 {
     public const int MaxTextLength = 1000;
     public const int MaxWarrantyDays = 3650;
+    /// <summary>Söz verilen teslim günü en fazla bu kadar ileri olabilir (yanlış yıl yazımına karşı).</summary>
+    public const int MaxPromiseDays = 180;
 
     private static readonly Dictionary<WorkOrderStatus, WorkOrderStatus[]> AllowedTransitions = new()
     {
@@ -47,6 +49,8 @@ public sealed class WorkOrder : Entity
     public WorkOrderStatus Status { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? DeliveredAt { get; private set; }
+    /// <summary>Müşteriye söz verilen teslim günü; takip sayfasında "tahmini teslim". Boş olabilir.</summary>
+    public DateOnly? PromisedDate { get; private set; }
     /// <summary>Teklifteki stok parçaları şubenin stoğundan düşüldü mü (iş emri hazır olduğunda).</summary>
     public bool PartsConsumed { get; private set; }
     public IReadOnlyList<StatusChange> History => _history;
@@ -129,6 +133,21 @@ public sealed class WorkOrder : Entity
         if (order.IsSuccess)
             order.Value.WarrantyOfId = previous.Id;
         return order;
+    }
+
+    /// <summary>
+    /// Teslim gününü söz verir ya da değiştirir (parça gecikti); boş verilirse söz kaldırılır.
+    /// Geçmiş bir gün söz verilemez; iş emri kapanınca değişmez.
+    /// </summary>
+    public Result Promise(DateOnly? date, DateOnly today)
+    {
+        if (IsClosed)
+            return WorkOrderErrors.Closed;
+        if (date is { } d && (d < today || d > today.AddDays(MaxPromiseDays)))
+            return WorkOrderErrors.InvalidPromisedDate;
+
+        PromisedDate = date;
+        return Result.Success();
     }
 
     /// <summary>Kabulde yanlış girilen bilgileri düzeltir; iş emri kapanınca değişmez.</summary>

@@ -163,6 +163,20 @@ internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRep
     public void Add(WorkOrder order) => db.WorkOrders.Add(order);
 }
 
+// Kiracı filtresi bilerek kapalı (müşteri oturum açmaz); onun yerine dört kimliğin aynı atölyede olması şartı var.
+internal sealed class TrackingDirectory(TamirhaneDbContext db) : ITrackingDirectory
+{
+    public Task<TrackingParties?> GetAsync(Guid shopId, Guid branchId, Guid customerId, Guid deviceId, CancellationToken ct) =>
+        (from s in db.Shops.IgnoreQueryFilters()
+         join b in db.Branches.IgnoreQueryFilters() on s.Id equals b.ShopId
+         join c in db.Customers.IgnoreQueryFilters() on s.Id equals c.ShopId
+         join d in db.Devices.IgnoreQueryFilters() on c.Id equals d.CustomerId
+         where s.Id == shopId && b.Id == branchId && c.Id == customerId && d.Id == deviceId && d.ShopId == shopId
+         select new TrackingParties(s.Name, b.Name, b.Address, b.Phone, c.Name, d.Kind, d.Brand, d.Model))
+        .AsNoTracking()
+        .SingleOrDefaultAsync(ct);
+}
+
 internal sealed class CustomerRepository(TamirhaneDbContext db) : ICustomerRepository
 {
     public Task<Customer?> GetAsync(Guid id, CancellationToken ct) =>

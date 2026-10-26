@@ -168,6 +168,12 @@ else
                             <div id="passcode-help" class="field-help">Sadece onarım için gerekiyorsa. İş emri kapanınca silinir, fişte ve takip sayfasında görünmez.</div>
                             <span asp-validation-for="Input.Passcode"></span>
                         </div>
+                        <div class="field">
+                            <label asp-for="Input.PromisedDate"></label>
+                            <input asp-for="Input.PromisedDate" type="date" aria-describedby="promise-help" />
+                            <div id="promise-help" class="field-help">Müşteri takip sayfasında "tahmini teslim" olarak görür; sonra iş emri sayfasından değiştirilebilir.</div>
+                            <span asp-validation-for="Input.PromisedDate"></span>
+                        </div>
                     </div>
                 </div>
             </fieldset>

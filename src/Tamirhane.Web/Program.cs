@@ -47,6 +47,7 @@ builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
     builder.Configuration["EMAIL_FROM"] ?? AccountOptions.DefaultFrom));
 builder.Services.AddAccountRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
+builder.Services.AddTrackingRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddShopPolicies();
 
 // Kullanım senaryoları (her istek kendi örneğini alır) ve saat.

@@ -31,6 +31,8 @@ public static class DependencyInjection
         services.AddScoped<ListWorkOrders>();
         services.AddScoped<FindCustomerByPhone>();
         services.AddScoped<UpdateIntakeDetails>();
+        services.AddScoped<PromiseDelivery>();
+        services.AddScoped<GetTracking>();
         services.AddScoped<AddNote>();
         services.AddScoped<StartDiagnosis>();
         services.AddScoped<StartRepair>();

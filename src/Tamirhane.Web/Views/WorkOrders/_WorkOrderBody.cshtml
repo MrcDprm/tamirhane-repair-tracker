@@ -58,6 +58,10 @@
                 {
                     <dt>Aksesuar</dt><dd>@Model.Accessories</dd>
                 }
+                @if (Model.PromisedDate is { } promised)
+                {
+                    <dt>Teslim günü</dt><dd>@promised.ToString("d MMMM dddd")</dd>
+                }
             </dl>
             @* Geçilen her durum etikete bir kaşe; sonuncusu az önce basıldıysa hareketle gelir. *@
             <p class="ticket-stamps" aria-label="Durum kaşeleri">
@@ -140,6 +144,30 @@
                             @:Garanti @until.ToOffset(turkey).ToString("d MMMM yyyy") tarihine kadar.
                         }
                     </p>
+                </section>
+            }
+
+            @if (Model.CanPromise)
+            {
+                // Takip sayfasında "tahmini teslim" olarak görünür; parça gecikince buradan değiştirilir.
+                var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(turkey).DateTime);
+                <section class="panel" aria-labelledby="promise-heading">
+                    <div class="panel-head"><h2 id="promise-heading">Teslim günü</h2></div>
+                    <form method="post" asp-action="Promise" asp-route-id="@Model.Id" hx-post="@Hx("promise")" hx-target="#work-order" hx-swap="outerHTML" class="panel-body inline-form">
+                        <div class="grow">
+                            <label for="promise-date" class="visually-hidden">Müşteriye söz verilen teslim günü</label>
+                            <input id="promise-date" name="Date" type="date" value="@Model.PromisedDate?.ToString("yyyy-MM-dd")"
+                                   min="@today.ToString("yyyy-MM-dd")" max="@today.AddDays(WorkOrder.MaxPromiseDays).ToString("yyyy-MM-dd")" />
+                        </div>
+                        <button type="submit" class="btn">Kaydet</button>
+                    </form>
+                    @if (Model.PromisedDate is not null)
+                    {
+                        @* Boş tarih gönderen ayrı form: aynı formda iki "Date" alanı olursa ilki kazanırdı. *@
+                        <form method="post" asp-action="Promise" asp-route-id="@Model.Id" hx-post="@Hx("promise")" hx-target="#work-order" hx-swap="outerHTML" class="panel-foot">
+                            <button type="submit" class="btn">Sözü kaldır</button>
+                        </form>
+                    }
                 </section>
             }
 

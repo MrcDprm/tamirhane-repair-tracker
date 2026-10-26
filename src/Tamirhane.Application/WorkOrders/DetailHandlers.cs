@@ -12,6 +12,14 @@ public sealed class UpdateIntakeDetails(IWorkOrderRepository orders, IUnitOfWork
         RunAsync(c.WorkOrderId, order => order.UpdateIntake(c.Complaint, c.Condition, c.Accessories, c.Passcode), ct);
 }
 
+/// <summary>Teslim gününü söz verir, değiştirir ya da kaldırır (takip sayfasında "tahmini teslim").</summary>
+public sealed class PromiseDelivery(IWorkOrderRepository orders, IUnitOfWork uow, INotificationQueue queue, ICurrentUser user, TimeProvider clock)
+    : WorkOrderHandler(orders, uow, queue, user, clock)
+{
+    public Task<Result<bool>> HandleAsync(Guid workOrderId, DateOnly? date, CancellationToken ct) =>
+        RunAsync(workOrderId, order => order.Promise(date, DateOnly.FromDateTime(Now.DateTime)), ct);
+}
+
 public sealed class AddNote(IWorkOrderRepository orders, IUnitOfWork uow, INotificationQueue queue, ICurrentUser user, TimeProvider clock)
     : WorkOrderHandler(orders, uow, queue, user, clock)
 {
