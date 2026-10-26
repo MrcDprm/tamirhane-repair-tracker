@@ -48,6 +48,9 @@ public static class DependencyInjection
         services.AddScoped<UpdatePart>();
         services.AddScoped<ChangeStock>();
         services.AddScoped<ListLowStock>();
+        services.AddScoped<ListParts>();
+        services.AddScoped<GetPart>();
+        services.AddScoped<SetPartActive>();
         services.TryAddSingletonTimeProvider();
         return services;
     }

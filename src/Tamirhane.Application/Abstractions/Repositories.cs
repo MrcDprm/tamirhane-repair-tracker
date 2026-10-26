@@ -70,6 +70,9 @@ public interface IWorkOrderRepository
     /// <summary>Takip sayfası için; kiracı filtresi olmadan, sadece koda göre.</summary>
     Task<WorkOrder?> GetByTrackingCodeAsync(string trackingCode, CancellationToken ct);
 
+    /// <summary>İş emirlerinin numaraları (stok hareketlerinde "hangi iş için" göstermek üzere).</summary>
+    Task<IReadOnlyDictionary<Guid, string>> NumbersAsync(IEnumerable<Guid> ids, CancellationToken ct);
+
     /// <summary>Atölyenin o yılki sıradaki iş emri numarası (1'den başlar).</summary>
     Task<int> NextSequenceAsync(Guid shopId, int year, CancellationToken ct);
 
@@ -101,6 +104,9 @@ public interface IPartRepository
     /// <summary>Atölyenin kullanımdaki parçaları ve verilen şubedeki miktarları.</summary>
     Task<IReadOnlyList<PartStock>> ListActiveWithStockAsync(Guid branchId, CancellationToken ct);
 
+    /// <summary>Stok sayfası için; kullanımdan kaldırılanlar da istenebilir.</summary>
+    Task<IReadOnlyList<PartStock>> ListWithStockAsync(Guid branchId, bool includeInactive, CancellationToken ct);
+
     void Add(Part part);
 }
 
@@ -110,6 +116,9 @@ public interface IStockRepository
 
     /// <summary>Şubenin verilen parçalara ait stok kayıtları; iş emriyle parça kullanma ve iade için.</summary>
     Task<BranchStock> GetBranchStockAsync(Guid branchId, IEnumerable<Guid> partIds, CancellationToken ct);
+
+    /// <summary>Parçanın şubedeki hareketleri, en yenisi başta.</summary>
+    Task<IReadOnlyList<StockMovement>> ListMovementsAsync(Guid partId, Guid branchId, int take, CancellationToken ct);
 
     void AddLevel(StockLevel level);
     void AddMovements(IEnumerable<StockMovement> movements);
