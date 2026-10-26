@@ -153,7 +153,32 @@ public sealed class WorkOrdersController : Controller
         return await AfterChangeAsync(id, result, pressed: false, get, ct);
     }
 
-    private async Task<IActionResult> AfterChangeAsync(Guid id, Result result, bool pressed, GetWorkOrder get, CancellationToken ct)
+    /// <summary>Tahsilat: nakit, kart ya da havale; kısmi olabilir. Kalan borçtan fazlası alınamaz.</summary>
+    [HttpPost("{id:guid}/payments")]
+    public async Task<IActionResult> Pay(Guid id, PaymentInput input, [FromServices] RecordPayment pay, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        Result result = await pay.HandleAsync(new PaymentCommand(id, input.Amount, input.Method, input.Note), ct);
+        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? $"{input.Amount:C} tahsilat kaydedildi." : null);
+    }
+
+    /// <summary>Para iadesi: kasadan çıkış olduğu için sadece sahip (senaryo denetler).</summary>
+    [HttpPost("{id:guid}/refunds")]
+    public async Task<IActionResult> Refund(Guid id, PaymentInput input, [FromServices] RecordRefund refund, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        Result result = await refund.HandleAsync(new PaymentCommand(id, input.Amount, input.Method, input.Note), ct);
+        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? $"{input.Amount:C} iade kaydedildi." : null);
+    }
+
+    /// <summary>Teklif reddedildiyse cihaz onarılmadan iade edilir; varsa inceleme ücreti.</summary>
+    [HttpPost("{id:guid}/diagnosis-fee")]
+    public async Task<IActionResult> DiagnosisFee(Guid id, decimal fee, [FromServices] SetDiagnosisFee set, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        Result result = await set.HandleAsync(id, fee, ct);
+        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? "İnceleme ücreti kaydedildi." : null);
+    }
+
+    private async Task<IActionResult> AfterChangeAsync(
+        Guid id, Result result, bool pressed, GetWorkOrder get, CancellationToken ct, string? success = null)
     {
         if (result.Error == ApplicationErrors.WorkOrderNotFound)
             return NotFound();
@@ -164,10 +189,13 @@ public sealed class WorkOrdersController : Controller
             var order = await get.HandleAsync(id, ct);
             ViewData["Pressed"] = pressed && result.IsSuccess;
             ViewData["Error"] = error;
+            ViewData["Success"] = success;
             return PartialView("_WorkOrderBody", order.Value);
         }
 
         TempData[result.IsSuccess ? "Pressed" : "Error"] = result.IsSuccess ? pressed : error;
+        if (success is not null)
+            TempData["Success"] = success;
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -184,7 +212,13 @@ public sealed class WorkOrdersController : Controller
         [PaymentErrors.BalanceDue.Code] = "Kalan borç var. Önce tahsilatı kaydet; borçlu teslimi sadece atölye sahibi onaylayabilir.",
         [PaymentErrors.RefundDue.Code] = "Müşteriden fazla ödeme alınmış; teslimden önce iadeyi kaydet.",
         [PaymentErrors.RefundRequired.Code] = "İptalden önce alınan ödemeyi iade et.",
-        [ApplicationErrors.OwnerOnly.Code] = "Borçlu teslimi sadece atölye sahibi onaylayabilir.",
+        [ApplicationErrors.OwnerOnly.Code] = "Bu işlem sadece atölye sahibinin: para iadesi ve borçlu teslim.",
+        [PaymentErrors.InvalidAmount.Code] = "Tutar sıfırdan büyük olmalı (en fazla iki ondalık).",
+        [PaymentErrors.Overpayment.Code] = "Kalan borçtan fazla tahsilat alınamaz.",
+        [PaymentErrors.RefundTooLarge.Code] = "Alınan paradan fazlası iade edilemez.",
+        [PaymentErrors.NotAllowed.Code] = "İptal edilen iş emrine tahsilat girilemez.",
+        [PaymentErrors.NoteTooLong.Code] = "Not en fazla 200 karakter olabilir.",
+        [PaymentErrors.InvalidDiagnosisFee.Code] = "İnceleme ücreti sıfır ya da daha büyük, en fazla iki ondalık olmalı.",
         [QuoteErrors.InvalidDescription.Code] = "Kalemin açıklamasını yaz (en fazla 200 karakter).",
         [QuoteErrors.InvalidQuantity.Code] = "Miktar sıfırdan büyük bir sayı olmalı (en fazla iki ondalık).",
         [QuoteErrors.PartQuantityMustBeWhole.Code] = "Stoktan parça tam adet eklenir (1, 2, 3...).",

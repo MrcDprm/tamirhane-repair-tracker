@@ -5,6 +5,7 @@
     ViewData["Created"] = TempData["Created"] is true;
     ViewData["Pressed"] = TempData["Pressed"] is true || TempData.Peek("Created") is true;
     ViewData["Error"] = TempData["Error"] as string;
+    ViewData["Success"] = TempData["Success"] as string;
 }
 
 <div class="page-head">

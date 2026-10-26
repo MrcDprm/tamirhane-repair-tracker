@@ -526,6 +526,23 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
 .quote-add form + form { border-left: 1px solid var(--line); margin-top: 0; }
 .quote-add h3 { margin: 0 0 12px; font-size: 1.1rem; }
 
+/* Tahsilat: tutarlar sağa yaslı; ödeme yolu üç büyük seçenek (tezgâhta tek dokunuş). */
+.money { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; margin: 0; }
+.money dt { color: var(--lead-text); }
+.money dd { margin: 0; text-align: right; font-weight: 600; }
+.bordered { border-top: 1px solid var(--line); }
+.choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.choices legend { margin-bottom: 8px; }
+.choice { position: relative; }
+.choice input { position: absolute; opacity: 0; inset: 0; }
+.choice span {
+  display: flex; align-items: center; justify-content: center; min-height: var(--touch);
+  border: 1px solid var(--lead); border-radius: var(--radius-control); background: var(--field); font-weight: 600; cursor: pointer;
+}
+.choice input:checked + span { border: 2px solid var(--stamp); color: var(--stamp); background: var(--surface); }
+.choice input:focus-visible + span { outline: 3px solid var(--stamp); outline-offset: 2px; }
+.payments li { font-size: 0.95rem; }
+
 /* ---------- Kaşe (tek cesur öğe) ---------- */
 
 .stamp {
