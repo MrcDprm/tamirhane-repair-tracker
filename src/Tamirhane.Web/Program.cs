@@ -4,8 +4,7 @@ using System.Text.Unicode;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.WebEncoders;
-using Tamirhane.Application.Accounts;
-using Tamirhane.Application.Shops;
+using Tamirhane.Application;
 using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Web.Authorization;
@@ -50,22 +49,8 @@ builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
 builder.Services.AddAccountRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddShopPolicies();
 
-// AddApplication() henüz çağrılamaz: bazı senaryoların bağımlılığı (INotificationQueue, #19) yok,
-// açılıştaki servis doğrulaması patlar. O zamana kadar ekranı olan senaryolar tek tek kaydedilir.
-builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddScoped<RegisterShop>();
-builder.Services.AddScoped<InviteStaff>();
-builder.Services.AddScoped<GetInvitation>();
-builder.Services.AddScoped<AcceptInvitation>();
-builder.Services.AddScoped<RevokeInvitation>();
-builder.Services.AddScoped<RemoveStaff>();
-builder.Services.AddScoped<ListStaff>();
-builder.Services.AddScoped<ListBranches>();
-builder.Services.AddScoped<AddBranch>();
-builder.Services.AddScoped<UpdateBranch>();
-builder.Services.AddScoped<SwitchBranch>();
-builder.Services.AddScoped<GetShopSettings>();
-builder.Services.AddScoped<UpdateShopSettings>();
+// Kullanım senaryoları (her istek kendi örneğini alır) ve saat.
+builder.Services.AddApplication();
 
 var app = builder.Build();
 
