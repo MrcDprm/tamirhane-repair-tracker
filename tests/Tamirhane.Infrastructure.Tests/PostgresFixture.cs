@@ -72,7 +72,7 @@ public sealed class PostgresCollection : ICollectionFixture<PostgresFixture>
 public sealed class TestUser : ICurrentUser
 {
     public Guid ShopId { get; set; }
-    public Guid StaffId { get; } = Guid.NewGuid();
+    public Guid StaffId { get; set; } = Guid.NewGuid();
     public bool IsOwner => true;
 }
 
