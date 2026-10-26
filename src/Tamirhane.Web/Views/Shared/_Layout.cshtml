@@ -7,6 +7,8 @@
     <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
     <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @* htmx: eval kapalı ve kendi stilini eklemez (CSP'de unsafe-eval ve satır içi stil gerekmesin). *@
+    <meta name="htmx-config" content='{"allowEval":false,"includeIndicatorStyles":false,"historyCacheSize":0}' />
     <script src="~/js/theme.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -95,6 +97,7 @@
     }
 
     <script src="~/js/vendor/motion.min.js" asp-append-version="true"></script>
+    <script src="~/js/vendor/htmx.min.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/motion.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

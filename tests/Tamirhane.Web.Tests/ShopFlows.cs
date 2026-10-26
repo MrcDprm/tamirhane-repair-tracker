@@ -47,6 +47,17 @@ public sealed partial class ShopFlows(TamirhaneWebFactory app)
         return technician;
     }
 
+    /// <summary>Yeni müşteriyle cihaz kabul eder; açılan iş emri sayfasının yolunu döner.</summary>
+    public static async Task<string> ReceiveAsync(Browser browser, string phone)
+    {
+        var response = await browser.SubmitAsync($"/work-orders/new?phone={Uri.EscapeDataString(phone)}", "/work-orders/new", new()
+        {
+            ["Input.Phone"] = phone, ["Input.CustomerName"] = "Zeynep Arslan", ["Input.KvkkConsent"] = "true",
+            ["Input.DeviceKind"] = "Phone", ["Input.Brand"] = "Apple", ["Input.Model"] = "iPhone 13", ["Input.Complaint"] = "Ekran kırık",
+        });
+        return Browser.RedirectOf(response);
+    }
+
     public string InvitationLink(string email) => LinkIn(email, "/invitation");
 
     /// <summary>Adrese giden, verilen sayfaya işaret eden son linkin yolu ve sorgusu.</summary>

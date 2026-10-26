@@ -44,6 +44,14 @@ internal sealed class StaffRepository(TamirhaneDbContext db) : IStaffRepository
     public async Task<IReadOnlyList<Staff>> ListActiveAsync(CancellationToken ct) =>
         await db.Staff.Where(s => s.RemovedAt == null).OrderBy(s => s.Role).ThenBy(s => s.DisplayName).ToListAsync(ct);
 
+    public async Task<IReadOnlyDictionary<Guid, string>> NamesAsync(IEnumerable<Guid> ids, CancellationToken ct)
+    {
+        var wanted = ids.Distinct().ToList();
+        if (wanted.Count == 0)
+            return new Dictionary<Guid, string>();
+        return await db.Staff.Where(s => wanted.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.DisplayName, ct);
+    }
+
     public void Add(Staff staff) => db.Staff.Add(staff);
 }
 

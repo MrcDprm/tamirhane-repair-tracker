@@ -113,6 +113,10 @@ public sealed class FakeStaff(ICurrentUser user) : IStaffRepository
         Task.FromResult<IReadOnlyList<Staff>>(Items.Where(s => s.ShopId == user.ShopId && s.IsActive)
             .OrderBy(s => s.Role).ThenBy(s => s.DisplayName).ToList());
 
+    public Task<IReadOnlyDictionary<Guid, string>> NamesAsync(IEnumerable<Guid> ids, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<Guid, string>>(Items
+            .Where(s => s.ShopId == user.ShopId && ids.Contains(s.Id)).ToDictionary(s => s.Id, s => s.DisplayName));
+
     public void Add(Staff staff) => Items.Add(staff);
 }
 

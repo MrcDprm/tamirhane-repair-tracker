@@ -34,6 +34,9 @@ public interface IStaffRepository
     /// <summary>Atölyede çalışan (çıkarılmamış) personel; önce sahip, sonra ada göre.</summary>
     Task<IReadOnlyList<Staff>> ListActiveAsync(CancellationToken ct);
 
+    /// <summary>Verilen personelin görünen adları; çıkarılmış personel de dahil (iş emri geçmişi için).</summary>
+    Task<IReadOnlyDictionary<Guid, string>> NamesAsync(IEnumerable<Guid> ids, CancellationToken ct);
+
     void Add(Staff staff);
 }
 

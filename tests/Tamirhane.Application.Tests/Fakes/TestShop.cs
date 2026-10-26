@@ -4,6 +4,7 @@ using Tamirhane.Application.Customers;
 using Tamirhane.Application.Inventory;
 using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.Customers;
+using Tamirhane.Domain.Shops;
 
 namespace Tamirhane.Application.Tests.Fakes;
 
@@ -18,6 +19,11 @@ public sealed class TestShop
         Customers = new FakeCustomers(User);
         Devices = new FakeDevices(User);
         Parts = new FakeParts(User) { Stock = Stock };
+        // Oturumdaki personelin kaydı: iş emri geçmişinde "kim yaptı" adıyla görünür.
+        var me = Domain.Shops.Staff.Create(User.ShopId, Guid.NewGuid(), isOwner ? StaffRole.Owner : StaffRole.Technician, "Mehmet Usta", User.BranchId).Value;
+        User.StaffId = me.Id;
+        Staff = new FakeStaff(User);
+        Staff.Add(me);
     }
 
     // 20 Ekim 2026 09:00 Türkiye saati
@@ -28,13 +34,14 @@ public sealed class TestShop
     public FakeCustomers Customers { get; }
     public FakeDevices Devices { get; }
     public FakeParts Parts { get; }
+    public FakeStaff Staff { get; }
     public FakeStock Stock { get; } = new();
     public FakeUnitOfWork UnitOfWork { get; } = new();
     public FakeQueue Queue { get; } = new();
 
     public ReceiveDevice ReceiveDevice() => new(Customers, Devices, Orders, UnitOfWork, Queue, User, Clock);
     public FindCustomerByPhone FindCustomerByPhone() => new(Customers, Devices);
-    public GetWorkOrder GetWorkOrder() => new(Orders, Customers, Devices);
+    public GetWorkOrder GetWorkOrder() => new(Orders, Customers, Devices, Staff);
     public StartDiagnosis StartDiagnosis() => new(Orders, UnitOfWork, Queue, User, Clock);
     public StartRepair StartRepair() => new(Orders, UnitOfWork, Queue, User, Clock);
     public AddQuoteLine AddQuoteLine() => new(Orders, Parts, UnitOfWork, Queue, User, Clock);
