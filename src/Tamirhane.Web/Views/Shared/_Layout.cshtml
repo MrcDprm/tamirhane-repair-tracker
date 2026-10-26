@@ -25,6 +25,12 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Panel" asp-action="Index">Panel</a>
                             </li>
+                            @if (User.IsInRole("Owner"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">Personel</a>
+                                </li>
+                            }
                             <li class="nav-item">
                                 @* Çıkış POST'tur: bir resim etiketi ya da link ile kullanıcının oturumu dışarıdan kapatılamaz. *@
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">

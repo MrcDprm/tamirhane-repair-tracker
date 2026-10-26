@@ -3,8 +3,10 @@ using System.Text.Unicode;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.WebEncoders;
 using Tamirhane.Application.Accounts;
+using Tamirhane.Application.Shops;
 using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Identity;
+using Tamirhane.Web.Authorization;
 using Tamirhane.Web.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,11 +41,18 @@ builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
     builder.Configuration["EMAIL_FROM"] ?? AccountOptions.DefaultFrom));
 builder.Services.AddAccountRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
+builder.Services.AddShopPolicies();
 
 // AddApplication() henüz çağrılamaz: bazı senaryoların bağımlılıkları (IShopSettings #18, INotificationQueue #19) yok,
 // açılıştaki servis doğrulaması patlar. O zamana kadar ekranı olan senaryolar tek tek kaydedilir.
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<RegisterShop>();
+builder.Services.AddScoped<InviteStaff>();
+builder.Services.AddScoped<GetInvitation>();
+builder.Services.AddScoped<AcceptInvitation>();
+builder.Services.AddScoped<RevokeInvitation>();
+builder.Services.AddScoped<RemoveStaff>();
+builder.Services.AddScoped<ListStaff>();
 
 var app = builder.Build();
 

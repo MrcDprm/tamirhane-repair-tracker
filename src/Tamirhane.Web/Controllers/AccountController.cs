@@ -160,11 +160,15 @@ public sealed class AccountController(IAccountService accounts) : Controller
 
     private void AddError(Error error)
     {
-        var (field, message) = Errors.TryGetValue(error.Code, out var known)
-            ? known
-            : ("", "İşlem tamamlanamadı. Bilgileri kontrol edip tekrar deneyin.");
+        var (field, message) = MessageFor(error);
         ModelState.AddModelError(field, message);
     }
+
+    /// <summary>Hesap hatasının formdaki alanı ve metni; davet kabul formu da şifre hataları için kullanır.</summary>
+    internal static (string Field, string Message) MessageFor(Error error) =>
+        Errors.TryGetValue(error.Code, out var known)
+            ? known
+            : ("", "İşlem tamamlanamadı. Bilgileri kontrol edip tekrar deneyin.");
 
     private bool SignedIn => User.Identity?.IsAuthenticated == true;
 
