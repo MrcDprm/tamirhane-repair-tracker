@@ -18,6 +18,8 @@ public static class DependencyInjection
         services.AddDbContext<TamirhaneDbContext>(options => Configure(options, connectionString));
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<TamirhaneDbContext>());
         services.AddScoped<IShopRepository, ShopRepository>();
+        services.AddScoped<IStaffRepository, StaffRepository>();
+        services.AddScoped<IInvitationRepository, InvitationRepository>();
         services.AddScoped<IWorkOrderRepository, WorkOrderRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();

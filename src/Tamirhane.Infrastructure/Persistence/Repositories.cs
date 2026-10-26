@@ -9,11 +9,45 @@ namespace Tamirhane.Infrastructure.Persistence;
 
 internal sealed class ShopRepository(TamirhaneDbContext db) : IShopRepository
 {
+    public Task<Shop?> GetAsync(Guid id, CancellationToken ct) => db.Shops.FirstOrDefaultAsync(s => s.Id == id, ct);
+
     public void Add(Shop shop, Staff owner)
     {
         db.Shops.Add(shop);
         db.Staff.Add(owner);
     }
+}
+
+internal sealed class StaffRepository(TamirhaneDbContext db) : IStaffRepository
+{
+    public Task<Staff?> GetAsync(Guid id, CancellationToken ct) => db.Staff.FirstOrDefaultAsync(s => s.Id == id, ct);
+
+    public async Task<IReadOnlyList<Staff>> ListActiveAsync(CancellationToken ct) =>
+        await db.Staff.Where(s => s.RemovedAt == null).OrderBy(s => s.Role).ThenBy(s => s.DisplayName).ToListAsync(ct);
+
+    public void Add(Staff staff) => db.Staff.Add(staff);
+}
+
+internal sealed class InvitationRepository(TamirhaneDbContext db) : IInvitationRepository
+{
+    public Task<Invitation?> GetAsync(Guid id, CancellationToken ct) => db.Invitations.FirstOrDefaultAsync(i => i.Id == id, ct);
+
+    // Davet edilen kişinin oturumu yok; token 256 bit rastgele olduğu için filtre bilerek kapatılır.
+    public async Task<InvitationWithShop?> FindByTokenHashAsync(byte[] tokenHash, CancellationToken ct)
+    {
+        var row = await db.Invitations.IgnoreQueryFilters()
+            .Where(i => i.TokenHash == tokenHash)
+            .Join(db.Shops.IgnoreQueryFilters(), i => i.ShopId, s => s.Id, (i, s) => new { Invitation = i, s.Name, s.Locale })
+            .FirstOrDefaultAsync(ct);
+        return row is null ? null : new InvitationWithShop(row.Invitation, row.Name, row.Locale);
+    }
+
+    public async Task<IReadOnlyList<Invitation>> ListPendingAsync(DateTimeOffset now, string? email, CancellationToken ct) =>
+        await db.Invitations
+            .Where(i => i.AcceptedAt == null && i.RevokedAt == null && i.ExpiresAt > now && (email == null || i.Email == email))
+            .ToListAsync(ct);
+
+    public void Add(Invitation invitation) => db.Invitations.Add(invitation);
 }
 
 internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRepository

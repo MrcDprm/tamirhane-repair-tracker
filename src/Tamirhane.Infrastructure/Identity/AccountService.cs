@@ -44,6 +44,30 @@ internal sealed class AccountService(
         return MapError(result);
     }
 
+    public async Task<Result<Guid>> CreateConfirmedAsync(string email, string password, CancellationToken ct)
+    {
+        email = (email ?? "").Trim();
+        var user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
+        var result = await users.CreateAsync(user, password ?? "");
+        return result.Succeeded ? user.Id : MapError(result);
+    }
+
+    public async Task DeleteAsync(Guid userId, CancellationToken ct)
+    {
+        var user = await users.FindByIdAsync(userId.ToString());
+        if (user is null)
+            return;
+        var result = await users.DeleteAsync(user);
+        if (!result.Succeeded)
+            throw new InvalidOperationException($"Hesap silinemedi: {result.Errors.First().Code}");
+    }
+
+    public Task SendInvitationAsync(StaffInvitationEmail invitation, CancellationToken ct)
+    {
+        var link = Link("/invitation", new() { ["token"] = invitation.Token });
+        return SendAsync(AccountEmails.Invitation(invitation, link), "davet", ct);
+    }
+
     public async Task SendEmailConfirmationAsync(Guid userId, string locale, CancellationToken ct)
     {
         var user = await users.FindByIdAsync(userId.ToString())

@@ -376,6 +376,61 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                     b.ToTable("stock_movements", (string)null);
                 });
 
+            modelBuilder.Entity("Tamirhane.Domain.Shops.Invitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("InvitedByStaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invited_by_staff_id");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<Guid>("ShopId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shop_id");
+
+                    b.Property<byte[]>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("bytea")
+                        .HasColumnName("token_hash");
+
+                    b.HasKey("Id")
+                        .HasName("pk_invitations");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_invitations_token_hash");
+
+                    b.HasIndex("ShopId", "Email")
+                        .HasDatabaseName("ix_invitations_shop_id_email");
+
+                    b.ToTable("invitations", (string)null);
+                });
+
             modelBuilder.Entity("Tamirhane.Domain.Shops.Shop", b =>
                 {
                     b.Property<Guid>("Id")
@@ -425,6 +480,10 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("display_name");
 
+                    b.Property<DateTimeOffset?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("removed_at");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -435,7 +494,7 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("shop_id");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
@@ -907,6 +966,16 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_stock_levels_parts_part_id");
                 });
 
+            modelBuilder.Entity("Tamirhane.Domain.Shops.Invitation", b =>
+                {
+                    b.HasOne("Tamirhane.Domain.Shops.Shop", null)
+                        .WithMany()
+                        .HasForeignKey("ShopId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_invitations_shops_shop_id");
+                });
+
             modelBuilder.Entity("Tamirhane.Domain.Shops.Staff", b =>
                 {
                     b.HasOne("Tamirhane.Domain.Shops.Shop", null)
@@ -919,8 +988,7 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                     b.HasOne("Tamirhane.Infrastructure.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
+                        .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_staff_users_user_id");
                 });
 

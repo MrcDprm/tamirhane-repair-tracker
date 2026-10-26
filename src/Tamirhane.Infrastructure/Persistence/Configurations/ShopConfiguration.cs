@@ -25,7 +25,22 @@ internal sealed class StaffConfiguration : IEntityTypeConfiguration<Staff>
         b.Property(s => s.DisplayName).HasMaxLength(Staff.MaxDisplayNameLength);
         b.HasOne<Shop>().WithMany().HasForeignKey(s => s.ShopId).OnDelete(DeleteBehavior.Cascade);
         // Bir hesap tek atölyede çalışır; girişte personel kaydı hesaptan bulunur.
-        b.HasOne<ApplicationUser>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
+        // Hesap silinince personel kaydı kalır (iş emri geçmişindeki adı için), bağ boşalır.
+        b.HasOne<ApplicationUser>().WithMany().HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(s => s.UserId).IsUnique();
+    }
+}
+
+internal sealed class InvitationConfiguration : IEntityTypeConfiguration<Invitation>
+{
+    public void Configure(EntityTypeBuilder<Invitation> b)
+    {
+        b.HasKey(i => i.Id);
+        b.Property(i => i.Id).ValueGeneratedNever();
+        b.Property(i => i.Email).HasMaxLength(Invitation.MaxEmailLength);
+        b.Property(i => i.TokenHash).HasMaxLength(32);
+        b.HasIndex(i => i.TokenHash).IsUnique(); // linkle gelen arama bu indeksten
+        b.HasIndex(i => new { i.ShopId, i.Email });
+        b.HasOne<Shop>().WithMany().HasForeignKey(i => i.ShopId).OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -3,6 +3,9 @@ using Tamirhane.Domain.Common;
 
 namespace Tamirhane.Application.Abstractions;
 
+/// <summary>Davet e-postasının içeriği: kime, linkteki token, hangi atölye, kim davet etti, hangi dilde.</summary>
+public sealed record StaffInvitationEmail(string Email, string Token, string ShopName, string InvitedBy, string Locale, DateTimeOffset ExpiresAt);
+
 /// <summary>
 /// Giriş hesapları (e-posta, şifre). Infrastructure Identity ile uygular; Application Identity'yi tanımaz.
 /// E-postalardaki linkler isteğin Host başlığından değil uygulamanın kendi adresinden (PUBLIC_ORIGIN) üretilir.
@@ -14,6 +17,18 @@ public interface IAccountService
     /// E-posta zaten kayıtlıysa <see cref="Accounts.AccountErrors.EmailTaken"/>: çağıran bunu kullanıcıya göstermez.
     /// </summary>
     Task<Result<Guid>> CreateAsync(string email, string password, CancellationToken ct);
+
+    /// <summary>
+    /// Davetle gelen kişinin hesabı. Davet linki o adrese gittiği için adresin sahibi kanıtlanmıştır: hesap doğrulanmış açılır.
+    /// E-posta zaten kayıtlıysa <see cref="Accounts.AccountErrors.EmailTaken"/>.
+    /// </summary>
+    Task<Result<Guid>> CreateConfirmedAsync(string email, string password, CancellationToken ct);
+
+    /// <summary>Hesabı siler; açık oturumları da düşer (güvenlik damgası her istekte kontrol edilir).</summary>
+    Task DeleteAsync(Guid userId, CancellationToken ct);
+
+    /// <summary>Davet linkini gönderir. Token sadece bu e-postada bulunur.</summary>
+    Task SendInvitationAsync(StaffInvitationEmail invitation, CancellationToken ct);
 
     /// <summary>E-posta doğrulama linkini gönderir.</summary>
     Task SendEmailConfirmationAsync(Guid userId, string locale, CancellationToken ct);
