@@ -13,8 +13,8 @@ namespace Tamirhane.Web.Tests;
 /// </summary>
 public sealed class AuthorizationPolicyTests
 {
-    /// <summary>Sadece sahibin açabileceği sayfalar. Ayarlar (#18) ve ciro (#33) sayfaları gelince buraya eklenir.</summary>
-    private static readonly Type[] OwnerControllers = [typeof(StaffController)];
+    /// <summary>Sadece sahibin açabileceği sayfalar. Ciro sayfası (#33) gelince buraya eklenir.</summary>
+    private static readonly Type[] OwnerControllers = [typeof(StaffController), typeof(SettingsController)];
 
     [Fact]
     public void Owner_pages_require_the_owner_policy()
