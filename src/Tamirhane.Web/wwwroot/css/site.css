@@ -270,6 +270,11 @@ form + p, form + .field-help { margin-top: 20px; }
 .inline-form > .wide { flex: 2 1 280px; }
 .inline-form.fill { flex: 1; }
 
+fieldset { border: 0; padding: 0; margin: 0 0 28px; min-width: 0; }
+legend { font-family: var(--font-display); font-weight: 600; font-size: 1.4rem; padding: 0; margin-bottom: 12px; }
+.intake { max-width: 52rem; }
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 16px; }
+
 /* ---------- Düğmeler ---------- */
 
 .btn {
@@ -333,6 +338,14 @@ form + p, form + .field-help { margin-top: 20px; }
   box-shadow: 0 0 0 4px var(--card-edge);
 }
 .ticket .work-no { font-size: 1.8rem; display: block; margin-bottom: 4px; }
+
+.ticket-label { font-weight: 600; }
+.ticket-stamps { display: flex; gap: 16px; flex-wrap: wrap; margin: 20px 0 0; }
+
+/* İş emri sayfası: solda etiket, sağda bilgi ve işlemler. */
+.work-layout { display: grid; grid-template-columns: minmax(0, 34rem) minmax(0, 1fr); gap: 32px; align-items: start; }
+.work-layout h2.first { margin-top: 0; }
+@media (max-width: 860px) { .work-layout { grid-template-columns: 1fr; } }
 
 /* ---------- Kaşe (tek cesur öğe) ---------- */
 
