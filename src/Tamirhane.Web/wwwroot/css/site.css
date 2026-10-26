@@ -543,6 +543,41 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
 .choice input:focus-visible + span { outline: 3px solid var(--stamp); outline-offset: 2px; }
 .payments li { font-size: 0.95rem; }
 
+/* İş emri listesi: durum sekmeleri ve uzun arızada tek satır. */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs a {
+  display: inline-flex; align-items: center; min-height: var(--touch); padding: 0 12px;
+  border-radius: var(--radius-control); color: var(--ink); text-decoration: none; font-weight: 600;
+}
+.tabs a:hover { background: var(--bench); }
+.tabs a[aria-current="page"] { background: var(--ink); color: var(--bench); }
+.work-list .clip { max-width: 28ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Satırın tamamı iş emrine götürür: numaradaki link satırı kaplar (dokunma alanı da büyür). */
+.work-list tbody tr { position: relative; }
+.work-list tbody tr:hover { background: var(--bench); }
+.work-list a.work-no { color: var(--ink); text-decoration: none; }
+.work-list a.work-no::after { content: ""; position: absolute; inset: 0; }
+.work-list a.work-no:focus-visible { outline: none; }
+.work-list tbody tr:has(a.work-no:focus-visible) { outline: 3px solid var(--stamp); outline-offset: -3px; }
+
+/* Telefonda tablo, her iş emri için iki sütunlu bir kart olur. */
+@media (max-width: 640px) {
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -4px; padding-inline: 4px; }
+  .tabs a { white-space: nowrap; }
+  .work-list thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .work-list, .work-list tbody { display: block; }
+  .work-list tbody tr {
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px 16px;
+    grid-template-areas: "no status" "device wait" "issue issue" "customer customer";
+    border-bottom: 1px solid var(--line);
+  }
+  .data-table.work-list tbody td { padding: 0; border: 0; }
+  .work-list .c-no { grid-area: no; } .work-list .c-status { grid-area: status; justify-self: end; }
+  .work-list .c-device { grid-area: device; font-weight: 600; } .work-list .c-wait { grid-area: wait; }
+  .work-list .c-issue { grid-area: issue; max-width: none; } .work-list .c-customer { grid-area: customer; color: var(--lead-text); }
+}
+.empty h3 { margin-top: 0; }
+
 /* ---------- Kaşe (tek cesur öğe) ---------- */
 
 .stamp {

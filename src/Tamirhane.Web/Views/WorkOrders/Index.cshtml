@@ -1,0 +1,125 @@
+@using Tamirhane.Application.WorkOrders
+@using Tamirhane.Domain.WorkOrders
+@using Tamirhane.Web.Display
+@model WorkOrderList
+@{
+    ViewData["Title"] = "İş emirleri";
+    var filters = new (WorkOrderFilter Filter, string Label)[]
+    {
+        (WorkOrderFilter.Open, "Açık"),
+        (WorkOrderFilter.AwaitingApproval, "Onay bekliyor"),
+        (WorkOrderFilter.InRepair, "Onarımda"),
+        (WorkOrderFilter.Ready, "Teslime hazır"),
+        (WorkOrderFilter.Overdue, "30 günü geçen"),
+        (WorkOrderFilter.Closed, "Kapanan"),
+        (WorkOrderFilter.All, "Tümü"),
+    };
+    var turkey = TimeSpan.FromHours(3);
+    var today = Model.Now.ToOffset(turkey).Date;
+    string Waiting(WorkOrderRow row)
+    {
+        if (row.Status == WorkOrderStatus.Delivered && row.DeliveredAt is { } at)
+            return at.ToOffset(turkey).ToString("d MMM") + " teslim";
+        if (row.Status == WorkOrderStatus.Cancelled)
+            return "iptal";
+        var days = (today - row.CreatedAt.ToOffset(turkey).Date).Days;
+        return days == 0 ? "bugün" : $"{days} gün";
+    }
+    bool Overdue(WorkOrderRow row) =>
+        row.Status is not (WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled)
+        && row.CreatedAt < Model.Now.AddDays(-ListWorkOrders.OverdueDays);
+    string Tone(WorkOrderStatus s) => s switch
+    {
+        WorkOrderStatus.Ready or WorkOrderStatus.Delivered => " stamp-ok",
+        WorkOrderStatus.Cancelled or WorkOrderStatus.Declined => " stamp-warn",
+        _ => "",
+    };
+}
+
+<div class="page-head">
+    <div>
+        <h1>İş emirleri</h1>
+        <p>Açık işlerde en uzun bekleyen başta. Ad, telefon, IMEI, iş emri ya da takip koduyla ara.</p>
+    </div>
+</div>
+
+<section class="panel" aria-labelledby="list-heading">
+    <div class="panel-head">
+        <h2 id="list-heading" class="visually-hidden">Liste</h2>
+        <nav class="tabs" aria-label="Durum süzgeci">
+            @foreach (var (filter, label) in filters)
+            {
+                <a asp-action="Index" asp-route-filter="@filter" asp-route-q="@Model.Query"
+                   aria-current="@(Model.Filter == filter ? "page" : null)">@label</a>
+            }
+        </nav>
+        <form method="get" asp-action="Index" class="inline-form" role="search">
+            <label for="list-search" class="visually-hidden">İş emirlerinde ara</label>
+            <input id="list-search" name="q" type="search" value="@Model.Query" placeholder="Ad, telefon, IMEI, no" autocomplete="off" />
+            <input type="hidden" name="filter" value="@Model.Filter" />
+            <button type="submit" class="btn"><svg class="icon"><use href="/img/icons.svg#i-search" /></svg>Ara</button>
+        </form>
+    </div>
+
+    @if (Model.Rows.Count == 0)
+    {
+        <div class="empty">
+            <partial name="_EmptyHook" />
+            <div>
+                @if (Model.Query is { Length: > 0 })
+                {
+                    <h3>"@Model.Query" için iş emri yok</h3>
+                    <p>Ad, telefon (0532 123 45 67 gibi), IMEI, iş emri numarası (2026-0042 ya da 42) ya da takip koduyla ara.@if (Model.Filter != WorkOrderFilter.All)
+                    {
+                        <text> Süzgeç "@filters.First(f => f.Filter == Model.Filter).Label" seçili; <a asp-action="Index" asp-route-q="@Model.Query" asp-route-filter="@WorkOrderFilter.All">tümünde ara</a>.</text>
+                    }</p>
+                }
+                else if (Model.Filter == WorkOrderFilter.Open)
+                {
+                    <h3>Tezgâhta açık iş yok</h3>
+                    <p>Yeni bir cihaz geldiğinde <a asp-action="New">Cihaz kabul et</a>'e bas.</p>
+                }
+                else
+                {
+                    <h3>Bu süzgeçte iş emri yok</h3>
+                    <p><a asp-action="Index">Açık işlere dön</a>.</p>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-table work-list">
+                <thead>
+                    <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Cihaz</th>
+                        <th scope="col">Arıza</th>
+                        <th scope="col">Müşteri</th>
+                        <th scope="col">Durum</th>
+                        <th scope="col" class="num">Bekleme</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        var late = Overdue(row);
+                        <tr>
+                            <td class="c-no"><a class="work-no" asp-action="Details" asp-route-id="@row.Id">@row.Number</a></td>
+                            <td class="c-device">@row.Brand @row.Model</td>
+                            <td class="c-issue clip">@row.Complaint</td>
+                            <td class="c-customer">@row.CustomerName</td>
+                            <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : Tone(row.Status))">@Labels.Of(row.Status)</span></td>
+                            <td class="c-wait num@(late ? " warn-text" : "")">@Waiting(row)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.Truncated)
+        {
+            <p class="panel-foot">İlk @ListWorkOrders.Limit iş emri gösteriliyor; aramayı daralt ya da süzgeç seç.</p>
+        }
+    }
+</section>

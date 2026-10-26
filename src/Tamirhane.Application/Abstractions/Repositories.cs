@@ -70,6 +70,14 @@ public interface IWorkOrderRepository
     /// <summary>Takip sayfası için; kiracı filtresi olmadan, sadece koda göre.</summary>
     Task<WorkOrder?> GetByTrackingCodeAsync(string trackingCode, CancellationToken ct);
 
+    /// <summary>
+    /// Liste ve arama. Ölçüt verilirse türlerinden herhangi biri tutan iş emirleri; durumlar ve tarih süzgeçtir.
+    /// Sıralama çağıranın işi; en fazla <paramref name="take"/> satır.
+    /// </summary>
+    Task<IReadOnlyList<Tamirhane.Application.WorkOrders.WorkOrderRow>> SearchAsync(
+        Tamirhane.Application.WorkOrders.WorkOrderCriteria? criteria, IReadOnlyCollection<WorkOrderStatus>? statuses,
+        DateTimeOffset? createdBefore, int take, CancellationToken ct);
+
     /// <summary>İş emirlerinin numaraları (stok hareketlerinde "hangi iş için" göstermek üzere).</summary>
     Task<IReadOnlyDictionary<Guid, string>> NumbersAsync(IEnumerable<Guid> ids, CancellationToken ct);
 

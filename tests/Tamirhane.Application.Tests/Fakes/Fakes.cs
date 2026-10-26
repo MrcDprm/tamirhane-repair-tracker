@@ -1,4 +1,5 @@
 using Tamirhane.Application.Abstractions;
+using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.Inventory;
 using Tamirhane.Domain.WorkOrders;
@@ -60,6 +61,11 @@ public sealed class FakeWorkOrders(ICurrentUser user) : IWorkOrderRepository
 
     public Task<WorkOrder?> GetAsync(Guid id, CancellationToken ct) =>
         Task.FromResult(Items.Find(o => o.Id == id && o.ShopId == user.ShopId));
+
+    // Arama veritabanının işi (ILIKE, birleştirmeler); gerçek PostgreSQL ile Web testlerinde denenir.
+    public Task<IReadOnlyList<WorkOrderRow>> SearchAsync(
+        WorkOrderCriteria? criteria, IReadOnlyCollection<WorkOrderStatus>? statuses, DateTimeOffset? createdBefore, int take, CancellationToken ct) =>
+        throw new NotSupportedException();
 
     public Task<IReadOnlyDictionary<Guid, string>> NumbersAsync(IEnumerable<Guid> ids, CancellationToken ct) =>
         Task.FromResult<IReadOnlyDictionary<Guid, string>>(Items
