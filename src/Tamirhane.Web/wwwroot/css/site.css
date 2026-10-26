@@ -493,6 +493,18 @@ legend { padding: 0; }
 .note-list li .muted { display: block; font-size: 0.85rem; }
 .note-list.is-customer li { border-left-color: var(--stamp); }
 
+/* Teklif: toplamlar sağa yaslı, genel toplam iri; ekleme formları yan yana. */
+.quote { margin-top: 24px; }
+.quote .small { display: block; font-size: 0.8rem; }
+.quote-totals { display: grid; grid-template-columns: auto minmax(8rem, auto); justify-content: end; gap: 6px 24px; margin: 0; padding: 14px 20px; border-top: 1px solid var(--line); }
+.quote-totals dt { color: var(--lead-text); text-align: right; }
+.quote-totals dd { margin: 0; text-align: right; font-feature-settings: "tnum" 1; }
+.quote-totals .grand { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; color: var(--ink); }
+.quote-add { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; border-top: 1px solid var(--line); }
+.quote-add form { padding: 18px 20px; }
+.quote-add form + form { border-left: 1px solid var(--line); margin-top: 0; }
+.quote-add h3 { margin: 0 0 12px; font-size: 1.1rem; }
+
 /* ---------- Kaşe (tek cesur öğe) ---------- */
 
 .stamp {
@@ -554,6 +566,8 @@ legend { padding: 0; }
   .auth-art h2 { margin-top: 16px; }
   .work-layout { grid-template-columns: 1fr; }
   .work-columns { grid-template-columns: 1fr; }
+  .quote-add { grid-template-columns: 1fr; }
+  .quote-add form + form { border-left: 0; border-top: 1px solid var(--line); }
   .empty { grid-template-columns: 1fr; }
   .empty svg { width: 120px; }
 }

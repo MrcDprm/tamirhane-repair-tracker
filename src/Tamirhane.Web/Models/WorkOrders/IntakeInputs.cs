@@ -98,3 +98,24 @@ public sealed class NoteInput
 
     public bool VisibleToCustomer { get; set; }
 }
+
+/// <summary>Teklif kalemi formu. Parça kalemi stoktan seçilir; serbest kalemde açıklama ve fiyat yazılır.</summary>
+public sealed class QuoteLineInput
+{
+    public Tamirhane.Domain.WorkOrders.QuoteLineKind Kind { get; set; }
+
+    public Guid? PartId { get; set; }
+
+    [StringLength(200)]
+    public string? Description { get; set; }
+
+    public decimal Quantity { get; set; } = 1;
+
+    /// <summary>Boşsa stoktaki parçanın satış fiyatı.</summary>
+    public decimal? UnitPrice { get; set; }
+
+    public decimal DiscountRate { get; set; }
+
+    /// <summary>Boşsa atölyenin varsayılan KDV oranı.</summary>
+    public decimal? VatRate { get; set; }
+}

@@ -130,6 +130,29 @@ public sealed class WorkOrdersController : Controller
         return await AfterChangeAsync(id, result, pressed: false, get, ct);
     }
 
+    /// <summary>
+    /// Teklif kalemi: stoktan parça ya da serbest kalem. Fiyat ve KDV boşsa sunucu doldurur (parçanın satış fiyatı,
+    /// atölyenin varsayılan KDV'si); toplamlar her zaman sunucuda hesaplanır.
+    /// </summary>
+    [HttpPost("{id:guid}/quote-lines")]
+    public async Task<IActionResult> AddLine(
+        Guid id, QuoteLineInput input, [FromServices] AddQuoteLine add, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        Result result = ModelState.IsValid
+            ? await add.HandleAsync(new AddQuoteLineCommand(id, input.Kind, input.Kind == QuoteLineKind.Part ? input.PartId : null,
+                input.Description, input.Quantity, input.UnitPrice, input.VatRate, input.DiscountRate), ct)
+            : QuoteErrors.InvalidQuantity;
+        return await AfterChangeAsync(id, result, pressed: false, get, ct);
+    }
+
+    [HttpPost("{id:guid}/quote-lines/{lineId:guid}/remove")]
+    public async Task<IActionResult> RemoveLine(
+        Guid id, Guid lineId, [FromServices] RemoveQuoteLine remove, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        Result result = await remove.HandleAsync(id, lineId, ct);
+        return await AfterChangeAsync(id, result, pressed: false, get, ct);
+    }
+
     private async Task<IActionResult> AfterChangeAsync(Guid id, Result result, bool pressed, GetWorkOrder get, CancellationToken ct)
     {
         if (result.Error == ApplicationErrors.WorkOrderNotFound)
@@ -162,6 +185,15 @@ public sealed class WorkOrdersController : Controller
         [PaymentErrors.RefundDue.Code] = "Müşteriden fazla ödeme alınmış; teslimden önce iadeyi kaydet.",
         [PaymentErrors.RefundRequired.Code] = "İptalden önce alınan ödemeyi iade et.",
         [ApplicationErrors.OwnerOnly.Code] = "Borçlu teslimi sadece atölye sahibi onaylayabilir.",
+        [QuoteErrors.InvalidDescription.Code] = "Kalemin açıklamasını yaz (en fazla 200 karakter).",
+        [QuoteErrors.InvalidQuantity.Code] = "Miktar sıfırdan büyük bir sayı olmalı (en fazla iki ondalık).",
+        [QuoteErrors.PartQuantityMustBeWhole.Code] = "Stoktan parça tam adet eklenir (1, 2, 3...).",
+        [QuoteErrors.InvalidUnitPrice.Code] = "Birim fiyatı yaz: sıfır ya da daha büyük, en fazla iki ondalık.",
+        [QuoteErrors.InvalidVatRate.Code] = "KDV oranı 0 ile 100 arasında olmalı.",
+        [QuoteErrors.InvalidDiscount.Code] = "İskonto 0 ile 100 arasında olmalı.",
+        [QuoteErrors.NotEditable.Code] = "Müşteri karar verdikten sonra teklif değiştirilemez.",
+        [QuoteErrors.LineNotFound.Code] = "Bu kalem bulunamadı; sayfa güncellendi.",
+        [ApplicationErrors.PartNotFound.Code] = "Seçilen parça bulunamadı ya da kullanımdan kalkmış.",
     };
 
     private static string StepMessage(Error error) =>

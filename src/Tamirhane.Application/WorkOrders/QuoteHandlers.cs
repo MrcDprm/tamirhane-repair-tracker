@@ -5,18 +5,24 @@ using Tamirhane.Domain.WorkOrders;
 
 namespace Tamirhane.Application.WorkOrders;
 
+/// <summary>
+/// Teklif kalemi. Birim fiyat boşsa stoktaki parçanın satış fiyatı, KDV boşsa atölyenin varsayılan oranı kullanılır.
+/// </summary>
 public sealed record AddQuoteLineCommand(
     Guid WorkOrderId, QuoteLineKind Kind, Guid? PartId, string? Description,
-    decimal Quantity, decimal UnitPrice, decimal VatRate, decimal DiscountRate);
+    decimal Quantity, decimal? UnitPrice, decimal? VatRate, decimal DiscountRate);
 
 /// <summary>Teklife kalem ekler. Stoktan parça seçildiyse parça bu atölyenin olmalı ve kullanımda olmalı.</summary>
-public sealed class AddQuoteLine(IWorkOrderRepository orders, IPartRepository parts, IUnitOfWork uow, INotificationQueue queue, ICurrentUser user, TimeProvider clock)
+public sealed class AddQuoteLine(
+    IWorkOrderRepository orders, IPartRepository parts, IShopSettings settings, IUnitOfWork uow, INotificationQueue queue,
+    ICurrentUser user, TimeProvider clock)
     : WorkOrderHandler(orders, uow, queue, user, clock)
 {
     public Task<Result<Guid>> HandleAsync(AddQuoteLineCommand command, CancellationToken ct) =>
         RunAsync<Guid>(command.WorkOrderId, async order =>
         {
             var description = command.Description;
+            var unitPrice = command.UnitPrice;
             if (command.Kind == QuoteLineKind.Part && command.PartId is { } partId)
             {
                 var part = await parts.GetAsync(partId, ct);
@@ -24,10 +30,14 @@ public sealed class AddQuoteLine(IWorkOrderRepository orders, IPartRepository pa
                     return ApplicationErrors.PartNotFound;
                 if (string.IsNullOrWhiteSpace(description))
                     description = part.Name;
+                unitPrice ??= part.SalePrice;
             }
+            if (unitPrice is null)
+                return QuoteErrors.InvalidUnitPrice;
+            var vatRate = command.VatRate ?? (await settings.GetAsync(User.ShopId, ct)).DefaultVatRate;
 
             var line = order.AddQuoteLine(command.Kind, command.PartId, description ?? "",
-                command.Quantity, command.UnitPrice, command.VatRate, command.DiscountRate);
+                command.Quantity, unitPrice.Value, vatRate, command.DiscountRate);
             return line.IsSuccess ? Result.Success(line.Value.Id) : Result.Failure<Guid>(line.Error!);
         }, ct);
 }
