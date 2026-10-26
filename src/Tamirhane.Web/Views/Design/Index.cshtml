@@ -1,0 +1,104 @@
+@{
+    ViewData["Title"] = "Tasarım sistemi";
+    var swatches = new (string Name, string Token, string Role)[]
+    {
+        ("Tezgâh", "--bench", "Zemin"),
+        ("Yüzey", "--surface", "Tablo ve form"),
+        ("Etiket kartonu", "--card", "Sadece iş emri etiketi"),
+        ("Mürekkep", "--ink", "Metin"),
+        ("Istampa mavisi", "--stamp", "Kaşe ve tek birincil eylem"),
+        ("Uyarı turuncusu", "--warn", "Kritik stok, 30 günü geçen iş, borç"),
+        ("Kurşun", "--lead", "Çizgiler"),
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/design.css" asp-append-version="true" />
+}
+
+@* Örnek veriler (docs/plan.md yerleşim taslağından); gerçek ekranlar #21-#33'te. *@
+<h1>Tasarım sistemi</h1>
+<p class="muted">Sadece geliştirmede açılır. Temayı değiştirmek için işletim sisteminin açık/koyu ayarını kullan.</p>
+
+<h2>Üst çubuk (oturum açıkken)</h2>
+<div class="topbar design-frame" aria-hidden="true">
+    <span class="brand">Tamirhane</span>
+    <div class="topbar-search"><input type="search" placeholder="Ad, telefon, IMEI ya da iş emri no ara" tabindex="-1" /></div>
+    <div class="topbar-end">
+        <span class="btn btn-primary">Cihaz kabul et</span>
+        <select tabindex="-1"><option>Merkez</option></select>
+        <span class="btn">Menü</span>
+    </div>
+</div>
+
+<h2>Renkler</h2>
+<ul class="design-swatches">
+    @foreach (var s in swatches)
+    {
+        <li><span class="design-chip design-chip-@s.Token[2..]"></span><strong>@s.Name</strong><span class="muted">@s.Role</span></li>
+    }
+</ul>
+
+<h2>Yazı</h2>
+<p><span class="work-no">2026-0042</span>, iş emri numarası ve başlıklar Barlow Semi Condensed.</p>
+<p>Gövde ve formlar Public Sans: müşteri ekranın kırık olduğunu, cihazın düştükten sonra açılmadığını söylüyor.</p>
+<p>Sadece gerçek kodlar Red Hat Mono: IMEI <code>490154203237518</code>, takip kodu <code>7K3M9QX2HFDA</code>.</p>
+
+<h2>İş emri listesi</h2>
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr><th scope="col">No</th><th scope="col">Cihaz</th><th scope="col">Arıza</th><th scope="col">Müşteri</th><th scope="col">Durum</th><th scope="col" class="num">Bekleme</th></tr>
+        </thead>
+        <tbody>
+            <tr><td class="work-no">2026-0042</td><td>iPhone 13</td><td>Kırık ekran</td><td>Ayşe Kaya</td><td>Onarımda</td><td class="num">2 gün</td></tr>
+            <tr><td class="work-no">2026-0041</td><td>Lenovo T14</td><td>Fan sesi</td><td>Mert Demir</td><td>Teslime hazır</td><td class="num">bugün</td></tr>
+            <tr><td class="work-no">2026-0040</td><td>Dyson V11</td><td>Şarj olmuyor</td><td>Selin Arslan</td><td>Onay bekliyor</td><td class="num">4 gün</td></tr>
+            <tr><td class="work-no">2026-0031</td><td>Samsung A54</td><td>Batarya şişmiş</td><td>Oğuz Çelik</td><td><span class="warn-text">Onarımda, 32 gün</span></td><td class="num">32 gün</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>İş emri etiketi ve kaşeler</h2>
+<div class="design-ticket-row">
+    <article class="ticket" aria-label="İş emri etiketi">
+        <span class="work-no">2026-0042</span>
+        <p><strong>Apple iPhone 13</strong><br />IMEI <code>490154203237518</code></p>
+        <p>Ekran kırık, dokunmatik sağ altta çalışmıyor. Kasada çizik.</p>
+        <p class="design-stamps">
+            <span class="stamp">Teslim alındı</span>
+            <span class="stamp is-pressed">Onarımda</span>
+        </p>
+    </article>
+    <div>
+        <p class="muted">Durum her değiştiğinde etikete bir kaşe basılır. Bir kez, hafif eğik; hareket azaltma açıksa hareketsiz.</p>
+        <p class="design-stamps">
+            <span class="stamp">Teslime hazır</span>
+            <span class="stamp stamp-warn">İptal</span>
+        </p>
+    </div>
+</div>
+
+<h2>Form</h2>
+<form class="narrow" novalidate>
+    <div class="notice notice-error" role="alert">Formda düzeltilmesi gereken bir alan var.</div>
+    <div class="field">
+        <label for="d-name">Müşterinin adı</label>
+        <input id="d-name" value="Ayşe Kaya" autocomplete="off" />
+    </div>
+    <div class="field">
+        <label for="d-phone">Telefon</label>
+        <input id="d-phone" class="input-validation-error" value="0532 12" inputmode="tel" />
+        <span class="field-validation-error">Telefon 10 haneli olmalı: 0532 123 45 67 gibi.</span>
+    </div>
+    <div class="check"><input id="d-kvkk" type="checkbox" checked /><label for="d-kvkk">Aydınlatma metni müşteriye okundu</label></div>
+    <div class="inline-form">
+        <button type="button" class="btn btn-primary">Cihazı kabul et</button>
+        <button type="button" class="btn">Vazgeç</button>
+        <button type="button" class="btn btn-danger">İş emrini iptal et</button>
+    </div>
+</form>
+
+<h2>Bildirimler</h2>
+<div class="notice notice-ok" role="status">İş emri 2026-0042 teslime hazır olarak işaretlendi; müşteriye e-posta gidiyor.</div>
+<div class="notice notice-error" role="alert">Stokta yeterli parça yok: iPhone 13 ekran (kalan 0).</div>

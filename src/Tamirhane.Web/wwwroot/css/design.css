@@ -1,0 +1,17 @@
+/* Sadece /design vitrin sayfası (geliştirme). */
+.design-swatches { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.design-swatches li { display: grid; grid-template-columns: 44px 1fr; column-gap: 12px; align-items: center; }
+.design-swatches .muted { grid-column: 2; font-size: 0.875rem; }
+.design-chip { grid-row: span 2; width: 44px; height: 44px; border-radius: var(--radius-control); border: 1px solid var(--line); }
+.design-chip-bench { background: var(--bench); }
+.design-chip-surface { background: var(--surface); }
+.design-chip-card { background: var(--card); }
+.design-chip-ink { background: var(--ink); }
+.design-chip-stamp { background: var(--stamp); }
+.design-chip-warn { background: var(--warn); }
+.design-chip-lead { background: var(--lead); }
+.design-ticket-row { display: grid; grid-template-columns: minmax(0, 34rem) minmax(0, 1fr); gap: 32px; align-items: start; }
+.design-stamps { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 16px; }
+@media (max-width: 800px) { .design-ticket-row { grid-template-columns: 1fr; } }
+.design-frame { border: 1px solid var(--line); border-radius: var(--radius-control); margin-bottom: 8px; }
+.design-frame select { width: auto; }

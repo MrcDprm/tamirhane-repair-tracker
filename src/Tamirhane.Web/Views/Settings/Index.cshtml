@@ -3,101 +3,91 @@
     ViewData["Title"] = "Ayarlar";
 }
 
-<h1 class="h3 mb-3">Ayarlar</h1>
+<h1>Ayarlar</h1>
 
 @if (TempData["Status"] is string status)
 {
-    <div class="alert alert-success" role="status">@status</div>
+    <div class="notice notice-ok" role="status">@status</div>
 }
 @if (TempData["Error"] is string error)
 {
-    <div class="alert alert-danger" role="alert">@error</div>
+    <div class="notice notice-error" role="alert">@error</div>
 }
-<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+<div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
 
-<section class="mb-5" aria-labelledby="shop-heading">
-    <h2 id="shop-heading" class="h5">Atölye</h2>
-    <form asp-action="Update" method="post" novalidate class="col-lg-7">
-        <div class="mb-3">
-            <label asp-for="Shop.Name" class="form-label"></label>
-            <input asp-for="Shop.Name" class="form-control" autocomplete="organization" />
-            <span asp-validation-for="Shop.Name" class="text-danger small"></span>
+<section class="narrow" aria-labelledby="shop-heading">
+    <h2 id="shop-heading">Atölye</h2>
+    <form asp-action="Update" method="post" novalidate>
+        <div class="field">
+            <label asp-for="Shop.Name"></label>
+            <input asp-for="Shop.Name" autocomplete="organization" />
+            <span asp-validation-for="Shop.Name"></span>
         </div>
-        <div class="row g-3 mb-3">
-            <div class="col-sm-6">
-                <label asp-for="Shop.WarrantyDays" class="form-label"></label>
-                <input asp-for="Shop.WarrantyDays" class="form-control" type="number" min="0" max="3650" step="1" aria-describedby="warranty-help" />
-                <div id="warranty-help" class="form-text">Teslimden itibaren. 0 garanti yok demektir.</div>
-                <span asp-validation-for="Shop.WarrantyDays" class="text-danger small"></span>
-            </div>
-            <div class="col-sm-6">
-                <label asp-for="Shop.DefaultVatRate" class="form-label"></label>
-                @* type="number" tarayıcıda her zaman nokta ondalıkla gönderir; değer de kültürden bağımsız yazılır. *@
-                <input name="Shop.DefaultVatRate" id="Shop_DefaultVatRate" class="form-control" type="number" min="0" max="100" step="0.01"
-                       value="@Model.Shop.DefaultVatRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                       aria-describedby="vat-help" />
-                <div id="vat-help" class="form-text">Yeni teklif kalemlerinde önerilen oran; kalem başına değiştirilebilir.</div>
-                <span asp-validation-for="Shop.DefaultVatRate" class="text-danger small"></span>
-            </div>
+        <div class="field">
+            <label asp-for="Shop.WarrantyDays"></label>
+            <input asp-for="Shop.WarrantyDays" type="number" min="0" max="3650" step="1" inputmode="numeric" aria-describedby="warranty-help" />
+            <div id="warranty-help" class="field-help">Teslimden itibaren. 0, garanti yok demek.</div>
+            <span asp-validation-for="Shop.WarrantyDays"></span>
         </div>
-        <div class="mb-4">
-            <label asp-for="Shop.Locale" class="form-label"></label>
-            <select asp-for="Shop.Locale" class="form-select">
+        <div class="field">
+            <label asp-for="Shop.DefaultVatRate"></label>
+            @* type="number" tarayıcıda her zaman nokta ondalıkla gönderir; değer de kültürden bağımsız yazılır. *@
+            <input name="Shop.DefaultVatRate" id="Shop_DefaultVatRate" type="number" min="0" max="100" step="0.01" inputmode="decimal"
+                   value="@Model.Shop.DefaultVatRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                   aria-describedby="vat-help" />
+            <div id="vat-help" class="field-help">Yeni teklif kalemlerinde önerilen oran; kalem başına değiştirilebilir.</div>
+            <span asp-validation-for="Shop.DefaultVatRate"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Shop.Locale"></label>
+            <select asp-for="Shop.Locale">
                 <option value="tr">Türkçe</option>
                 <option value="en">English</option>
             </select>
-            <span asp-validation-for="Shop.Locale" class="text-danger small"></span>
+            <span asp-validation-for="Shop.Locale"></span>
         </div>
         <button type="submit" class="btn btn-primary">Ayarları kaydet</button>
     </form>
 </section>
 
 <section aria-labelledby="branches-heading">
-    <h2 id="branches-heading" class="h5">Şubeler</h2>
-    <p class="text-body-secondary">
+    <h2 id="branches-heading">Şubeler</h2>
+    <p class="muted">
         İş emirleri ve parça stoku şubeye bağlıdır. Tek şuben varsa şube seçimi hiçbir ekranda çıkmaz;
-        ikinci şubeyi eklediğinde menüde şube seçici görünür.
+        ikinci şubeyi eklediğinde üst çubukta şube seçici görünür.
     </p>
 
-    <ul class="list-group mb-4">
+    <ul class="plain-list">
         @foreach (var branch in Model.Branches)
         {
-            <li class="list-group-item">
-                <form asp-action="UpdateBranch" asp-route-id="@branch.Id" method="post" class="row g-2 align-items-center">
-                    <div class="col-md-4">
+            <li>
+                <form asp-action="UpdateBranch" asp-route-id="@branch.Id" method="post" class="inline-form fill">
+                    <div class="grow">
                         <label class="visually-hidden" for="name-@branch.Id">Şube adı</label>
-                        <input id="name-@branch.Id" name="Name" value="@branch.Name" class="form-control" maxlength="100" required />
+                        <input id="name-@branch.Id" name="Name" value="@branch.Name" maxlength="100" required />
                     </div>
-                    <div class="col-md-6">
+                    <div class="wide">
                         <label class="visually-hidden" for="address-@branch.Id">Adres</label>
-                        <input id="address-@branch.Id" name="Address" value="@branch.Address" class="form-control" maxlength="300" placeholder="Adres (isteğe bağlı)" />
+                        <input id="address-@branch.Id" name="Address" value="@branch.Address" maxlength="300" placeholder="Adres (isteğe bağlı)" />
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-outline-secondary w-100">Kaydet</button>
-                    </div>
+                    <button type="submit" class="btn">Kaydet</button>
                 </form>
             </li>
         }
     </ul>
 
-    <h3 class="h6">Şube ekle</h3>
-    <form asp-action="AddBranch" method="post" novalidate class="row g-2 align-items-start col-lg-10">
-        <div class="col-md-4">
+    <h3>Şube ekle</h3>
+    <form asp-action="AddBranch" method="post" novalidate class="inline-form">
+        <div class="grow">
             <label asp-for="NewBranch.Name" class="visually-hidden"></label>
-            <input asp-for="NewBranch.Name" class="form-control" placeholder="Şube adı" />
-            <span asp-validation-for="NewBranch.Name" class="text-danger small"></span>
+            <input asp-for="NewBranch.Name" placeholder="Şube adı" />
+            <span asp-validation-for="NewBranch.Name"></span>
         </div>
-        <div class="col-md-6">
+        <div class="wide">
             <label asp-for="NewBranch.Address" class="visually-hidden"></label>
-            <input asp-for="NewBranch.Address" class="form-control" placeholder="Adres (isteğe bağlı)" />
-            <span asp-validation-for="NewBranch.Address" class="text-danger small"></span>
+            <input asp-for="NewBranch.Address" placeholder="Adres (isteğe bağlı)" />
+            <span asp-validation-for="NewBranch.Address"></span>
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Ekle</button>
-        </div>
+        <button type="submit" class="btn btn-primary">Şube ekle</button>
     </form>
 </section>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
