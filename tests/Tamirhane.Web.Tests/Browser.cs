@@ -11,14 +11,18 @@ public sealed partial class Browser(HttpClient client)
     /// <summary>
     /// Formun bulunduğu sayfayı açar, oradaki CSRF token'ını alır ve alanları gönderir; gerçek bir form gönderimi gibi.
     /// </summary>
-    public async Task<HttpResponseMessage> SubmitAsync(string page, string action, Dictionary<string, string> fields)
+    public async Task<HttpResponseMessage> SubmitAsync(
+        string page, string action, Dictionary<string, string> fields, Dictionary<string, string>? headers = null)
     {
         var html = await client.GetStringAsync(page);
         var token = AntiforgeryField().Match(html);
         Assert.True(token.Success, $"{page} sayfasında CSRF token'ı yok.");
 
         fields["__RequestVerificationToken"] = token.Groups[1].Value;
-        return await client.PostAsync(action, new FormUrlEncodedContent(fields));
+        using var request = new HttpRequestMessage(HttpMethod.Post, action) { Content = new FormUrlEncodedContent(fields) };
+        foreach (var (name, value) in headers ?? [])
+            request.Headers.Add(name, value); // ör. htmx'in gönderdiği HX-Request
+        return await client.SendAsync(request);
     }
 
     /// <summary>Yönlendirilen adres; yönlendirme yoksa test düşer.</summary>
