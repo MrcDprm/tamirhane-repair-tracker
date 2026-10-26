@@ -636,6 +636,21 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
 .track-notes time { color: var(--lead-text); font-size: 0.9rem; }
 .track-notes p { margin: 2px 0 0; overflow-wrap: anywhere; }
 
+/* Teklif: kalemler, toplam ve karar formu; karar verilince kaşe. */
+.track-quote { margin-top: 28px; padding: 20px; background: var(--surface); border-radius: var(--radius-card); border-top: 4px solid var(--stamp); }
+.track-quote h2 { margin-top: 0; }
+.track-lines { list-style: none; margin: 0; padding: 0; }
+.track-lines li { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.track-lines small { display: block; color: var(--lead-text); font-size: 0.88rem; }
+.track-lines strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.track-totals { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; margin: 12px 0 0; }
+.track-totals dt { color: var(--lead-text); }
+.track-totals dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.track-totals .track-total { color: var(--ink); font-family: var(--font-display); font-size: 1.4rem; margin-top: 6px; }
+.track-decide { margin-top: 20px; }
+.track-decide .track-actions .btn { flex: 1 1 12rem; }
+.track-decided { display: flex; align-items: center; gap: 12px; margin: 16px 0 0; color: var(--lead-text); }
+
 .track-contact { margin-top: 32px; padding: 20px; background: var(--surface); border-radius: var(--radius-card); }
 .track-contact h2 { margin-top: 0; }
 .track-contact p { margin: 0 0 14px; }

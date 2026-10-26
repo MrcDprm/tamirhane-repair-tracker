@@ -9,6 +9,12 @@ public sealed record TrackingStep(WorkOrderStatus Status, DateTimeOffset? At);
 
 public sealed record TrackingNote(string Text, DateTimeOffset At);
 
+/// <summary>Teklif kalemi, müşterinin gördüğü kadarıyla (stok kodu ya da parça kimliği yok).</summary>
+public sealed record TrackingQuoteLine(string Description, decimal Quantity, decimal UnitPrice, decimal DiscountRate, decimal VatRate, decimal Total);
+
+/// <summary>Verilmiş karar; kararı verenin yazdığı ad sayfada gösterilmez.</summary>
+public sealed record TrackingDecision(QuoteDecisionKind Kind, DateTimeOffset At);
+
 /// <summary>
 /// Müşterinin takip sayfası (giriş yok, erişim takip koduyla). Bilerek dar tutulur: müşterinin adı maskeli gelir,
 /// tam adı, telefonu, e-postası, cihaz şifresi, IMEI/seri no, personel adları ve atölye içi notlar burada hiç yoktur.
@@ -20,6 +26,12 @@ public sealed record TrackingView(
     IReadOnlyList<TrackingStep> Steps, IReadOnlyList<TrackingNote> Notes)
 {
     public bool IsClosed => Status is WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled;
+
+    /// <summary>Teklif sadece gönderildikten sonra görünür (inceleme sırasında hazırlanan kalemler taslaktır).</summary>
+    public IReadOnlyList<TrackingQuoteLine> QuoteLines { get; init; } = [];
+    public QuoteTotals QuoteTotals { get; init; } = QuoteTotals.Of([]);
+    public TrackingDecision? Decision { get; init; }
+    public bool CanDecide => Status == WorkOrderStatus.AwaitingApproval;
 }
 
 public sealed class GetTracking(IWorkOrderRepository orders, ITrackingDirectory directory)
@@ -54,10 +66,19 @@ public sealed class GetTracking(IWorkOrderRepository orders, ITrackingDirectory 
         var notes = order.Notes.Where(n => n.VisibleToCustomer).OrderByDescending(n => n.At)
             .Select(n => new TrackingNote(n.Text, n.At)).ToList();
 
+        // Gönderilmemiş teklif (inceleme sırasındaki taslak) ve teklifsiz onarım müşteriye gösterilmez.
+        var quoteSent = order.Status == WorkOrderStatus.AwaitingApproval || order.QuoteDecision is not null;
         return new TrackingView(
             order.Number, NameMask.Mask(parties.CustomerName), parties.DeviceKind, parties.Brand, parties.Model, order.Complaint,
             order.Status, order.CreatedAt, order.PromisedDate, order.DeliveredAt, order.WarrantyUntil,
             parties.ShopName, parties.BranchName, parties.BranchAddress, parties.BranchPhone,
-            steps, notes);
+            steps, notes)
+        {
+            QuoteLines = quoteSent
+                ? order.QuoteLines.Select(l => new TrackingQuoteLine(l.Description, l.Quantity, l.UnitPrice, l.DiscountRate, l.VatRate, l.Total)).ToList()
+                : [],
+            QuoteTotals = quoteSent ? order.QuoteTotals : QuoteTotals.Of([]),
+            Decision = order.QuoteDecision is { } d ? new TrackingDecision(d.Kind, d.At) : null,
+        };
     }
 }

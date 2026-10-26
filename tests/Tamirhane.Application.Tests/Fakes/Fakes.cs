@@ -26,9 +26,16 @@ public sealed class FakeUnitOfWork : IUnitOfWork
 {
     public int Saves { get; private set; }
     public int Commits { get; private set; }
+    /// <summary>Bir sonraki kayıt, aynı anda gelen başka bir istek kaydı değiştirmiş gibi reddedilir.</summary>
+    public bool ConflictOnNextSave { get; set; }
 
     public Task SaveChangesAsync(CancellationToken ct)
     {
+        if (ConflictOnNextSave)
+        {
+            ConflictOnNextSave = false;
+            throw new ConcurrencyConflictException(new InvalidOperationException("test"));
+        }
         Saves++;
         return Task.CompletedTask;
     }
@@ -46,6 +53,13 @@ public sealed class FakeUnitOfWork : IUnitOfWork
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
+}
+
+public sealed class FakeWorkshop : IWorkshopNotifier
+{
+    public List<Guid> QuoteDecisions { get; } = [];
+
+    public void QuoteDecided(Guid shopId, Guid workOrderId) => QuoteDecisions.Add(workOrderId);
 }
 
 public sealed class FakeQueue : INotificationQueue

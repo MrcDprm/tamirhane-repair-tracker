@@ -795,6 +795,12 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasColumnName("tracking_code")
                         .IsFixedLength();
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<Guid?>("WarrantyOfId")
                         .HasColumnType("uuid")
                         .HasColumnName("warranty_of_id");
@@ -1119,7 +1125,7 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
 
                             b1.HasKey("WorkOrderId");
 
-                            b1.ToTable("work_orders");
+                            b1.ToTable("work_orders", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("WorkOrderId")

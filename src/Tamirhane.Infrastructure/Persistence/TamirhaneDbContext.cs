@@ -39,7 +39,17 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
     // Filtre her sorguda bu değeri parametre olarak okur; oturum yoksa Guid.Empty olur ve hiçbir kayıt dönmez.
     private Guid CurrentShopId => currentUser.ShopId;
 
-    Task IUnitOfWork.SaveChangesAsync(CancellationToken ct) => SaveChangesAsync(ct);
+    async Task IUnitOfWork.SaveChangesAsync(CancellationToken ct)
+    {
+        try
+        {
+            await SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException e)
+        {
+            throw new ConcurrencyConflictException(e);
+        }
+    }
 
     async Task<ITransaction> IUnitOfWork.BeginTransactionAsync(CancellationToken ct) =>
         new EfTransaction(await Database.BeginTransactionAsync(ct));

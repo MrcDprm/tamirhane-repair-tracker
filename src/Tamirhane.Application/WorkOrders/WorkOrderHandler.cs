@@ -27,7 +27,14 @@ public abstract class WorkOrderHandler(
         if (result.IsFailure)
             return result;
 
-        await unitOfWork.SaveChangesAsync(ct);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (ConcurrencyConflictException)
+        {
+            return ApplicationErrors.ConcurrentChange;
+        }
         if (order.Status != before)
             notifications.Enqueue(new WorkOrderNotification(order.ShopId, order.Id, order.Status));
         return result;

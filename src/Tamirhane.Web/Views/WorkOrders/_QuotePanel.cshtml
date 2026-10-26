@@ -18,6 +18,8 @@
             <span class="stamp stamp-sm@(decision.Kind == QuoteDecisionKind.Approved ? " stamp-ok" : " stamp-warn")">
                 @(decision.Kind == QuoteDecisionKind.Approved ? "Onaylandı" : "Reddedildi")
             </span>
+            @* Müşteri takip sayfasından verdiyse personel kaydı yoktur; telefonla bildirdiyse personel onun adına kaydetmiştir. *@
+            <span class="muted">@decision.ByName, @(decision.StaffId is null ? "takip sayfasından" : "telefonla"), @decision.At.ToOffset(TimeSpan.FromHours(3)).ToString("d MMMM HH:mm")</span>
         }
         else if (Model.Status == WorkOrderStatus.AwaitingApproval)
         {

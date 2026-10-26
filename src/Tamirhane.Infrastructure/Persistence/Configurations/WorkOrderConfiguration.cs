@@ -13,6 +13,9 @@ internal sealed class WorkOrderConfiguration : IEntityTypeConfiguration<WorkOrde
         b.Property(o => o.Number).HasMaxLength(20);
         b.Property(o => o.TrackingCode).HasMaxLength(TrackingCode.Length).IsFixedLength();
         b.Property(o => o.Complaint).HasMaxLength(WorkOrder.MaxTextLength);
+        // Satır sürümü (PostgreSQL'in xmin sistem sütunu): durum değişikliği aynı anda iki kez kaydedilemez
+        // (ör. müşteri teklif onayına çift tıklarsa ikinci istek "değişmiş" hatası alır).
+        b.Property<uint>("Version").IsRowVersion();
 
         b.HasIndex(o => new { o.ShopId, o.Number }).IsUnique();
         b.HasIndex(o => o.TrackingCode).IsUnique();

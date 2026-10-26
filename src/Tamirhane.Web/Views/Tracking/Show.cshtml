@@ -26,6 +26,10 @@
         _ => "",
     };
     var current = Model.Steps.Count(s => s.At is not null) - 1;
+    var code = ViewContext.RouteData.Values["code"] as string;
+    var done = TempData["Decision"] as string;
+    var failed = (TempData["DecisionError"] ?? ViewData["DecisionError"]) as string;
+    string Percent(decimal value) => "%" + value.ToString("0.##");
     string? Maps(string? address) => address is null ? null
         : "https://www.google.com/maps/search/?api=1&query=" + WebUtility.UrlEncode($"{Model.ShopName} {address}");
 }
@@ -42,6 +46,14 @@
 </header>
 
 <main id="main" class="track-body">
+    @if (done is not null)
+    {
+        <div class="notice notice-ok" role="status">@done</div>
+    }
+    @if (failed is not null)
+    {
+        <div class="notice notice-error" role="alert">@failed</div>
+    }
     <p class="track-lead">@lead</p>
 
     @if (!Model.IsClosed && Model.PromisedDate is { } promised)
@@ -51,6 +63,58 @@
     else if (Model.Status == WorkOrderStatus.Delivered && Model.WarrantyUntil is { } until)
     {
         <p class="track-eta">Garanti <strong>@until.ToOffset(turkey).ToString("d MMMM yyyy")</strong> tarihine kadar</p>
+    }
+
+    @if (Model.QuoteLines.Count > 0)
+    {
+        var totals = Model.QuoteTotals;
+        <section class="track-quote" aria-labelledby="quote-heading">
+            <h2 id="quote-heading">Teklif</h2>
+            <ul class="track-lines">
+                @foreach (var line in Model.QuoteLines)
+                {
+                    <li>
+                        <span>@line.Description
+                            <small>@line.Quantity.ToString("0.##") × @line.UnitPrice.ToString("C")@(line.DiscountRate > 0 ? $", iskonto {Percent(line.DiscountRate)}" : ""), KDV @Percent(line.VatRate)</small>
+                        </span>
+                        <strong>@line.Total.ToString("C")</strong>
+                    </li>
+                }
+            </ul>
+            <dl class="track-totals">
+                @if (totals.Discount > 0)
+                {
+                    <dt>İskonto</dt><dd>−@totals.Discount.ToString("C")</dd>
+                }
+                <dt>KDV hariç</dt><dd>@totals.Net.ToString("C")</dd>
+                <dt>KDV</dt><dd>@totals.Vat.ToString("C")</dd>
+                <dt class="track-total">Toplam</dt><dd class="track-total">@totals.Total.ToString("C")</dd>
+            </dl>
+
+            @if (Model.CanDecide)
+            {
+                @* Çift tıklamaya karşı düğmeler gönderimden sonra kilitlenir (tracking.js); asıl koruma sunucuda. *@
+                <form method="post" asp-action="Decide" asp-route-code="@code" class="track-decide" data-once>
+                    <div class="field">
+                        <label for="decided-by">Adın ve soyadın</label>
+                        <input id="decided-by" name="DecidedBy" value="@ViewData["DecidedBy"]" maxlength="100" autocomplete="name" required aria-describedby="decided-by-help" />
+                        <div id="decided-by-help" class="field-help">Kararı kimin verdiği iş emrine yazılır. Karar bir kez verilir.</div>
+                    </div>
+                    <div class="track-actions">
+                        <button type="submit" name="Approved" value="true" class="btn btn-primary">Onarımı onayla</button>
+                        <button type="submit" name="Approved" value="false" class="btn">Onarım istemiyorum</button>
+                    </div>
+                </form>
+            }
+            else if (Model.Decision is { } decision)
+            {
+                var approved = decision.Kind == QuoteDecisionKind.Approved;
+                <p class="track-decided">
+                    <span class="stamp stamp-sm@(approved ? " stamp-ok" : " stamp-warn")">@(approved ? "Onaylandı" : "Reddedildi")</span>
+                    <time datetime="@decision.At.ToString("O")">@decision.At.ToOffset(turkey).ToString("d MMMM HH:mm")</time>
+                </p>
+            }
+        </section>
     }
 
     <section aria-labelledby="steps-heading">
