@@ -37,6 +37,7 @@
                     <ul class="nav">
                         <li><a asp-controller="Panel" asp-action="Index" aria-current="@Current("Panel")"><svg class="icon"><use href="/img/icons.svg#i-home" /></svg>Panel</a></li>
                         <li><a asp-controller="WorkOrders" asp-action="New" aria-current="@Current("WorkOrders")"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>Cihaz kabul</a></li>
+                        <li><a asp-controller="Inventory" asp-action="Index" aria-current="@Current("Inventory")"><svg class="icon"><use href="/img/icons.svg#i-box" /></svg>Stok</a></li>
                         @if (isOwner)
                         {
                             <li><a asp-controller="Staff" asp-action="Index" aria-current="@Current("Staff")"><svg class="icon"><use href="/img/icons.svg#i-users" /></svg>Personel</a></li>

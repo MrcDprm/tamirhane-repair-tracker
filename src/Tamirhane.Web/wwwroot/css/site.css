@@ -463,6 +463,27 @@ legend { padding: 0; }
 .hang-tag::after { content: ""; position: absolute; top: -18px; left: 50%; width: 2px; height: 30px; margin-left: -1px; background: var(--card-dim); }
 .hang-tag strong { display: block; font-family: var(--font-display); font-size: 2.8rem; line-height: 1; }
 .hang-tag.is-warn strong { color: var(--warn-text); }
+/* Her etiket kancasında biraz farklı açıyla asılı (satır içi stil yok: CSP). */
+.hang-tag:nth-child(4n+1) { --tilt: -1.5deg; }
+.hang-tag:nth-child(4n+2) { --tilt: 2deg; }
+.hang-tag:nth-child(4n+3) { --tilt: -0.8deg; }
+.hang-tag:nth-child(4n) { --tilt: 1.2deg; }
+.hang-tags-2 { grid-template-columns: repeat(2, minmax(0, 220px)); }
+a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness: 2px; }
+.panel-foot { margin: 0; max-width: none; padding: 12px 20px; border-top: 1px solid var(--line); font-size: 0.9rem; }
+.panel-head form.inline-form { flex-wrap: nowrap; }
+.panel-head input[type="search"] { width: min(280px, 60vw); }
+.is-retired td { color: var(--lead-text); }
+.facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; margin: 0; }
+.facts dt { color: var(--lead-text); }
+.facts dd { margin: 0; }
+.stock-count { font-family: var(--font-display); font-weight: 700; font-size: 4rem; line-height: 1; margin: 0 0 4px; }
+.stock-forms { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: 1px solid var(--line); }
+.stock-forms form { padding: 18px 20px; }
+.stock-forms form + form { border-left: 1px solid var(--line); }
+.stock-forms h3 { margin: 0 0 12px; font-size: 1.1rem; }
+.change-plus { color: var(--ok); font-weight: 700; }
+.change-minus { color: var(--warn-text); font-weight: 700; }
 
 /* İş emri sayfası: solda etiket, sağda bilgi ve işlemler. */
 .work-layout { display: grid; grid-template-columns: minmax(0, 34rem) minmax(0, 1fr); gap: 32px; align-items: start; }
@@ -567,6 +588,8 @@ legend { padding: 0; }
   .work-layout { grid-template-columns: 1fr; }
   .work-columns { grid-template-columns: 1fr; }
   .quote-add { grid-template-columns: 1fr; }
+  .stock-forms { grid-template-columns: 1fr; }
+  .stock-forms form + form { border-left: 0; border-top: 1px solid var(--line); }
   .quote-add form + form { border-left: 0; border-top: 1px solid var(--line); }
   .empty { grid-template-columns: 1fr; }
   .empty svg { width: 120px; }

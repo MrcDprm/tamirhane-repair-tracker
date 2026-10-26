@@ -1,0 +1,150 @@
+@model InventoryPage
+@{
+    ViewData["Title"] = "Stok";
+    var list = Model.List;
+    var isOwner = User.IsInRole("Owner");
+}
+
+<div class="page-head">
+    <div>
+        <h1>Stok</h1>
+        <p>Bu şubedeki parçalar. Onarım bitince kullanılan parça stoktan kendiliğinden düşer; iptalde geri gelir.</p>
+    </div>
+</div>
+
+@* Form hataları herkese görünür yerde (teknisyen elle gönderirse de neden reddedildiğini görür). *@
+<div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+
+@* Panoya asılı iki etiket: parça çeşidi ve kritik stoktakiler (tıklayınca liste süzülür). *@
+<div class="hang-tags hang-tags-2">
+    <a class="hang-tag" asp-action="Index"><strong>@list.ActiveCount</strong>parça çeşidi</a>
+    <a class="hang-tag@(list.LowCount > 0 ? " is-warn" : "")" asp-action="Index" asp-route-low="true"><strong>@list.LowCount</strong>kritik stokta</a>
+</div>
+
+<section class="panel" aria-labelledby="parts-heading">
+    <div class="panel-head">
+        <h2 id="parts-heading">@(Model.LowOnly ? "Kritik stoktaki parçalar" : "Parçalar")</h2>
+        <form method="get" asp-action="Index" class="inline-form" role="search">
+            <label for="part-search" class="visually-hidden">Parça kodu ya da adı</label>
+            <input id="part-search" name="q" type="search" value="@Model.Query" placeholder="Kod ya da ad ara" autocomplete="off" />
+            @if (Model.LowOnly)
+            {
+                <input type="hidden" name="low" value="true" />
+            }
+            <button type="submit" class="btn"><svg class="icon"><use href="/img/icons.svg#i-search" /></svg>Ara</button>
+        </form>
+    </div>
+
+    @if (list.Parts.Count == 0)
+    {
+        <p class="panel-body muted">
+            @(Model.Query is { Length: > 0 } ? $"\"{Model.Query}\" ile eşleşen parça yok."
+                : Model.LowOnly ? "Kritik seviyeye inmiş parça yok."
+                : "Henüz parça yok. Aşağıdan ilk parçayı ekle.")
+        </p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Kod</th>
+                        <th scope="col">Parça</th>
+                        <th scope="col" class="num">Stok</th>
+                        <th scope="col" class="num">Kritik seviye</th>
+                        <th scope="col" class="num">Satış fiyatı</th>
+                        @if (isOwner)
+                        {
+                            <th scope="col" class="num">Alış fiyatı</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var part in list.Parts)
+                    {
+                        <tr class="@(part.IsActive ? "" : "is-retired")">
+                            <td><code>@part.Sku</code></td>
+                            <td>
+                                <a asp-action="Part" asp-route-id="@part.Id">@part.Name</a>
+                                @if (!part.IsActive)
+                                {
+                                    <span class="muted">(kullanımdan kalktı)</span>
+                                }
+                            </td>
+                            <td class="num">
+                                @if (part.IsLow)
+                                {
+                                    <span class="stamp stamp-sm stamp-warn">Kritik</span>
+                                }
+                                <strong class="@(part.IsLow ? "warn-text" : "")">@part.Quantity</strong>
+                            </td>
+                            <td class="num">@(part.CriticalLevel == 0 ? "" : part.CriticalLevel)</td>
+                            <td class="num">@part.SalePrice.ToString("C")</td>
+                            @if (isOwner)
+                            {
+                                <td class="num muted">@part.CostPrice?.ToString("C")</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    <p class="panel-foot">
+        @if (Model.IncludeInactive)
+        {
+            <a asp-action="Index">Kullanımdan kalkanları gizle</a>
+        }
+        else
+        {
+            <a asp-action="Index" asp-route-inactive="true">Kullanımdan kalkan parçaları da göster</a>
+        }
+    </p>
+</section>
+
+@if (isOwner)
+{
+    <section class="panel" aria-labelledby="new-part-heading">
+        <div class="panel-head"><h2 id="new-part-heading">Yeni parça</h2></div>
+        <form method="post" asp-action="Add" novalidate class="panel-body">
+            <div class="field-row">
+                <div class="field">
+                    <label asp-for="NewPart.Sku"></label>
+                    <input asp-for="NewPart.Sku" class="code" placeholder="ör. IP13-SCR" autocomplete="off" />
+                    <span asp-validation-for="NewPart.Sku"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="NewPart.Name"></label>
+                    <input asp-for="NewPart.Name" placeholder="ör. iPhone 13 ekran paneli" autocomplete="off" />
+                    <span asp-validation-for="NewPart.Name"></span>
+                </div>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label asp-for="NewPart.CostPrice"></label>
+                    <input name="NewPart.CostPrice" id="NewPart_CostPrice" type="number" min="0" step="0.01" inputmode="decimal"
+                           value="@(Model.NewPart.CostPrice == 0 ? "" : Model.NewPart.CostPrice.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                </div>
+                <div class="field">
+                    <label asp-for="NewPart.SalePrice"></label>
+                    <input name="NewPart.SalePrice" id="NewPart_SalePrice" type="number" min="0" step="0.01" inputmode="decimal"
+                           value="@(Model.NewPart.SalePrice == 0 ? "" : Model.NewPart.SalePrice.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                    <span asp-validation-for="NewPart.SalePrice"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="NewPart.CriticalLevel"></label>
+                    <input asp-for="NewPart.CriticalLevel" type="number" min="0" step="1" inputmode="numeric" aria-describedby="critical-help" />
+                    <div id="critical-help" class="field-help">Bu adede inince kritik stokta görünür. 0: uyarma.</div>
+                    <span asp-validation-for="NewPart.CriticalLevel"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="NewPart.OpeningQuantity"></label>
+                    <input asp-for="NewPart.OpeningQuantity" type="number" min="0" step="1" inputmode="numeric" />
+                    <span asp-validation-for="NewPart.OpeningQuantity"></span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Parçayı ekle</button>
+        </form>
+    </section>
+}
