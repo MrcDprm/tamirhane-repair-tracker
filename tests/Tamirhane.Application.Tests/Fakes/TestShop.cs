@@ -38,6 +38,7 @@ public sealed class TestShop
     public FakeStock Stock { get; } = new();
     public FakeUnitOfWork UnitOfWork { get; } = new();
     public FakeQueue Queue { get; } = new();
+    public FakeWorkshop Workshop { get; } = new();
 
     public ReceiveDevice ReceiveDevice() => new(Customers, Devices, Orders, UnitOfWork, Queue, User, Clock);
     public FindCustomerByPhone FindCustomerByPhone() => new(Customers, Devices);
@@ -48,7 +49,7 @@ public sealed class TestShop
     public RemoveQuoteLine RemoveQuoteLine() => new(Orders, UnitOfWork, Queue, User, Clock);
     public SendQuote SendQuote() => new(Orders, UnitOfWork, Queue, User, Clock);
     public RecordQuoteDecision RecordQuoteDecision() => new(Orders, UnitOfWork, Queue, User, Clock);
-    public DecideQuoteByCustomer DecideQuoteByCustomer() => new(Orders, UnitOfWork, Queue, Clock);
+    public DecideQuoteByCustomer DecideQuoteByCustomer() => new(Orders, UnitOfWork, Queue, Workshop, Clock);
     public MarkReady MarkReady() => new(Orders, Stock, UnitOfWork, Queue, User, Clock);
     public DeliverWorkOrder Deliver() => new(Orders, new FakeSettings(Settings), UnitOfWork, Queue, User, Clock);
     public CancelWorkOrder Cancel() => new(Orders, Stock, UnitOfWork, Queue, User, Clock);

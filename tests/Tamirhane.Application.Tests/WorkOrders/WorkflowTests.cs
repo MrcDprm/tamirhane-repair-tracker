@@ -108,6 +108,51 @@ public class WorkflowTests
         Assert.Equal(WorkOrderStatus.InRepair, order.Status);
         Assert.Null(order.QuoteDecision!.StaffId);
         Assert.Equal(WorkOrderStatus.InRepair, shop.Queue.Sent[^1].Status);
+        Assert.Equal([id], shop.Workshop.QuoteDecisions);
+    }
+
+    [Fact]
+    public async Task Customer_decides_only_once()
+    {
+        var (shop, id) = await DiagnosingAsync();
+        await shop.AddQuoteLine().HandleAsync(Labor(id), default);
+        await shop.SendQuote().HandleAsync(id, default);
+        var code = shop.Orders.Items[0].TrackingCode;
+        await shop.DecideQuoteByCustomer().HandleAsync(code, approved: true, "Ayşe Kaya", default);
+
+        var second = await shop.DecideQuoteByCustomer().HandleAsync(code, approved: false, "Ayşe Kaya", default);
+
+        Assert.Equal(WorkOrderErrors.InvalidTransition, second.Error);
+        Assert.Equal(QuoteDecisionKind.Approved, shop.Orders.Items[0].QuoteDecision!.Kind);
+        Assert.Single(shop.Workshop.QuoteDecisions);
+    }
+
+    [Fact]
+    public async Task Simultaneous_second_decision_is_not_saved_and_nobody_is_notified()
+    {
+        var (shop, id) = await DiagnosingAsync();
+        await shop.AddQuoteLine().HandleAsync(Labor(id), default);
+        await shop.SendQuote().HandleAsync(id, default);
+        var sent = shop.Queue.Sent.Count;
+        shop.UnitOfWork.ConflictOnNextSave = true; // aynı anda gelen öbür istek önce kaydetti
+
+        var result = await shop.DecideQuoteByCustomer().HandleAsync(shop.Orders.Items[0].TrackingCode, true, "Ayşe Kaya", default);
+
+        Assert.Equal(ApplicationErrors.ConcurrentChange, result.Error);
+        Assert.Equal(sent, shop.Queue.Sent.Count);
+        Assert.Empty(shop.Workshop.QuoteDecisions);
+    }
+
+    [Fact]
+    public async Task Workshop_step_that_loses_a_race_reports_the_change_instead_of_failing()
+    {
+        var shop = new TestShop();
+        var id = await shop.ReceiveAsync();
+        shop.UnitOfWork.ConflictOnNextSave = true;
+
+        var result = await shop.StartDiagnosis().HandleAsync(id, default);
+
+        Assert.Equal(ApplicationErrors.ConcurrentChange, result.Error);
     }
 
     [Fact]

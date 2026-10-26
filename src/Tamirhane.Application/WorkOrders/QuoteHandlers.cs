@@ -59,9 +59,11 @@ public sealed class RecordQuoteDecision(IWorkOrderRepository orders, IUnitOfWork
 
 /// <summary>
 /// Müşteri teklifi takip sayfasından onaylar ya da reddeder. Giriş yoktur: erişim takip koduyla,
-/// bu yüzden ICurrentUser kullanılmaz ve kayıt personel olmadan yapılır.
+/// bu yüzden ICurrentUser kullanılmaz ve kayıt personel olmadan yapılır. Karar bir kez verilir: ikinci deneme
+/// (aynı anda gelen çift tıklama dahil) kaydedilmez. Karar atölyeye e-postayla bildirilir.
 /// </summary>
-public sealed class DecideQuoteByCustomer(IWorkOrderRepository orders, IUnitOfWork unitOfWork, INotificationQueue notifications, TimeProvider clock)
+public sealed class DecideQuoteByCustomer(
+    IWorkOrderRepository orders, IUnitOfWork unitOfWork, INotificationQueue notifications, IWorkshopNotifier workshop, TimeProvider clock)
 {
     public async Task<Result> HandleAsync(string trackingCode, bool approved, string customerName, CancellationToken ct)
     {
@@ -74,8 +76,16 @@ public sealed class DecideQuoteByCustomer(IWorkOrderRepository orders, IUnitOfWo
         if (result.IsFailure)
             return result;
 
-        await unitOfWork.SaveChangesAsync(ct);
+        try
+        {
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+        catch (ConcurrencyConflictException)
+        {
+            return ApplicationErrors.ConcurrentChange;
+        }
         notifications.Enqueue(new WorkOrderNotification(order.ShopId, order.Id, order.Status));
+        workshop.QuoteDecided(order.ShopId, order.Id);
         return Result.Success();
     }
 }

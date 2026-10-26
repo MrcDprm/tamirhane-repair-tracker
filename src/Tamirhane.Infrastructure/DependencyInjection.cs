@@ -9,6 +9,7 @@ using Tamirhane.Application.Abstractions;
 using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Identity;
+using Tamirhane.Infrastructure.Notifications;
 using Tamirhane.Infrastructure.Persistence;
 using Tamirhane.Infrastructure.Printing;
 
@@ -71,6 +72,8 @@ public static class DependencyInjection
         services.AddHostedService<BackgroundJobWorker>();
         services.AddSingleton<EmailOutbox>();
         services.AddScoped<INotificationQueue, WorkOrderNotificationQueue>();
+        services.AddScoped<IWorkshopNotifier, WorkshopNotifier>();
+        services.AddScoped<WorkshopEmails>();
         return services;
     }
 

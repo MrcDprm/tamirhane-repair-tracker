@@ -89,6 +89,38 @@ public class TrackingViewTests
     }
 
     [Fact]
+    public async Task Draft_quote_stays_hidden_until_it_is_sent()
+    {
+        _order.StartDiagnosis(Staff, Now);
+        _order.AddQuoteLine(QuoteLineKind.Labor, null, "Ekran değişimi", 1, 1000, 20, 0);
+
+        var draft = (await _get.HandleAsync(Code, default))!;
+        Assert.Empty(draft.QuoteLines);
+        Assert.False(draft.CanDecide);
+
+        _order.SendQuote(Staff, Now);
+        var sent = (await _get.HandleAsync(Code, default))!;
+        Assert.Equal(["Ekran değişimi"], sent.QuoteLines.Select(l => l.Description));
+        Assert.Equal(1200m, sent.QuoteTotals.Total);
+        Assert.True(sent.CanDecide);
+    }
+
+    [Fact]
+    public async Task Decision_is_shown_without_the_typed_name()
+    {
+        _order.StartDiagnosis(Staff, Now);
+        _order.AddQuoteLine(QuoteLineKind.Labor, null, "Ekran değişimi", 1, 1000, 20, 0);
+        _order.SendQuote(Staff, Now);
+        _order.DecideQuote(approved: false, "Ayşe Kaya", null, Now.AddHours(1));
+
+        var view = (await _get.HandleAsync(Code, default))!;
+
+        Assert.False(view.CanDecide);
+        Assert.Equal(new TrackingDecision(QuoteDecisionKind.Declined, Now.AddHours(1)), view.Decision);
+        Assert.Single(view.QuoteLines); // karar sonrası teklif görünmeye devam eder
+    }
+
+    [Fact]
     public async Task Promised_date_reaches_the_page()
     {
         _order.Promise(new DateOnly(2026, 10, 30), new DateOnly(2026, 10, 26));
