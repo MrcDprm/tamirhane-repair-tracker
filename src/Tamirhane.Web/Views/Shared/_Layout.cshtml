@@ -20,7 +20,10 @@
         // Oturumdaki görünen ad (personel kaydından); yoksa e-posta.
         var displayName = User.FindFirst("tamirhane:name")?.Value ?? User.Identity?.Name;
         var controller = ViewContext.RouteData.Values["controller"] as string;
+        var action = ViewContext.RouteData.Values["action"] as string;
         string? Current(string name) => controller == name ? "page" : null;
+        // Cihaz kabul ve iş emirleri aynı controller'da: kabul formu ayrı işaretlenir.
+        var onIntake = controller == "WorkOrders" && action == "New";
     }
 
     @if (signedIn)
@@ -36,7 +39,8 @@
                 <nav id="side-nav" aria-label="Sayfalar">
                     <ul class="nav">
                         <li><a asp-controller="Panel" asp-action="Index" aria-current="@Current("Panel")"><svg class="icon"><use href="/img/icons.svg#i-home" /></svg>Panel</a></li>
-                        <li><a asp-controller="WorkOrders" asp-action="New" aria-current="@Current("WorkOrders")"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>Cihaz kabul</a></li>
+                        <li><a asp-controller="WorkOrders" asp-action="Index" aria-current="@(controller == "WorkOrders" && !onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-list" /></svg>İş emirleri</a></li>
+                        <li><a asp-controller="WorkOrders" asp-action="New" aria-current="@(onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>Cihaz kabul</a></li>
                         <li><a asp-controller="Inventory" asp-action="Index" aria-current="@Current("Inventory")"><svg class="icon"><use href="/img/icons.svg#i-box" /></svg>Stok</a></li>
                         @if (isOwner)
                         {
@@ -62,11 +66,12 @@
 
             <div class="main">
                 <header class="top">
-                    @* Arama her ekranda; "/" aramaya, "N" kabule götürür (site.js). Arama sayfası #27'de. *@
+                    @* Arama her ekranda; "/" aramaya, "N" kabule götürür (site.js). *@
                     <form class="search" role="search" method="get" action="/work-orders">
                         <svg class="icon"><use href="/img/icons.svg#i-search" /></svg>
                         <label for="search" class="visually-hidden">Ad, telefon, IMEI ya da iş emri no ile ara</label>
                         <input id="search" name="q" type="search" placeholder="Ad, telefon, IMEI ya da iş emri no ara" autocomplete="off"
+                               value="@(controller == "WorkOrders" && action == "Index" ? Context.Request.Query["q"].ToString() : "")"
                                aria-keyshortcuts="/" />
                         <kbd aria-hidden="true">/</kbd>
                     </form>

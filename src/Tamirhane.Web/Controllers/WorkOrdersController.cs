@@ -43,6 +43,22 @@ public sealed class WorkOrdersController : Controller
             "Bu telefonla kayıtlı bir müşteri var. Telefonla yeniden arayıp kayıtlı müşteriyi seç."),
     };
 
+    /// <summary>
+    /// İş emri listesi ve hızlı arama (üst çubuktaki arama buraya gelir). Arama tek sonuç verirse doğrudan o iş emri açılır:
+    /// tezgâhta müşteri "cihazım ne oldu" dediğinde telefonu yazmak yeter.
+    /// </summary>
+    [HttpGet("")]
+    public async Task<IActionResult> Index(string? q, WorkOrderFilter filter, [FromServices] ListWorkOrders list, CancellationToken ct)
+    {
+        // Arama yapılıyorsa varsayılan süzgeç "tümü": kapanmış işler de bulunsun.
+        if (!string.IsNullOrWhiteSpace(q) && !Request.Query.ContainsKey("filter"))
+            filter = WorkOrderFilter.All;
+        var result = await list.HandleAsync(q, filter, ct);
+        if (result.Query is { Length: > 0 } && result.Rows.Count == 1)
+            return RedirectToAction(nameof(Details), new { id = result.Rows[0].Id });
+        return View(result);
+    }
+
     [HttpGet("new")]
     public async Task<IActionResult> New(string? phone, [FromServices] FindCustomerByPhone find, CancellationToken ct)
     {
