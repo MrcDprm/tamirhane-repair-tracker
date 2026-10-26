@@ -1,0 +1,71 @@
+@using Tamirhane.Web.Display
+@model Tamirhane.Application.WorkOrders.WorkOrderView
+@{
+    ViewData["Title"] = Model.Number;
+    var created = TempData["Created"] is true;
+}
+
+@* Durum geçişleri, teklif, tahsilat ve notlar #22-#25'te; şimdilik kabulde yazılanlar. *@
+@if (created)
+{
+    <div class="notice notice-ok" role="status">
+        İş emri @Model.Number açıldı. Fişi yazdırıp müşteriye ver; takip kodu fişte yazar.
+    </div>
+}
+
+<div class="work-layout">
+    <article class="ticket" aria-label="İş emri etiketi">
+        <span class="work-no">@Model.Number</span>
+        <p>
+            <strong>@Model.Brand @Model.Model</strong> <span>(@Labels.Of(Model.DeviceKind))</span>
+            @if (Model.Imei is not null)
+            {
+                <br />@:IMEI <code>@Model.Imei</code>
+            }
+            @if (Model.Serial is not null)
+            {
+                <br />@:Seri no <code>@Model.Serial</code>
+            }
+        </p>
+        <p>@Model.Complaint</p>
+        @if (Model.Condition is not null)
+        {
+            <p><span class="ticket-label">Görünür durum:</span> @Model.Condition</p>
+        }
+        @if (Model.Accessories is not null)
+        {
+            <p><span class="ticket-label">Aksesuarlar:</span> @Model.Accessories</p>
+        }
+        <p class="ticket-stamps">
+            <span class="stamp@(created ? " is-pressed" : "")">@Labels.Of(Model.Status)</span>
+        </p>
+    </article>
+
+    <div>
+        <h2 class="first">Müşteri</h2>
+        <p>
+            <strong>@Model.CustomerName</strong><br />
+            <a href="tel:@Model.CustomerPhone">@Labels.Phone(Model.CustomerPhone)</a>
+            @if (Model.CustomerEmail is not null)
+            {
+                <br /><a href="mailto:@Model.CustomerEmail">@Model.CustomerEmail</a>
+            }
+        </p>
+
+        <h2>Kabul</h2>
+        <p>
+            @Model.CreatedAt.ToOffset(TimeSpan.FromHours(3)).ToString("d MMMM yyyy HH:mm")<br />
+            Takip kodu <code>@Model.TrackingCode</code>
+            @if (Model.HasPasscode)
+            {
+                <br /><span class="muted">Cihaz şifresi kayıtlı; iş emri kapanınca silinir.</span>
+            }
+        </p>
+
+        <div class="inline-form">
+            @* Yazdırma sayfası #26'da. *@
+            <a class="btn" href="/work-orders/@Model.Id/receipt">Fişi yazdır</a>
+            <a class="btn" asp-action="New">Başka cihaz kabul et</a>
+        </div>
+    </div>
+</div>

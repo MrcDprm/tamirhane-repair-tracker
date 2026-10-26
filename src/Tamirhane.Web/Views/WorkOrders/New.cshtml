@@ -1,0 +1,157 @@
+@using Tamirhane.Web.Display
+@model IntakePage
+@{
+    ViewData["Title"] = "Cihaz kabul et";
+    var customer = Model.Customer;
+}
+
+<h1>Cihaz kabul et</h1>
+
+@if (!Model.Searched)
+{
+    @* 1. adım: telefonla müşteri arama. Aynı numarayla gelen müşteri tekrar yazılmaz. *@
+    <form class="narrow" method="get" asp-action="New" novalidate>
+        <div class="field">
+            <label for="phone">Müşterinin telefonu</label>
+            <div class="inline-form">
+                <div class="grow">
+                    <input id="phone" name="phone" type="tel" inputmode="tel" value="@Model.Input.Phone" autocomplete="off" autofocus
+                           aria-describedby="phone-help" />
+                </div>
+                <button type="submit" class="btn btn-primary">Müşteriyi bul</button>
+            </div>
+            <div id="phone-help" class="field-help">Kayıtlı müşteriyse bilgileri ve cihazları gelir; değilse yeni müşteri olarak kaydedersin.</div>
+            @Html.ValidationMessage("Input.Phone")
+        </div>
+    </form>
+}
+else
+{
+    <form method="post" asp-action="New" novalidate class="intake">
+        <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+        <input asp-for="Input.Phone" type="hidden" />
+        <input asp-for="Input.CustomerId" type="hidden" />
+
+        <fieldset>
+            <legend>Müşteri</legend>
+            @if (customer is not null)
+            {
+                <p>
+                    <strong>@customer.Name</strong>, @Labels.Phone(customer.Phone)
+                    @if (customer.Email is not null)
+                    {
+                        <span class="muted">, @customer.Email</span>
+                    }
+                </p>
+            }
+            else
+            {
+                <p class="muted">@Model.Input.Phone numarasıyla kayıtlı müşteri yok; yeni müşteri olarak kaydedilecek.</p>
+                <div class="field">
+                    <label asp-for="Input.CustomerName"></label>
+                    <input asp-for="Input.CustomerName" autocomplete="off" />
+                    <span asp-validation-for="Input.CustomerName"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Input.CustomerEmail"></label>
+                    <input asp-for="Input.CustomerEmail" type="email" autocomplete="off" aria-describedby="email-help" />
+                    <div id="email-help" class="field-help">Yazılırsa durum değiştikçe müşteriye e-posta gider.</div>
+                    <span asp-validation-for="Input.CustomerEmail"></span>
+                </div>
+                <div class="check">
+                    <input asp-for="Input.KvkkConsent" />
+                    <label asp-for="Input.KvkkConsent"></label>
+                </div>
+                <span asp-validation-for="Input.KvkkConsent"></span>
+            }
+            <p><a asp-action="New">Başka bir telefonla ara</a></p>
+        </fieldset>
+
+        <fieldset>
+            <legend>Cihaz</legend>
+            @if (customer is { Devices.Count: > 0 })
+            {
+                <p class="muted">Müşterinin kayıtlı cihazlarından birini seç ya da yeni cihaz ekle.</p>
+                @foreach (var device in customer.Devices)
+                {
+                    <div class="check">
+                        <input type="radio" id="device-@device.Id" name="Input.DeviceId" value="@device.Id" checked="@(Model.Input.DeviceId == device.Id)" />
+                        <label for="device-@device.Id">
+                            @device.Brand @device.Model <span class="muted">(@Labels.Of(device.Kind))</span>
+                            @if (device.Imei is not null)
+                            {
+                                <span class="muted">IMEI <code>@device.Imei</code></span>
+                            }
+                        </label>
+                    </div>
+                }
+                <div class="check">
+                    <input type="radio" id="device-new" name="Input.DeviceId" value="" checked="@(Model.Input.DeviceId is null)" />
+                    <label for="device-new">Yeni cihaz (aşağıya yaz)</label>
+                </div>
+            }
+            <div class="field-row">
+                <div class="field">
+                    <label asp-for="Input.DeviceKind"></label>
+                    <select asp-for="Input.DeviceKind">
+                        @foreach (var (kind, label) in Labels.DeviceKinds)
+                        {
+                            <option value="@kind" selected="@(Model.Input.DeviceKind == kind)">@label</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.DeviceKind"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Input.Brand"></label>
+                    <input asp-for="Input.Brand" autocomplete="off" placeholder="ör. Apple" />
+                    <span asp-validation-for="Input.Brand"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Input.Model"></label>
+                    <input asp-for="Input.Model" autocomplete="off" placeholder="ör. iPhone 13" />
+                    <span asp-validation-for="Input.Model"></span>
+                </div>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label asp-for="Input.Imei"></label>
+                    <input asp-for="Input.Imei" inputmode="numeric" autocomplete="off" class="code" aria-describedby="imei-help" />
+                    <div id="imei-help" class="field-help">Telefonda *#06# tuşlayınca görünür.</div>
+                    <span asp-validation-for="Input.Imei"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Input.Serial"></label>
+                    <input asp-for="Input.Serial" autocomplete="off" class="code" />
+                    <span asp-validation-for="Input.Serial"></span>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Arıza ve teslim alınanlar</legend>
+            <div class="field">
+                <label asp-for="Input.Complaint"></label>
+                <textarea asp-for="Input.Complaint" rows="3" placeholder="ör. Ekran kırık, dokunmatik sağ altta çalışmıyor"></textarea>
+                <span asp-validation-for="Input.Complaint"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.Condition"></label>
+                <textarea asp-for="Input.Condition" rows="2" placeholder="ör. Kasada çizik, arka cam sağlam"></textarea>
+                <span asp-validation-for="Input.Condition"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.Accessories"></label>
+                <input asp-for="Input.Accessories" autocomplete="off" placeholder="ör. Kılıf, şarj aleti" />
+                <span asp-validation-for="Input.Accessories"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.Passcode"></label>
+                <input asp-for="Input.Passcode" autocomplete="off" spellcheck="false" aria-describedby="passcode-help" />
+                <div id="passcode-help" class="field-help">Sadece onarım için gerekiyorsa. İş emri kapanınca silinir, fişte ve takip sayfasında görünmez.</div>
+                <span asp-validation-for="Input.Passcode"></span>
+            </div>
+        </fieldset>
+
+        <button type="submit" class="btn btn-primary">Cihazı kabul et</button>
+    </form>
+}
