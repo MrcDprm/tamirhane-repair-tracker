@@ -12,7 +12,7 @@ namespace Tamirhane.Application.WorkOrders;
 public sealed record ReceiveDeviceCommand(
     Guid? CustomerId, string? CustomerName, string? CustomerPhone, string? CustomerEmail, bool KvkkConsent,
     Guid? DeviceId, DeviceKind DeviceKind, string? Brand, string? Model, string? Serial, string? Imei,
-    string Complaint, string? Condition, string? Accessories, string? Passcode);
+    string Complaint, string? Condition, string? Accessories, string? Passcode, DateOnly? PromisedDate = null);
 
 public sealed record ReceivedWorkOrder(Guid WorkOrderId, string Number, string TrackingCode);
 
@@ -37,6 +37,9 @@ public sealed class ReceiveDevice(
             customer.Value.Id, device.Value.Id, c.Complaint, c.Condition, c.Accessories, c.Passcode, user.StaffId, now);
         if (order.IsFailure)
             return order.Error!;
+        var promised = order.Value.Promise(c.PromisedDate, DateOnly.FromDateTime(now.DateTime));
+        if (promised.IsFailure)
+            return promised.Error!;
 
         orders.Add(order.Value);
         await unitOfWork.SaveChangesAsync(ct);

@@ -37,6 +37,8 @@ public sealed class WorkOrdersController : Controller
             "IMEI 15 rakam olmalı ve son rakamı tutmalı. Telefonda *#06# tuşlayınca görünür; emin değilsen boş bırak."),
         [WorkOrderErrors.ComplaintRequired.Code] = (nameof(IntakeInput.Complaint), "Müşterinin şikâyetini yaz."),
         [WorkOrderErrors.TextTooLong.Code] = ("", "Metin alanları en fazla 1000 karakter olabilir."),
+        [WorkOrderErrors.InvalidPromisedDate.Code] = (nameof(IntakeInput.PromisedDate),
+            $"Teslim günü bugün ya da sonraki {WorkOrder.MaxPromiseDays} gün içinde olmalı."),
         [ApplicationErrors.CustomerNotFound.Code] = ("", "Seçilen müşteri bulunamadı. Telefonla yeniden ara."),
         [ApplicationErrors.DeviceNotFound.Code] = ("", "Seçilen cihaz bu müşterinin değil. Listeden seç ya da yeni cihaz ekle."),
         [ApplicationErrors.DuplicatePhone.Code] = ("",
@@ -96,7 +98,7 @@ public sealed class WorkOrdersController : Controller
         var result = await receive.HandleAsync(new ReceiveDeviceCommand(
             input.CustomerId, input.CustomerName, input.Phone, input.CustomerEmail, input.KvkkConsent,
             input.DeviceId, input.DeviceKind, input.Brand, input.Model, input.Serial, input.Imei,
-            input.Complaint, input.Condition, input.Accessories, input.Passcode), ct);
+            input.Complaint, input.Condition, input.Accessories, input.Passcode, input.PromisedDate), ct);
         if (result.IsFailure)
         {
             AddError(result.Error!);
@@ -176,6 +178,16 @@ public sealed class WorkOrdersController : Controller
         return await AfterChangeAsync(id, result, pressed: false, get, ct);
     }
 
+    [HttpPost("{id:guid}/promise")]
+    public async Task<IActionResult> Promise(Guid id, PromiseInput input, [FromServices] PromiseDelivery promise, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        Result result = ModelState.IsValid
+            ? await promise.HandleAsync(id, input.Date, ct)
+            : WorkOrderErrors.InvalidPromisedDate;
+        return await AfterChangeAsync(id, result, pressed: false, get, ct,
+            success: result.IsSuccess ? (input.Date is null ? "Teslim günü kaldırıldı." : "Teslim günü kaydedildi; takip sayfasında görünür.") : null);
+    }
+
     /// <summary>
     /// Teklif kalemi: stoktan parça ya da serbest kalem. Fiyat ve KDV boşsa sunucu doldurur (parçanın satış fiyatı,
     /// atölyenin varsayılan KDV'si); toplamlar her zaman sunucuda hesaplanır.
@@ -251,6 +263,8 @@ public sealed class WorkOrdersController : Controller
         [WorkOrderErrors.CancelReasonRequired.Code] = "İptalin nedenini yaz; müşteriye ve geçmişe bu yazılır.",
         [WorkOrderErrors.NoteRequired.Code] = "Notu yaz.",
         [WorkOrderErrors.TextTooLong.Code] = "Metin en fazla 1000 karakter olabilir.",
+        [WorkOrderErrors.InvalidPromisedDate.Code] = $"Teslim günü bugün ya da sonraki {WorkOrder.MaxPromiseDays} gün içinde olmalı.",
+        [WorkOrderErrors.Closed.Code] = "Kapanmış iş emri değiştirilemez.",
         [QuoteErrors.Empty.Code] = "Teklifi göndermek için önce teklife kalem ekle.",
         [QuoteErrors.DeciderNameRequired.Code] = "Kararı veren kişinin adını yaz.",
         [InventoryErrors.InsufficientStock.Code] = "Teklifteki parçalardan stokta yeterince yok. Önce stok girişi yap, sonra tekrar dene.",

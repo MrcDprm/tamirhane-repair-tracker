@@ -67,6 +67,9 @@ public sealed class IntakeInput
     [Display(Name = "Ekran kilidi ya da cihaz şifresi (isteğe bağlı)")]
     [StringLength(100, ErrorMessage = "En fazla 100 karakter.")]
     public string? Passcode { get; set; }
+
+    [Display(Name = "Söz verilen teslim günü (isteğe bağlı)")]
+    public DateOnly? PromisedDate { get; set; }
 }
 
 /// <summary>
@@ -89,6 +92,12 @@ public sealed class StepInput
 
     /// <summary>Borçlu teslim (sadece sahip; senaryo da denetler).</summary>
     public bool AllowBalanceDue { get; set; }
+}
+
+/// <summary>Söz verilen teslim günü; boş gönderilirse söz kaldırılır.</summary>
+public sealed class PromiseInput
+{
+    public DateOnly? Date { get; set; }
 }
 
 public sealed class NoteInput

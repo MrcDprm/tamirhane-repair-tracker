@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IShopSettings, ShopSettingsReader>();
         services.AddScoped<IInvitationRepository, InvitationRepository>();
         services.AddScoped<IWorkOrderRepository, WorkOrderRepository>();
+        services.AddScoped<ITrackingDirectory, TrackingDirectory>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();
         services.AddScoped<IPartRepository, PartRepository>();

@@ -8,6 +8,20 @@ namespace Tamirhane.Application.Abstractions;
 // Depolar sadece mevcut atölyenin kayıtlarını görür (kiracı filtresi Infrastructure'da).
 // Başka atölyenin kaydı istenirse "yok" döner; varlığı bile sızmaz.
 
+/// <summary>Takip sayfasının ihtiyacı olan atölye, şube, müşteri adı ve cihaz bilgisi (iş emri takip koduyla bulunduktan sonra).</summary>
+public sealed record TrackingParties(
+    string ShopName, string BranchName, string? BranchAddress, string? BranchPhone,
+    string CustomerName, DeviceKind DeviceKind, string Brand, string Model);
+
+/// <summary>
+/// Oturumsuz okuma: müşteri giriş yapmadığı için kiracı filtresi kullanılamaz. Bütün kimlikler aynı atölyeye ait
+/// olmalı; biri tutmazsa sonuç boştur. Sadece takip koduyla bulunmuş bir iş emrinin kimlikleriyle çağrılır.
+/// </summary>
+public interface ITrackingDirectory
+{
+    Task<TrackingParties?> GetAsync(Guid shopId, Guid branchId, Guid customerId, Guid deviceId, CancellationToken ct);
+}
+
 public interface IShopRepository
 {
     Task<Shop?> GetAsync(Guid id, CancellationToken ct);

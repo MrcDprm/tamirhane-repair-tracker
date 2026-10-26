@@ -397,6 +397,11 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
+                    b.Property<string>("Phone")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("phone");
+
                     b.Property<Guid>("ShopId")
                         .HasColumnType("uuid")
                         .HasColumnName("shop_id");
@@ -768,6 +773,10 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("passcode");
+
+                    b.Property<DateOnly?>("PromisedDate")
+                        .HasColumnType("date")
+                        .HasColumnName("promised_date");
 
                     b.Property<Guid>("ShopId")
                         .HasColumnType("uuid")

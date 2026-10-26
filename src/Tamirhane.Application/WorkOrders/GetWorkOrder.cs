@@ -52,6 +52,9 @@ public sealed record WorkOrderView(
     public decimal AmountDue { get; init; }
     public decimal Balance { get; init; }
     public DateTimeOffset? WarrantyUntil { get; init; }
+    public DateOnly? PromisedDate { get; init; }
+    /// <summary>Söz verilen gün değiştirilebilir mi (iş emri açıkken).</summary>
+    public bool CanPromise => Status is not (WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled);
     public IReadOnlyList<QuoteLineView> QuoteLines { get; init; } = [];
     public QuoteTotals QuoteTotals { get; init; } = QuoteTotals.Of([]);
     /// <summary>Kalem eklenip çıkarılabilir mi (inceleme ya da kararsız onarım sırasında).</summary>
@@ -114,6 +117,7 @@ public sealed class GetWorkOrder(
             AmountDue = order.AmountDue,
             Balance = order.Balance,
             WarrantyUntil = order.WarrantyUntil,
+            PromisedDate = order.PromisedDate,
             QuoteLines = order.QuoteLines.Select(l => new QuoteLineView(
                 l.Id, l.Kind, l.PartId is not null, l.Description, l.Quantity, l.UnitPrice, l.DiscountRate, l.VatRate, l.Total)).ToList(),
             QuoteTotals = order.QuoteTotals,

@@ -1,0 +1,104 @@
+@using System.Net
+@using Tamirhane.Application.WorkOrders
+@using Tamirhane.Domain.WorkOrders
+@using Tamirhane.Web.Display
+@model TrackingView
+@{
+    Layout = "_TrackingLayout";
+    ViewData["Title"] = $"{Model.Brand} {Model.Model}: {Labels.Of(Model.Status)}";
+    var turkey = TimeSpan.FromHours(3);
+    var lead = Model.Status switch
+    {
+        WorkOrderStatus.Received => "Cihazın atölyede. Sırası gelince incelenecek.",
+        WorkOrderStatus.Diagnosing => "Cihazın inceleniyor. Arıza bulununca fiyat için seni arayacağız.",
+        WorkOrderStatus.AwaitingApproval => "Teklif hazır, onayını bekliyoruz. Onaylamak ya da sormak için atölyeyi arayabilirsin.",
+        WorkOrderStatus.InRepair => "Cihazın onarılıyor.",
+        WorkOrderStatus.Ready => "Cihazın hazır. Fişinle gelip teslim alabilirsin.",
+        WorkOrderStatus.Declined => "Onarım yapılmayacak. Cihazını gelip teslim alabilirsin.",
+        WorkOrderStatus.Delivered => "Cihazın teslim edildi.",
+        WorkOrderStatus.Cancelled => "Bu iş emri iptal edildi. Sorun varsa atölyeyi ara.",
+        _ => "",
+    };
+    var tone = Model.Status switch
+    {
+        WorkOrderStatus.Ready or WorkOrderStatus.Delivered => " stamp-ok",
+        WorkOrderStatus.Cancelled or WorkOrderStatus.Declined => " stamp-warn",
+        _ => "",
+    };
+    var current = Model.Steps.Count(s => s.At is not null) - 1;
+    string? Maps(string? address) => address is null ? null
+        : "https://www.google.com/maps/search/?api=1&query=" + WebUtility.UrlEncode($"{Model.ShopName} {address}");
+}
+
+<header class="track-board pegboard">
+    <p class="track-shop">@Model.ShopName<span>@Model.BranchName</span></p>
+    <article class="track-tag" aria-labelledby="track-device">
+        <p class="track-no">İş emri @Model.Number</p>
+        <h1 id="track-device">@Model.Brand @Model.Model</h1>
+        <p class="track-owner">@Model.MaskedCustomerName</p>
+        <p class="track-complaint">@Model.Complaint</p>
+        <span class="stamp is-pressed@(tone)">@Labels.Of(Model.Status)</span>
+    </article>
+</header>
+
+<main id="main" class="track-body">
+    <p class="track-lead">@lead</p>
+
+    @if (!Model.IsClosed && Model.PromisedDate is { } promised)
+    {
+        <p class="track-eta">Tahmini teslim <strong>@promised.ToString("d MMMM dddd")</strong></p>
+    }
+    else if (Model.Status == WorkOrderStatus.Delivered && Model.WarrantyUntil is { } until)
+    {
+        <p class="track-eta">Garanti <strong>@until.ToOffset(turkey).ToString("d MMMM yyyy")</strong> tarihine kadar</p>
+    }
+
+    <section aria-labelledby="steps-heading">
+        <h2 id="steps-heading">Onarımın adımları</h2>
+        <ol class="track-steps">
+            @for (var i = 0; i < Model.Steps.Count; i++)
+            {
+                var step = Model.Steps[i];
+                <li class="@(step.At is null ? "is-ahead" : i == current ? "is-current" : "is-done")" aria-current="@(i == current ? "step" : null)">
+                    <span class="track-dot" aria-hidden="true"></span>
+                    <span class="track-step">@Labels.Of(step.Status)</span>
+                    @if (step.At is { } at)
+                    {
+                        <time datetime="@at.ToString("O")">@at.ToOffset(turkey).ToString("d MMM HH:mm")</time>
+                    }
+                </li>
+            }
+        </ol>
+    </section>
+
+    @if (Model.Notes.Count > 0)
+    {
+        <section aria-labelledby="notes-heading">
+            <h2 id="notes-heading">Atölyeden notlar</h2>
+            <ul class="track-notes">
+                @foreach (var note in Model.Notes)
+                {
+                    <li><time datetime="@note.At.ToString("O")">@note.At.ToOffset(turkey).ToString("d MMM HH:mm")</time><p>@note.Text</p></li>
+                }
+            </ul>
+        </section>
+    }
+
+    <section class="track-contact" aria-labelledby="contact-heading">
+        <h2 id="contact-heading">@Model.ShopName</h2>
+        @if (Model.BranchAddress is not null)
+        {
+            <p>@Model.BranchAddress</p>
+        }
+        <div class="track-actions">
+            @if (Model.BranchPhone is { } phone)
+            {
+                <a class="btn btn-primary" href="tel:@phone"><svg class="icon"><use href="/img/icons.svg#i-phone" /></svg>@Labels.Phone(phone)</a>
+            }
+            @if (Maps(Model.BranchAddress) is { } maps)
+            {
+                <a class="btn" href="@maps" rel="noopener noreferrer" target="_blank">Yol tarifi</a>
+            }
+        </div>
+    </section>
+</main>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @* Adresteki takip kodu müşteriye özel: dizine eklenmez, başka siteye Referer ile gitmez. *@
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>@ViewData["Title"]</title>
+    <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+</head>
+<body class="track-page">
+    @RenderBody()
+    <footer class="track-foot">
+        <p>Bu sayfa sana özel. Linki sadece cihazı teslim alacak kişiyle paylaş.</p>
+    </footer>
+    <script src="~/js/vendor/motion.min.js" asp-append-version="true"></script>
+    <script src="~/js/motion.js" asp-append-version="true"></script>
+</body>
+</html>
