@@ -28,6 +28,9 @@ public sealed record QuoteLineView(
     Guid Id, QuoteLineKind Kind, bool FromStock, string Description, decimal Quantity, decimal UnitPrice,
     decimal DiscountRate, decimal VatRate, decimal Total);
 
+/// <summary>Kasaya giren ya da çıkan para (para sistemden geçmez; bu sadece kayıt).</summary>
+public sealed record PaymentView(PaymentKind Kind, decimal Amount, PaymentMethod Method, DateTimeOffset At, string By, string? Note);
+
 /// <summary>Teklife eklenebilecek stok parçası: personelin şubesindeki adediyle.</summary>
 public sealed record QuotePartOption(Guid Id, string Sku, string Name, decimal SalePrice, int Quantity);
 
@@ -57,6 +60,17 @@ public sealed record WorkOrderView(
     public IReadOnlyList<QuotePartOption> PartOptions { get; init; } = [];
     public decimal DefaultVatRate { get; init; }
     public QuoteDecision? QuoteDecision { get; init; }
+    public IReadOnlyList<PaymentView> Payments { get; init; } = [];
+    public decimal PaidTotal { get; init; }
+    public decimal DiagnosisFee { get; init; }
+    /// <summary>Borçlu teslim edildiyse teslim anındaki borç.</summary>
+    public decimal? BalanceAtDelivery { get; init; }
+    /// <summary>İptal edilen işe tahsilat girilmez; borç kalmadıysa form gösterilmez.</summary>
+    public bool CanTakePayment => Status != WorkOrderStatus.Cancelled && Balance > 0;
+    /// <summary>İade: alınmış para varsa (formu sadece sahip görür; senaryo da denetler).</summary>
+    public bool CanRefund => PaidTotal > 0;
+    /// <summary>Teklif reddedildi, cihaz henüz teslim edilmedi: inceleme ücreti girilebilir.</summary>
+    public bool CanSetDiagnosisFee => Status == WorkOrderStatus.Declined;
 
     public WorkOrderAction? NextAction => Actions.Count > 0 && Actions[0] != WorkOrderAction.Cancel ? Actions[0] : null;
 }
@@ -75,8 +89,8 @@ public sealed class GetWorkOrder(
         var customer = await customers.GetAsync(order.CustomerId, ct) ?? throw new InvalidOperationException("İş emrinin müşterisi yok.");
         var device = await devices.GetAsync(order.DeviceId, ct) ?? throw new InvalidOperationException("İş emrinin cihazı yok.");
         // Çıkarılmış personelin adı da gelir: geçmişte kimin ne yaptığı kaybolmaz.
-        var names = await staff.NamesAsync(
-            order.History.Select(h => h.StaffId).OfType<Guid>().Concat(order.Notes.Select(n => n.StaffId)), ct);
+        var names = await staff.NamesAsync(order.History.Select(h => h.StaffId).OfType<Guid>()
+            .Concat(order.Notes.Select(n => n.StaffId)).Concat(order.Payments.Select(p => p.StaffId)), ct);
         var editable = order.IsQuoteEditable;
         // Parça seçimi iş emrinin şubesinin stoğundan (onarım bitince stok oradan düşer).
         var options = editable
@@ -107,6 +121,11 @@ public sealed class GetWorkOrder(
             PartOptions = options,
             DefaultVatRate = editable ? (await settings.GetAsync(user.ShopId, ct)).DefaultVatRate : 0,
             QuoteDecision = order.QuoteDecision,
+            Payments = order.Payments.OrderBy(p => p.At)
+                .Select(p => new PaymentView(p.Kind, p.Amount, p.Method, p.At, names.GetValueOrDefault(p.StaffId, "?"), p.Note)).ToList(),
+            PaidTotal = order.PaidTotal,
+            DiagnosisFee = order.DiagnosisFee,
+            BalanceAtDelivery = order.BalanceAtDelivery,
         };
     }
 

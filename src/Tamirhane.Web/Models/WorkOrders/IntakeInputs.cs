@@ -119,3 +119,14 @@ public sealed class QuoteLineInput
     /// <summary>Boşsa atölyenin varsayılan KDV oranı.</summary>
     public decimal? VatRate { get; set; }
 }
+
+/// <summary>Tahsilat ya da iade formu.</summary>
+public sealed class PaymentInput
+{
+    public decimal Amount { get; set; }
+
+    public Tamirhane.Domain.WorkOrders.PaymentMethod Method { get; set; }
+
+    [StringLength(200)]
+    public string? Note { get; set; }
+}
