@@ -201,3 +201,11 @@ Koyu tema (akşam kapanış sayımı): zemin `#1B2024`, etiket `#4A4130`, metin 
 - İlk akla gelen "koyu zemin + neon turuncu, teknik servis = teknoloji" görünümüydü (iki numaralı klişe). Değiştirildi: atölyenin kendi eşyaları (karton etiket, kaşe), aydınlık zemin.
 - İkinci aday, iş emirlerini yuvarlak köşeli kartlardan oluşan bir kanban panosu olarak göstermekti (SaaS kart kiti). Değiştirildi: liste tablo; "etiket" görünümü sadece tek iş emri sayfasında ve müşteri sayfasında.
 - Etiket kartonunun rengi kreme kaymasın diye daha doymuş, gerçek manila kartonuna yakın tutuldu ve zemin olarak hiç kullanılmıyor.
+
+**Revizyon 2 (2026-10-26): delikli pano ve hareket katmanı.** İlk ekranlar düz form ve tablodan ibaretti; atölye hissi yoktu. Renkler, yazı tipleri ve kaşe aynı kaldı, üstüne:
+- **İmza öğesi delikli pano (pegboard):** yan menü koyu, delikli bir pano; bulunulan sayfa panoya asılı karton etiket. Altında asılı aletler (tornavida, kargaburun, cımbız).
+- **Giriş, kayıt, şifre ve davet sayfaları ikiye bölünür:** solda pano çizimi (asılı aletler, ekranı çatlak telefon, iple bağlı iş emri etiketi ve kaşesi, tezgâh), sağda form.
+- **Paneller:** sayfalar tezgâh zemininde paneller (başlıklı, gölgeli); kart içinde kart yok. Panel sayıları (#33) panoya iple asılı etiketler. Boş durumda panoda boş kanca çizimi.
+- **Kabul ekranı:** numaralı adımlar (müşteri, cihaz, arıza) ve sağda yazdıkça dolan etiket önizlemesi.
+- **Hareket (Motion, MIT; GSAP AGPL lisansla uyumsuz olduğu için seçilmedi):** pano çizimi bir kez canlanır (aletler asılır, etiket ipinde sallanır, kaşe basılır), panodaki etiketler asılırken salınır, kaşe yaylı basılır, yan menüdeki aletler üstüne gelince sallanır. Sayfa geçişleri View Transitions ile (kabuldeki etiket iş emri sayfasındaki etikete taşınır; Firefox'ta sayfa normal açılır). Kısmi sayfa güncellemesi htmx ile #22'de (durum değişince sadece etikete kaşe basılır). Hareket azaltma açıksa hiçbiri çalışmaz.
+- Her yerde hareket yok: kayarak beliren bölümler gibi kalıp hareketler bilerek kullanılmadı.
