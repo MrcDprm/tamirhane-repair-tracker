@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Tamirhane.Application.Abstractions;
+using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Infrastructure.Persistence;
@@ -49,8 +51,24 @@ public static class DependencyInjection
             .SetApplicationName("Tamirhane")
             .PersistKeysToDbContext<TamirhaneDbContext>();
 
+        services.AddBackgroundJobs();
+
         // /health ucu veritabanına bağlanılabiliyor mu diye bakar (yayında sunucunun sağlık kontrolü).
         services.AddHealthChecks().AddDbContextCheck<TamirhaneDbContext>("database");
+        return services;
+    }
+
+    /// <summary>
+    /// Arka plan işleri (e-posta, iş emri bildirimleri): istek işi ekler ve döner, tek bir işçi sırayla çalıştırır.
+    /// Seçenekler önceden kaydedildiyse (testte sıfır bekleme) onlar kullanılır.
+    /// </summary>
+    public static IServiceCollection AddBackgroundJobs(this IServiceCollection services)
+    {
+        services.AddSingleton<BackgroundJobQueue>();
+        services.TryAddSingleton(BackgroundJobOptions.Default);
+        services.AddHostedService<BackgroundJobWorker>();
+        services.AddSingleton<EmailOutbox>();
+        services.AddScoped<INotificationQueue, WorkOrderNotificationQueue>();
         return services;
     }
 
@@ -96,8 +114,9 @@ public static class DependencyInjection
                 http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ResendApiKey);
                 http.Timeout = TimeSpan.FromSeconds(15);
             });
+            var from = EmailFrom.Parse(options.EmailFrom); // bozuksa uygulama açılırken durur
             services.AddSingleton<IEmailSender>(sp => new ResendEmailSender(
-                sp.GetRequiredService<IHttpClientFactory>().CreateClient("resend"), options.EmailFrom));
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient("resend"), from));
         }
         return services;
     }

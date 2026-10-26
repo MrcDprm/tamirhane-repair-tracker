@@ -3,13 +3,13 @@ using System.Net.Http.Json;
 namespace Tamirhane.Infrastructure.Email;
 
 /// <summary>Resend API'si (ücretsiz katman). Anahtar RESEND_API_KEY ortam değişkeninden gelir.</summary>
-internal sealed class ResendEmailSender(HttpClient http, string from) : IEmailSender
+internal sealed class ResendEmailSender(HttpClient http, EmailFrom from) : IEmailSender
 {
     public async Task SendAsync(EmailMessage message, CancellationToken ct)
     {
         using var response = await http.PostAsJsonAsync("emails", new
         {
-            from,
+            from = from.Format(message.FromName),
             to = new[] { message.To },
             subject = message.Subject,
             text = message.Text,

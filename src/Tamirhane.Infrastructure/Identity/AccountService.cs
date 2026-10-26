@@ -2,10 +2,10 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Domain.Common;
+using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Persistence;
 
@@ -14,7 +14,7 @@ namespace Tamirhane.Infrastructure.Identity;
 /// <summary><see cref="IAccountService"/>'in Identity ile uygulanması.</summary>
 internal sealed class AccountService(
     UserManager<ApplicationUser> users, SignInManager<ApplicationUser> signIn, TamirhaneDbContext db,
-    IEmailSender email, AccountOptions options, ILogger<AccountService> logger)
+    EmailOutbox outbox, AccountOptions options)
     : IAccountService
 {
     // Identity hata kodları → uygulamanın hata kodları. Şifre hataları kullanıcı hatası değil "kuralı anlat" mesajıdır.
@@ -65,7 +65,8 @@ internal sealed class AccountService(
     public Task SendInvitationAsync(StaffInvitationEmail invitation, CancellationToken ct)
     {
         var link = Link("/invitation", new() { ["token"] = invitation.Token });
-        return SendAsync(AccountEmails.Invitation(invitation, link), "davet", ct);
+        outbox.Enqueue(AccountEmails.Invitation(invitation, link), "davet");
+        return Task.CompletedTask;
     }
 
     public async Task SendEmailConfirmationAsync(Guid userId, string locale, CancellationToken ct)
@@ -79,7 +80,8 @@ internal sealed class AccountService(
     {
         var message = AccountEmails.AlreadyRegistered(email.Trim(), locale,
             Link("/account/login", []), Link("/account/forgot-password", []));
-        return SendAsync(message, "zaten kayıtlı", ct);
+        outbox.Enqueue(message, "zaten kayıtlı");
+        return Task.CompletedTask;
     }
 
     public async Task<SignInOutcome> SignInAsync(string email, string password, bool remember, CancellationToken ct)
@@ -139,7 +141,7 @@ internal sealed class AccountService(
 
         var token = await users.GeneratePasswordResetTokenAsync(user);
         var link = Link("/account/reset-password", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) });
-        await SendAsync(AccountEmails.PasswordReset(user.Email!, await LocaleOfAsync(user.Id, ct), link), "şifre sıfırlama", ct);
+        outbox.Enqueue(AccountEmails.PasswordReset(user.Email!, await LocaleOfAsync(user.Id, ct), link), "şifre sıfırlama");
     }
 
     public async Task<Result> ResetPasswordAsync(Guid userId, string token, string newPassword, CancellationToken ct)
@@ -180,23 +182,9 @@ internal sealed class AccountService(
     {
         var token = await users.GenerateEmailConfirmationTokenAsync(user);
         var link = Link("/account/confirm-email", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) });
-        await SendAsync(AccountEmails.Confirmation(user.Email!, locale, link), "doğrulama", ct);
-    }
-
-    /// <summary>
-    /// Gönderim hatası işlemi bozmaz (hesap açılmış olur, link tekrar istenebilir); hata alıcı adresi olmadan loglanır.
-    /// Kalıcı çözüm, tekrar deneyen e-posta kuyruğu (#19).
-    /// </summary>
-    private async Task SendAsync(EmailMessage message, string kind, CancellationToken ct)
-    {
-        try
-        {
-            await email.SendAsync(message, ct);
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
-        {
-            logger.LogError(ex, "Hesap e-postası gönderilemedi ({Kind})", kind);
-        }
+        // E-posta kuyruğa girer, istek gönderimi beklemez; gönderim hatası hesabı bozmaz, 3 kez denenir.
+        // Her hesap e-postası aynı yoldan gittiği için cevap süresi "bu adres kayıtlı mı" bilgisini de sızdırmaz.
+        outbox.Enqueue(AccountEmails.Confirmation(user.Email!, locale, link), "doğrulama");
     }
 
     private Uri Link(string path, Dictionary<string, string?> query) =>

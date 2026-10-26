@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Infrastructure;
+using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Infrastructure.Persistence;
@@ -37,12 +39,19 @@ public sealed class PostgresFixture : IAsyncLifetime
         services.AddInfrastructure(_container.GetConnectionString());
         services.AddAccounts(new AccountOptions(PublicOrigin, null, AccountOptions.DefaultFrom));
         services.AddSingleton<IEmailSender>(Emails); // gönderilen e-postalar testte okunur
+        services.AddSingleton(new BackgroundJobOptions([TimeSpan.Zero, TimeSpan.Zero]));
         services.AddScoped<TestUser>();
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<TestUser>());
         _services = services.BuildServiceProvider();
 
         using var scope = AsShop(Guid.Empty);
         await scope.Db.Database.MigrateAsync();
+
+        // Burada web sunucusu yok: arka plan işçisini (e-posta kuyruğu) elle başlat.
+        foreach (var hosted in _services.GetServices<IHostedService>())
+            await hosted.StartAsync(default);
+        var queue = _services.GetRequiredService<BackgroundJobQueue>();
+        Emails.BeforeRead = () => queue.WhenIdleAsync(TimeSpan.FromSeconds(10));
     }
 
     public async Task DisposeAsync()
