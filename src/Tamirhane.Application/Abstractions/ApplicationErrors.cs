@@ -14,4 +14,6 @@ public static class ApplicationErrors
     public static readonly Error DuplicatePhone = Error.Conflict("customer.duplicate_phone");
     public static readonly Error InvitationNotFound = Error.NotFound("invitation.not_found");
     public static readonly Error TooManyInvitations = Error.Conflict("invitation.too_many");
+    /// <summary>Aynı iş emri aynı anda başka bir istekle değişti; bu istek kaydedilmedi.</summary>
+    public static readonly Error ConcurrentChange = Error.Conflict("work_order.concurrent_change");
 }
