@@ -1,5 +1,6 @@
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Tests.Fakes;
+using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.WorkOrders;
 
@@ -147,5 +148,31 @@ public class ReceiveDeviceTests
         Assert.Equal("iPhone 13", Assert.Single(found.Devices).Model);
         Assert.Null(missing);
         Assert.Equal(CustomerErrors.InvalidPhone, invalid.Error);
+    }
+
+    [Fact]
+    public async Task Work_order_page_shows_customer_and_device_but_not_the_passcode()
+    {
+        var shop = new TestShop();
+        var id = await shop.ReceiveAsync();
+
+        var view = (await shop.GetWorkOrder().HandleAsync(id, default)).Value;
+
+        Assert.Equal(("2026-0001", WorkOrderStatus.Received, "Ekran kırık"), (view.Number, view.Status, view.Complaint));
+        Assert.Equal(("Ayşe Kaya", "+905321234567"), (view.CustomerName, view.CustomerPhone));
+        Assert.Equal((DeviceKind.Phone, "Apple", "iPhone 13", "490154203237518"), (view.DeviceKind, view.Brand, view.Model, view.Imei));
+        Assert.True(view.HasPasscode);
+        Assert.DoesNotContain(typeof(WorkOrderView).GetProperties(), p => p.Name == "Passcode"); // şifrenin kendisi sayfaya gitmez
+    }
+
+    [Fact]
+    public async Task Another_shops_work_order_is_not_found()
+    {
+        var other = new TestShop();
+        var foreign = await other.ReceiveAsync();
+        var shop = new TestShop();
+        shop.Orders.Items.AddRange(other.Orders.Items); // aynı depoda olsa bile kiracı filtresi gizler
+
+        Assert.Equal(ApplicationErrors.WorkOrderNotFound, (await shop.GetWorkOrder().HandleAsync(foreign, default)).Error);
     }
 }
