@@ -59,7 +59,10 @@ public sealed class TestShop
     public SetDiagnosisFee SetDiagnosisFee() => new(Orders, UnitOfWork, Queue, User, Clock);
     public ReopenUnderWarranty ReopenUnderWarranty() => new(Orders, UnitOfWork, Queue, User, Clock);
     public AddPart AddPart() => new(Parts, Stock, UnitOfWork, User, Clock);
-    public UpdatePart UpdatePart() => new(Parts, UnitOfWork);
+    public UpdatePart UpdatePart() => new(Parts, UnitOfWork, User);
+    public ListParts ListParts() => new(Parts, User);
+    public GetPart GetPart() => new(Parts, Stock, Staff, Orders, User);
+    public SetPartActive SetPartActive() => new(Parts, UnitOfWork, User);
     public ChangeStock ChangeStock() => new(Parts, Stock, UnitOfWork, User, Clock);
     public ListLowStock ListLowStock() => new(Parts, User);
 

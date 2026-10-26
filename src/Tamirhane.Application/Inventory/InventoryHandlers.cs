@@ -7,11 +7,13 @@ namespace Tamirhane.Application.Inventory;
 
 public sealed record PartCommand(string Sku, string Name, decimal CostPrice, decimal SalePrice, int CriticalLevel);
 
-/// <summary>Yeni parça; isteğe bağlı açılış stoğu personelin şubesine "alış" olarak girer.</summary>
+/// <summary>Yeni parça; isteğe bağlı açılış stoğu personelin şubesine "alış" olarak girer. Fiyat belirlediği için sadece sahip.</summary>
 public sealed class AddPart(IPartRepository parts, IStockRepository stock, IUnitOfWork unitOfWork, ICurrentUser user, TimeProvider clock)
 {
     public async Task<Result<Guid>> HandleAsync(PartCommand c, int openingQuantity, CancellationToken ct)
     {
+        if (!user.IsOwner)
+            return ApplicationErrors.OwnerOnly;
         if (openingQuantity < 0)
             return InventoryErrors.InvalidQuantity;
 
@@ -37,10 +39,13 @@ public sealed class AddPart(IPartRepository parts, IStockRepository stock, IUnit
     }
 }
 
-public sealed class UpdatePart(IPartRepository parts, IUnitOfWork unitOfWork)
+/// <summary>Parçanın kodu, adı, fiyatları ve kritik seviyesi; sadece sahip.</summary>
+public sealed class UpdatePart(IPartRepository parts, IUnitOfWork unitOfWork, ICurrentUser user)
 {
     public async Task<Result> HandleAsync(Guid partId, PartCommand c, CancellationToken ct)
     {
+        if (!user.IsOwner)
+            return ApplicationErrors.OwnerOnly;
         var part = await parts.GetAsync(partId, ct);
         if (part is null)
             return ApplicationErrors.PartNotFound;

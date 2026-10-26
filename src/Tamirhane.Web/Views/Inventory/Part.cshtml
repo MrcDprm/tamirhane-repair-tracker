@@ -1,0 +1,167 @@
+@using Tamirhane.Domain.Inventory
+@model PartPage
+@{
+    var part = Model.Detail.Part;
+    ViewData["Title"] = part.Name;
+    var isOwner = User.IsInRole("Owner");
+    var turkey = TimeSpan.FromHours(3);
+    string Reason(StockMovementReason r) => r switch
+    {
+        StockMovementReason.Purchase => "Stok girişi",
+        StockMovementReason.Used => "Onarımda kullanıldı",
+        StockMovementReason.Returned => "İptalden geri döndü",
+        StockMovementReason.Adjustment => "Sayım düzeltmesi",
+        _ => r.ToString(),
+    };
+}
+
+<div class="page-head">
+    <div>
+        <h1>@part.Name</h1>
+        <p><code>@part.Sku</code>@(part.IsActive ? "" : ", kullanımdan kalktı")</p>
+    </div>
+    <a class="btn" asp-action="Index">Stok listesine dön</a>
+</div>
+
+@if (TempData["Status"] is string status)
+{
+    <div class="notice notice-ok" role="status">@status</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="notice notice-error" role="alert">@error</div>
+}
+
+<div class="work-columns">
+    <section class="panel" aria-labelledby="stock-heading">
+        <div class="panel-head">
+            <h2 id="stock-heading">Bu şubedeki stok</h2>
+            @if (part.IsLow)
+            {
+                <span class="stamp stamp-sm stamp-warn">Kritik</span>
+            }
+        </div>
+        <div class="panel-body">
+            <p class="stock-count@(part.IsLow ? " warn-text" : "")">@part.Quantity</p>
+            <p class="muted">@(part.CriticalLevel > 0 ? $"adet, kritik seviye {part.CriticalLevel}" : "adet")</p>
+        </div>
+        <div class="stock-forms">
+            <form method="post" asp-action="Receive" asp-route-id="@part.Id">
+                <h3>Stok girişi</h3>
+                <div class="field">
+                    <label for="receive-qty">Gelen adet</label>
+                    <input id="receive-qty" name="quantity" type="number" min="1" step="1" value="1" inputmode="numeric" />
+                </div>
+                <div class="field">
+                    <label for="receive-note">Not (isteğe bağlı)</label>
+                    <input id="receive-note" name="note" maxlength="200" placeholder="ör. Tedarikçi faturası 1234" autocomplete="off" />
+                </div>
+                <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Stoğa ekle</button>
+            </form>
+            <form method="post" asp-action="Adjust" asp-route-id="@part.Id">
+                <h3>Sayım düzeltmesi</h3>
+                <div class="field">
+                    <label for="adjust-count">Sayılan adet</label>
+                    <input id="adjust-count" name="counted" type="number" min="0" step="1" value="@part.Quantity" inputmode="numeric" />
+                </div>
+                <div class="field">
+                    <label for="adjust-reason">Neden</label>
+                    <input id="adjust-reason" name="reason" maxlength="200" placeholder="ör. Sayım farkı, Kırıldı" autocomplete="off" />
+                </div>
+                <button type="submit" class="btn">Düzelt</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="panel" aria-labelledby="info-heading">
+        <div class="panel-head"><h2 id="info-heading">Parça bilgileri</h2></div>
+        @if (isOwner)
+        {
+            <form method="post" asp-action="Update" asp-route-id="@part.Id" novalidate class="panel-body">
+                <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+                <div class="field-row">
+                    <div class="field">
+                        <label asp-for="Edit.Sku"></label>
+                        <input asp-for="Edit.Sku" class="code" autocomplete="off" />
+                        <span asp-validation-for="Edit.Sku"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Edit.CriticalLevel"></label>
+                        <input asp-for="Edit.CriticalLevel" type="number" min="0" step="1" inputmode="numeric" />
+                        <span asp-validation-for="Edit.CriticalLevel"></span>
+                    </div>
+                </div>
+                <div class="field">
+                    <label asp-for="Edit.Name"></label>
+                    <input asp-for="Edit.Name" autocomplete="off" />
+                    <span asp-validation-for="Edit.Name"></span>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label asp-for="Edit.CostPrice"></label>
+                        <input name="Edit.CostPrice" id="Edit_CostPrice" type="number" min="0" step="0.01" inputmode="decimal"
+                               value="@Model.Edit.CostPrice.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" />
+                    </div>
+                    <div class="field">
+                        <label asp-for="Edit.SalePrice"></label>
+                        <input name="Edit.SalePrice" id="Edit_SalePrice" type="number" min="0" step="0.01" inputmode="decimal"
+                               value="@Model.Edit.SalePrice.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" />
+                        <span asp-validation-for="Edit.SalePrice"></span>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Bilgileri kaydet</button>
+            </form>
+            <form method="post" asp-action="SetActive" asp-route-id="@part.Id" class="panel-foot">
+                <input type="hidden" name="active" value="@(part.IsActive ? "false" : "true")" />
+                <button type="submit" class="link-button">@(part.IsActive ? "Kullanımdan kaldır (geçmiş kayıtlar durur)" : "Yeniden kullanıma al")</button>
+            </form>
+        }
+        else
+        {
+            <dl class="panel-body facts">
+                <dt>Kod</dt><dd><code>@part.Sku</code></dd>
+                <dt>Satış fiyatı</dt><dd>@part.SalePrice.ToString("C")</dd>
+                <dt>Kritik seviye</dt><dd>@(part.CriticalLevel == 0 ? "uyarı yok" : part.CriticalLevel)</dd>
+            </dl>
+        }
+    </section>
+</div>
+
+<section class="panel" aria-labelledby="moves-heading">
+    <div class="panel-head">
+        <h2 id="moves-heading">Hareketler</h2>
+        <span class="muted">Son @Tamirhane.Application.Inventory.GetPart.MovementLimit hareket, en yenisi başta</span>
+    </div>
+    @if (Model.Detail.Movements.Count == 0)
+    {
+        <p class="panel-body muted">Henüz hareket yok. Stok girişi yapınca burada görünür.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr><th scope="col">Tarih</th><th scope="col">Hareket</th><th scope="col" class="num">Adet</th><th scope="col">Kim</th><th scope="col">Not</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Detail.Movements)
+                    {
+                        <tr>
+                            <td>@m.At.ToOffset(turkey).ToString("d MMMM yyyy HH:mm")</td>
+                            <td>@Reason(m.Reason)</td>
+                            <td class="num"><span class="@(m.Change > 0 ? "change-plus" : "change-minus")">@(m.Change > 0 ? "+" : "−")@Math.Abs(m.Change)</span></td>
+                            <td>@m.By</td>
+                            <td>
+                                @if (m.WorkOrderId is { } orderId)
+                                {
+                                    <a href="/work-orders/@orderId">İş emri @m.WorkOrderNumber</a>
+                                }
+                                @m.Note
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

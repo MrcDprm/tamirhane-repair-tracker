@@ -61,6 +61,10 @@ public sealed class FakeWorkOrders(ICurrentUser user) : IWorkOrderRepository
     public Task<WorkOrder?> GetAsync(Guid id, CancellationToken ct) =>
         Task.FromResult(Items.Find(o => o.Id == id && o.ShopId == user.ShopId));
 
+    public Task<IReadOnlyDictionary<Guid, string>> NumbersAsync(IEnumerable<Guid> ids, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<Guid, string>>(Items
+            .Where(o => o.ShopId == user.ShopId && ids.Contains(o.Id)).ToDictionary(o => o.Id, o => o.Number));
+
     public Task<WorkOrder?> GetByTrackingCodeAsync(string trackingCode, CancellationToken ct) =>
         Task.FromResult(Items.Find(o => o.TrackingCode == trackingCode));
 
@@ -109,8 +113,11 @@ public sealed class FakeParts(ICurrentUser user) : IPartRepository
     public FakeStock? Stock { get; set; }
 
     public Task<IReadOnlyList<PartStock>> ListActiveWithStockAsync(Guid branchId, CancellationToken ct) =>
+        ListWithStockAsync(branchId, includeInactive: false, ct);
+
+    public Task<IReadOnlyList<PartStock>> ListWithStockAsync(Guid branchId, bool includeInactive, CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<PartStock>>(Items
-            .Where(p => p.ShopId == user.ShopId && p.IsActive)
+            .Where(p => p.ShopId == user.ShopId && (includeInactive || p.IsActive))
             .Select(p => new PartStock(p, Stock?.Levels.Find(l => l.PartId == p.Id && l.BranchId == branchId)?.Quantity ?? 0))
             .ToList());
 
@@ -130,6 +137,10 @@ public sealed class FakeStock : IStockRepository
         var ids = partIds.ToHashSet();
         return Task.FromResult(new BranchStock(branchId, Levels.Where(l => l.BranchId == branchId && ids.Contains(l.PartId))));
     }
+
+    public Task<IReadOnlyList<StockMovement>> ListMovementsAsync(Guid partId, Guid branchId, int take, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<StockMovement>>(Movements
+            .Where(m => m.PartId == partId && m.BranchId == branchId).OrderByDescending(m => m.At).Take(take).ToList());
 
     public void AddLevel(StockLevel level) => Levels.Add(level);
 

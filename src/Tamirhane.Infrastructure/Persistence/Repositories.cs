@@ -115,6 +115,14 @@ internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRep
         return values[0];
     }
 
+    public async Task<IReadOnlyDictionary<Guid, string>> NumbersAsync(IEnumerable<Guid> ids, CancellationToken ct)
+    {
+        var wanted = ids.Distinct().ToList();
+        if (wanted.Count == 0)
+            return new Dictionary<Guid, string>();
+        return await db.WorkOrders.Where(o => wanted.Contains(o.Id)).ToDictionaryAsync(o => o.Id, o => o.Number, ct);
+    }
+
     public void Add(WorkOrder order) => db.WorkOrders.Add(order);
 }
 
@@ -148,10 +156,13 @@ internal sealed class PartRepository(TamirhaneDbContext db) : IPartRepository
     public Task<bool> SkuExistsAsync(string sku, Guid? exceptPartId, CancellationToken ct) =>
         db.Parts.AnyAsync(p => p.Sku == sku && p.Id != exceptPartId, ct);
 
-    public async Task<IReadOnlyList<PartStock>> ListActiveWithStockAsync(Guid branchId, CancellationToken ct)
+    public Task<IReadOnlyList<PartStock>> ListActiveWithStockAsync(Guid branchId, CancellationToken ct) =>
+        ListWithStockAsync(branchId, includeInactive: false, ct);
+
+    public async Task<IReadOnlyList<PartStock>> ListWithStockAsync(Guid branchId, bool includeInactive, CancellationToken ct)
     {
         var rows = await db.Parts
-            .Where(p => p.IsActive)
+            .Where(p => includeInactive || p.IsActive)
             .Select(p => new
             {
                 Part = p,
@@ -177,6 +188,10 @@ internal sealed class StockRepository(TamirhaneDbContext db) : IStockRepository
             : await db.StockLevels.Where(l => l.BranchId == branchId && ids.Contains(l.PartId)).ToListAsync(ct);
         return new BranchStock(branchId, levels);
     }
+
+    public async Task<IReadOnlyList<StockMovement>> ListMovementsAsync(Guid partId, Guid branchId, int take, CancellationToken ct) =>
+        await db.StockMovements.Where(m => m.PartId == partId && m.BranchId == branchId)
+            .OrderByDescending(m => m.At).ThenByDescending(m => m.Id).Take(take).ToListAsync(ct);
 
     public void AddLevel(StockLevel level) => db.StockLevels.Add(level);
 
