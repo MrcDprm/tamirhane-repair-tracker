@@ -7,6 +7,7 @@ using Microsoft.Extensions.WebEncoders;
 using Tamirhane.Application;
 using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Identity;
+using Tamirhane.Infrastructure.Notifications;
 using Tamirhane.Web.Authorization;
 using Tamirhane.Web.ModelBinding;
 using Tamirhane.Web.RateLimiting;
@@ -46,6 +47,9 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
     builder.Configuration["EMAIL_FROM"] ?? AccountOptions.DefaultFrom));
+// Tarayıcı bildirimi: üç değişken de boşsa kapalı; yarım ya da bozuk ayarda uygulama açılmaz.
+builder.Services.AddWebPush(WebPushOptions.From(builder.Configuration["VAPID_PUBLIC_KEY"],
+    builder.Configuration["VAPID_PRIVATE_KEY"], builder.Configuration["VAPID_SUBJECT"]));
 builder.Services.AddAccountRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddTrackingRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddShopPolicies();
