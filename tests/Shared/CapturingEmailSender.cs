@@ -20,8 +20,24 @@ public sealed class CapturingEmailSender : IEmailSender
             return _sent.Where(m => m.To.Equals(address, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
+    /// <summary>Şimdiye kadar gönderilen bütün e-postaların sayısı (bir işin hiçbir şey göndermediğini görmek için).</summary>
+    public int Count
+    {
+        get
+        {
+            BeforeRead?.Invoke().GetAwaiter().GetResult();
+            lock (_sent)
+                return _sent.Count;
+        }
+    }
+
+    /// <summary>Açıkken her gönderim hata verir (e-posta servisi çökmüş gibi).</summary>
+    public bool Failing { get; set; }
+
     public Task SendAsync(EmailMessage message, CancellationToken ct)
     {
+        if (Failing)
+            throw new HttpRequestException("e-posta servisi cevap vermiyor (test)");
         lock (_sent)
             _sent.Add(message);
         return Task.CompletedTask;

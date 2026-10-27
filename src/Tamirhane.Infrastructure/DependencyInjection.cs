@@ -55,6 +55,9 @@ public static class DependencyInjection
             .PersistKeysToDbContext<TamirhaneDbContext>();
 
         services.AddBackgroundJobs();
+        // Bildirim kanalları (#30 e-posta, #31 tarayıcı bildirimi). Veritabanı gerektikleri için arka plan kuyruğunun
+        // kendisinde değil burada kaydedilir; kuyruk testleri veritabanı olmadan kendi sahte kanallarıyla çalışır.
+        services.AddScoped<IWorkOrderNotificationHandler, CustomerStatusEmails>();
 
         // /health ucu veritabanına bağlanılabiliyor mu diye bakar (yayında sunucunun sağlık kontrolü).
         services.AddHealthChecks().AddDbContextCheck<TamirhaneDbContext>("database");
