@@ -65,6 +65,25 @@
         <p class="track-eta">Garanti <strong>@until.ToOffset(turkey).ToString("d MMMM yyyy")</strong> tarihine kadar</p>
     }
 
+    @if (!Model.IsClosed && ViewData["PushKey"] is string pushKey)
+    {
+        @* Tarayıcı bildirimi desteklenmiyorsa (ör. iPhone'da Ana Ekran'a eklenmemiş Safari) bölüm gizli kalır; tracking.js açar. *@
+        <section class="track-push" data-push data-key="@pushKey" hidden
+                 data-state="@Url.Action("PushState", new { code })" data-subscribe="@Url.Action("Subscribe", new { code })"
+                 data-unsubscribe="@Url.Action("Unsubscribe", new { code })" aria-labelledby="push-heading">
+            @Html.AntiForgeryToken()
+            <h2 id="push-heading">Haber verelim</h2>
+            <p data-push-text>Durum değişince bu tarayıcıya bildirim gönderelim; sayfayı açık tutman gerekmez.</p>
+            <div class="track-actions">
+                <button type="button" class="btn btn-primary" data-push-on>
+                    <svg class="icon"><use href="/img/icons.svg#i-bell" /></svg>Durum değişince haber ver
+                </button>
+                <button type="button" class="btn" data-push-off hidden>Haber vermeyi durdur</button>
+            </div>
+            <p class="field-help" data-push-message role="status" aria-live="polite"></p>
+        </section>
+    }
+
     @if (Model.QuoteLines.Count > 0)
     {
         var totals = Model.QuoteTotals;
