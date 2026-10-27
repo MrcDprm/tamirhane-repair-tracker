@@ -79,7 +79,8 @@ public sealed class ListWorkOrders(IWorkOrderRepository orders, TimeProvider clo
     public const int Limit = 200;
     public const int OverdueDays = 30;
 
-    private static readonly WorkOrderStatus[] OpenStatuses =
+    /// <summary>Tezgâhta bekleyen işler: teslim edilmemiş ve iptal edilmemiş (panel de bunu kullanır).</summary>
+    public static readonly WorkOrderStatus[] OpenStatuses =
     [
         WorkOrderStatus.Received, WorkOrderStatus.Diagnosing, WorkOrderStatus.AwaitingApproval,
         WorkOrderStatus.InRepair, WorkOrderStatus.Ready, WorkOrderStatus.Declined,

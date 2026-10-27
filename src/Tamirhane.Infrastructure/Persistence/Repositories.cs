@@ -249,3 +249,32 @@ internal sealed class StockRepository(TamirhaneDbContext db) : IStockRepository
 
     public void AddMovements(IEnumerable<StockMovement> movements) => db.StockMovements.AddRange(movements);
 }
+
+/// <summary>Panel sayıları. Kiracı filtresi iş emirlerinde; ödemeler iş emri üzerinden süzülür.</summary>
+internal sealed class DashboardQueries(TamirhaneDbContext db) : IDashboardQueries
+{
+    public async Task<WorkOrderCounts> CountsAsync(DateTimeOffset overdueBefore, CancellationToken ct)
+    {
+        // Tek sorgu: açık işler duruma ve gecikmeye göre gruplanır, sayılar bellekte toplanır (en fazla birkaç satır).
+        var groups = await db.WorkOrders
+            .Where(o => o.Status != WorkOrderStatus.Delivered && o.Status != WorkOrderStatus.Cancelled)
+            .GroupBy(o => new { o.Status, Late = o.CreatedAt < overdueBefore })
+            .Select(g => new { g.Key.Status, g.Key.Late, Count = g.Count() })
+            .ToListAsync(ct);
+
+        int Of(params WorkOrderStatus[] statuses) => groups.Where(g => statuses.Contains(g.Status)).Sum(g => g.Count);
+        return new WorkOrderCounts(
+            Open: groups.Sum(g => g.Count),
+            AwaitingApproval: Of(WorkOrderStatus.AwaitingApproval),
+            InRepair: Of(WorkOrderStatus.InRepair),
+            ReadyForPickup: Of(WorkOrderStatus.Ready, WorkOrderStatus.Declined),
+            Overdue: groups.Where(g => g.Late).Sum(g => g.Count));
+    }
+
+    public async Task<decimal> RevenueAsync(DateTimeOffset start, DateTimeOffset end, CancellationToken ct) =>
+        await (from p in db.Set<Payment>()
+               join o in db.WorkOrders on p.WorkOrderId equals o.Id
+               where p.At >= start && p.At < end
+               select p.Kind == PaymentKind.Refund ? -p.Amount : p.Amount)
+            .SumAsync(ct);
+}
