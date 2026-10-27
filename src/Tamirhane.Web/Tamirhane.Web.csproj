@@ -11,4 +11,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Arayüz metinleri derlemeye gömülür (#35): yayında dosya kopyalamaya bağlı kalmaz. -->
+    <EmbeddedResource Include="Resources\*.json" LogicalName="Tamirhane.Web.Resources.%(Filename)%(Extension)" />
+    <Content Remove="Resources\*.json" />
+  </ItemGroup>
+
 </Project>

@@ -77,6 +77,13 @@ tests/
 - **Entegrasyon testleri:** Testcontainers her test çalıştırmasında Docker'da geçici bir PostgreSQL açar, testler bitince siler. Gerçek veritabanına hiç dokunulmaz; kiracı filtresi ve migration'lar gerçek PostgreSQL'de denenir. Docker Desktop gerekir (2026-10-20 kararı: kurulacak).
 - **Arka plan işleri:** E-posta ve push gönderimi `Channel` tabanlı bir `BackgroundService` kuyruğunda; istek beklemez, hata loglanır ve 3 kez denenir.
 
+## Türkçe ve İngilizce arayüz (#35)
+
+- **Dil seçimi:** Atölye panelinde kişiye göre: üst çubuktaki TR/EN seçici, çerezde saklanır; çerez yoksa tarayıcının dili (Türkçe değilse İngilizce). Müşterinin takip sayfası atölyenin müşteri dilinde açılır (e-posta, bildirim ve WhatsApp ile aynı), sayfada küçük bir TR/EN geçişi de vardır.
+- **Kaynak dosyaları:** `Resources/tr.json` ve `en.json`, anlamlı anahtarlar (`workorder.receive.title`). Kendi `IStringLocalizer` uygulamamız; görünümler, denetleyici mesajları ve doğrulama mesajları (DataAnnotations) aynı dosyalardan. Anahtar bulunamazsa Türkçesi, o da yoksa anahtarın kendisi gösterilir (geçiş sırasında sayfalar bozulmaz).
+- **Test:** iki dosyada aynı anahtarlar, her anahtarda aynı yer tutucular, boş değer yok.
+- **Para birimi:** İngilizce kültür en-GB tabanlı ama para simgesi ₺ (en-GB £ gösterirdi).
+
 ## Veri modeli (özet)
 
 ```
