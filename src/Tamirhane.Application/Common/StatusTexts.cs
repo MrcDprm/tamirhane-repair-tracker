@@ -1,12 +1,12 @@
 using Tamirhane.Domain.WorkOrders;
 
-namespace Tamirhane.Infrastructure.Notifications;
+namespace Tamirhane.Application.Common;
 
 /// <summary>
-/// Müşteriye giden durum haberlerinin metni (e-posta #30 ve tarayıcı bildirimi #31 aynısını kullanır).
+/// Müşteriye giden durum haberlerinin metni: e-posta (#30), tarayıcı bildirimi (#31) ve WhatsApp mesajı (#32) aynısını kullanır.
 /// Başlık kısa ("teslime hazır"), açıklama takip sayfasındaki cümleyle aynı dilde.
 /// </summary>
-internal static class StatusTexts
+public static class StatusTexts
 {
     public static (string Headline, string Lead) For(WorkOrderStatus status, string locale) =>
         locale == "en" ? English(status) : Turkish(status);
