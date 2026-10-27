@@ -161,6 +161,10 @@ internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRep
         return await db.WorkOrders.Where(o => wanted.Contains(o.Id)).ToDictionaryAsync(o => o.Id, o => o.Number, ct);
     }
 
+    public async Task<IReadOnlyList<WorkOrderLink>> WarrantyReturnsAsync(Guid previousId, CancellationToken ct) =>
+        await db.WorkOrders.Where(o => o.WarrantyOfId == previousId).OrderBy(o => o.CreatedAt)
+            .Select(o => new WorkOrderLink(o.Id, o.Number)).ToListAsync(ct);
+
     public void Add(WorkOrder order) => db.WorkOrders.Add(order);
 }
 

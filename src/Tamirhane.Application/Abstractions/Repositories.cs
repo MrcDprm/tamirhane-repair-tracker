@@ -95,6 +95,9 @@ public interface IWorkOrderRepository
     /// <summary>İş emirlerinin numaraları (stok hareketlerinde "hangi iş için" göstermek üzere).</summary>
     Task<IReadOnlyDictionary<Guid, string>> NumbersAsync(IEnumerable<Guid> ids, CancellationToken ct);
 
+    /// <summary>Bu iş emrinin garanti kapsamında açılmış dönüşleri (kimlik, numara), eskisi başta.</summary>
+    Task<IReadOnlyList<Tamirhane.Application.WorkOrders.WorkOrderLink>> WarrantyReturnsAsync(Guid previousId, CancellationToken ct);
+
     /// <summary>Atölyenin o yılki sıradaki iş emri numarası (1'den başlar).</summary>
     Task<int> NextSequenceAsync(Guid shopId, int year, CancellationToken ct);
 

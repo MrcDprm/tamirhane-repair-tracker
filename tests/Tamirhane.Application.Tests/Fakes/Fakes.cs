@@ -91,6 +91,11 @@ public sealed class FakeWorkOrders(ICurrentUser user) : IWorkOrderRepository
         Task.FromResult<IReadOnlyDictionary<Guid, string>>(Items
             .Where(o => o.ShopId == user.ShopId && ids.Contains(o.Id)).ToDictionary(o => o.Id, o => o.Number));
 
+    public Task<IReadOnlyList<WorkOrderLink>> WarrantyReturnsAsync(Guid previousId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<WorkOrderLink>>(Items
+            .Where(o => o.ShopId == user.ShopId && o.WarrantyOfId == previousId).OrderBy(o => o.CreatedAt)
+            .Select(o => new WorkOrderLink(o.Id, o.Number)).ToList());
+
     public Task<WorkOrder?> GetByTrackingCodeAsync(string trackingCode, CancellationToken ct) =>
         Task.FromResult(Items.Find(o => o.TrackingCode == trackingCode));
 
