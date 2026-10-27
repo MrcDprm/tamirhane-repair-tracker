@@ -36,7 +36,12 @@ internal sealed class WorkOrderConfiguration : IEntityTypeConfiguration<WorkOrde
         b.HasMany(o => o.QuoteLines).WithOne().HasForeignKey(l => l.WorkOrderId).OnDelete(DeleteBehavior.Cascade);
         b.HasMany(o => o.Payments).WithOne().HasForeignKey(p => p.WorkOrderId).OnDelete(DeleteBehavior.Cascade);
         b.HasMany(o => o.Notes).WithOne().HasForeignKey(n => n.WorkOrderId).OnDelete(DeleteBehavior.Cascade);
-        foreach (var navigation in new[] { nameof(WorkOrder.History), nameof(WorkOrder.QuoteLines), nameof(WorkOrder.Payments), nameof(WorkOrder.Notes) })
+        b.HasMany(o => o.PushSubscriptions).WithOne().HasForeignKey(s => s.WorkOrderId).OnDelete(DeleteBehavior.Cascade);
+        foreach (var navigation in new[]
+                 {
+                     nameof(WorkOrder.History), nameof(WorkOrder.QuoteLines), nameof(WorkOrder.Payments), nameof(WorkOrder.Notes),
+                     nameof(WorkOrder.PushSubscriptions),
+                 })
             b.Navigation(navigation).UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
@@ -85,6 +90,21 @@ internal sealed class WorkOrderNoteConfiguration : IEntityTypeConfiguration<Work
         b.ToTable("work_order_notes");
         b.HasKey(n => n.Id);
         b.Property(n => n.Id).ValueGeneratedNever();
+    }
+}
+
+internal sealed class PushSubscriptionConfiguration : IEntityTypeConfiguration<PushSubscription>
+{
+    public void Configure(EntityTypeBuilder<PushSubscription> b)
+    {
+        b.ToTable("work_order_push_subscriptions");
+        b.HasKey(s => s.Id);
+        b.Property(s => s.Id).ValueGeneratedNever();
+        b.Property(s => s.Endpoint).HasMaxLength(PushSubscription.MaxEndpointLength);
+        b.Property(s => s.P256dh).HasMaxLength(100);
+        b.Property(s => s.Auth).HasMaxLength(32);
+        // Aynı tarayıcı aynı iş emrine bir kez abone olur (tekrar abone olunca kayıt yenilenir).
+        b.HasIndex(s => new { s.WorkOrderId, s.Endpoint }).IsUnique();
     }
 }
 
