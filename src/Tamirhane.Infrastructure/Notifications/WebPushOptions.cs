@@ -1,4 +1,5 @@
 using System.Buffers.Text;
+using Tamirhane.Application.Abstractions;
 
 namespace Tamirhane.Infrastructure.Notifications;
 
@@ -35,4 +36,10 @@ public sealed record WebPushOptions(string PublicKey, string PrivateKey, string 
 
     // Gizli anahtar loglara ya da hata sayfasına düşmesin (record'un ToString'i bütün alanları yazardı).
     public override string ToString() => $"WebPushOptions {{ PublicKey = {PublicKey}, Subject = {Subject} }}";
+}
+
+/// <summary><see cref="IPushSettings"/>: ayar yoksa açık anahtar boş (özellik kapalı).</summary>
+internal sealed class PushSettings(string? publicKey) : IPushSettings
+{
+    public string? PublicKey { get; } = publicKey;
 }

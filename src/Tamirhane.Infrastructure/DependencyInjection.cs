@@ -60,6 +60,8 @@ public static class DependencyInjection
         // Bildirim kanalları (#30 e-posta, #31 tarayıcı bildirimi). Veritabanı gerektikleri için arka plan kuyruğunun
         // kendisinde değil burada kaydedilir; kuyruk testleri veritabanı olmadan kendi sahte kanallarıyla çalışır.
         services.AddScoped<IWorkOrderNotificationHandler, CustomerStatusEmails>();
+        // Tarayıcı bildirimi varsayılan olarak kapalı; AddWebPush ayarla çağrılırsa açılır.
+        services.TryAddSingleton<IPushSettings>(new PushSettings(null));
 
         // /health ucu veritabanına bağlanılabiliyor mu diye bakar (yayında sunucunun sağlık kontrolü).
         services.AddHealthChecks().AddDbContextCheck<TamirhaneDbContext>("database");
@@ -92,6 +94,7 @@ public static class DependencyInjection
             return services;
 
         services.AddSingleton(options);
+        services.Replace(ServiceDescriptor.Singleton<IPushSettings>(new PushSettings(options.PublicKey)));
         services.AddHttpClient(WebPushClientName, http => http.Timeout = TimeSpan.FromSeconds(15));
         // İmza (JWT) tekrar tekrar üretilmesin diye kütüphane bir süre saklar; bu yüzden tek örnek.
         services.AddSingleton(_ => new VapidAuthentication(options.PublicKey, options.PrivateKey) { Subject = options.Subject });

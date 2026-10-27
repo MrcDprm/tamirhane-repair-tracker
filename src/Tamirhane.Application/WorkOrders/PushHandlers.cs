@@ -43,3 +43,19 @@ public sealed class UnsubscribeFromPush(IWorkOrderRepository orders, IUnitOfWork
         return Result.Success();
     }
 }
+
+/// <summary>
+/// Takip sayfası açılınca: bu tarayıcı (adresiyle) bu iş emrine abone mi? Düğme "haber ver" ya da "durdur" olur.
+/// Aynı tarayıcı birden çok iş emrine abone olabildiği için tarayıcının kendi aboneliği bunu söyleyemez.
+/// </summary>
+public sealed class GetPushState(IWorkOrderRepository orders)
+{
+    public async Task<bool?> HandleAsync(string trackingCode, string? endpoint, CancellationToken ct)
+    {
+        var code = TrackingCode.Normalize(trackingCode);
+        var order = code is null ? null : await orders.GetByTrackingCodeAsync(code, ct);
+        if (order is null)
+            return null;
+        return order.PushSubscriptions.Any(s => s.Endpoint == endpoint?.Trim());
+    }
+}
