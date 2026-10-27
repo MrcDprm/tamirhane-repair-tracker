@@ -34,7 +34,7 @@ internal sealed class BranchRepository(TamirhaneDbContext db) : IBranchRepositor
 internal sealed class ShopSettingsReader(TamirhaneDbContext db) : IShopSettings
 {
     public async Task<ShopSettings> GetAsync(Guid shopId, CancellationToken ct) =>
-        await db.Shops.Where(s => s.Id == shopId).Select(s => new ShopSettings(s.WarrantyDays, s.DefaultVatRate)).SingleOrDefaultAsync(ct)
+        await db.Shops.Where(s => s.Id == shopId).Select(s => new ShopSettings(s.WarrantyDays, s.DefaultVatRate, s.Locale)).SingleOrDefaultAsync(ct)
         ?? throw new InvalidOperationException("Oturumun atölyesi yok.");
 }
 

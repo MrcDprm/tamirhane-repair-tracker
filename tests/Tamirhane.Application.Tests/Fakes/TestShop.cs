@@ -11,10 +11,10 @@ namespace Tamirhane.Application.Tests.Fakes;
 /// <summary>Bir atölyenin bütün sahte bağımlılıkları ve kullanım senaryoları tek yerde.</summary>
 public sealed class TestShop
 {
-    public TestShop(bool isOwner = true)
+    public TestShop(bool isOwner = true, string locale = "tr")
     {
         User = new FakeUser(Guid.NewGuid(), isOwner);
-        Settings = new ShopSettings(WarrantyDays: 90, DefaultVatRate: 20);
+        Settings = new ShopSettings(WarrantyDays: 90, DefaultVatRate: 20, Locale: locale);
         Orders = new FakeWorkOrders(User);
         Customers = new FakeCustomers(User);
         Devices = new FakeDevices(User);
@@ -42,7 +42,7 @@ public sealed class TestShop
 
     public ReceiveDevice ReceiveDevice() => new(Customers, Devices, Orders, UnitOfWork, Queue, User, Clock);
     public FindCustomerByPhone FindCustomerByPhone() => new(Customers, Devices);
-    public GetWorkOrder GetWorkOrder() => new(Orders, Customers, Devices, Staff, Parts, new FakeSettings(Settings), User);
+    public GetWorkOrder GetWorkOrder() => new(Orders, Customers, Devices, Staff, Parts, new FakeSettings(Settings), User, new FakeTrackingLinks());
     public StartDiagnosis StartDiagnosis() => new(Orders, UnitOfWork, Queue, User, Clock);
     public StartRepair StartRepair() => new(Orders, UnitOfWork, Queue, User, Clock);
     public AddQuoteLine AddQuoteLine() => new(Orders, Parts, new FakeSettings(Settings), UnitOfWork, Queue, User, Clock);
