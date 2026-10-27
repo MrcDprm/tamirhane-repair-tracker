@@ -1,0 +1,11 @@
+@using System.Globalization
+@model string
+@* Dil seçici: tek düğme, diğer dile geçer (seçim çerezde kalır). Model düğmenin sınıfı (yan menüde side-btn). *@
+@{
+    var english = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en";
+}
+<form asp-controller="Language" asp-action="Set" method="post" class="lang-switch">
+    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+    <button type="submit" name="culture" value="@(english ? "tr" : "en")" class="@Model" lang="@(english ? "tr" : "en")"
+            aria-label="@T["language.switch"]" title="@T["language.switch"]">@(english ? "Türkçe" : "English")</button>
+</form>

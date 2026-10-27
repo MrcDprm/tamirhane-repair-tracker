@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Localization;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Application.Shops;
 using Tamirhane.Domain.Shops;
+using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.Staff;
 using Tamirhane.Web.RateLimiting;
 
@@ -14,7 +16,7 @@ namespace Tamirhane.Web.Controllers;
 /// Geçersiz linkin nedeni (süresi dolmuş, kullanılmış, geri alınmış) ayrıca söylenmez.
 /// </summary>
 [Route("invitation")]
-public sealed class InvitationController(IAccountService accounts) : Controller
+public sealed class InvitationController(IAccountService accounts, IStringLocalizer<SharedResource> t) : Controller
 {
     [HttpGet("")]
     public async Task<IActionResult> Index(string? token, [FromServices] GetInvitation get, CancellationToken ct)
@@ -49,7 +51,7 @@ public sealed class InvitationController(IAccountService accounts) : Controller
                 : result.Error == ShopErrors.InvalidDisplayName
                     ? (nameof(AcceptInvitationInput.DisplayName), "Ad 2 ile 100 karakter arasında olmalı.")
                     : AccountController.MessageFor(result.Error!);
-            ModelState.AddModelError(field == "" ? "" : $"{nameof(AcceptInvitationPage.Input)}.{field}", message);
+            ModelState.AddModelError(field == "" ? "" : $"{nameof(AcceptInvitationPage.Input)}.{field}", t[message]);
             return View(page);
         }
 

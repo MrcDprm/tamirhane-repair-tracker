@@ -1,16 +1,15 @@
 @model LoginInput
 @{
-    ViewData["Title"] = "Giriş yap";
+    ViewData["Title"] = T["account.login.title"];
 }
 
 <div class="narrow">
-    <h1>Giriş yap</h1>
+    <h1>@T["account.login.title"]</h1>
 
     @if (ViewData["EmailNotConfirmed"] is true)
     {
         <div class="notice notice-error" role="alert">
-            E-posta adresin henüz doğrulanmadı. Sana gönderdiğimiz linke tıkla ya da
-            <a asp-action="ResendConfirmation">yeni bir link iste</a>.
+            @H["account.login.not_confirmed_html", Url.Action("ResendConfirmation")!]
         </div>
     }
 
@@ -33,10 +32,10 @@
             <label asp-for="RememberMe"></label>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Giriş yap</button>
+        <button type="submit" class="btn btn-primary btn-block">@T["account.login.title"]</button>
     </form>
 
-    <p>Hesabın yok mu? <a asp-action="Register">Atölyeni kaydet</a></p>
-    <p><a asp-action="ForgotPassword">Şifremi unuttum</a></p>
-    <p><a asp-action="ResendConfirmation">Doğrulama e-postası gelmedi mi?</a></p>
+    <p>@T["account.login.no_account"] <a asp-action="Register">@T["account.register.title"]</a></p>
+    <p><a asp-action="ForgotPassword">@T["account.forgot.title"]</a></p>
+    <p><a asp-action="ResendConfirmation">@T["account.login.no_email"]</a></p>
 </div>

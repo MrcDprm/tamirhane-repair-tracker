@@ -321,6 +321,9 @@ kbd {
 .auth-form { display: flex; flex-direction: column; justify-content: center; padding: 48px clamp(24px, 6vw, 88px); background: var(--surface); }
 .auth-form > * { width: 100%; max-width: 26rem; }
 .auth-form h1 { font-size: 2.4rem; }
+/* Dil seçici (#35): giriş sayfalarında formun sağ üstünde; formun kendisi yerleşimi bozmaz. */
+.lang-switch { display: contents; }
+.auth-lang { display: flex; justify-content: flex-end; margin-bottom: 16px; }
 
 /* Geniş ekranda pano yerinde durur: form uzunsa sadece form kayar, çizim hep görünür. Çizimin doğal yüksekliği
    genişliğinden gelir (640×330); kısa ekranda görünür alanın %42'siyle sınırlanır ve ortada kalır. Çizim daralınca

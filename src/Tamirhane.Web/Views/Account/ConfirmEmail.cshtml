@@ -1,19 +1,19 @@
 @model bool
 @{
-    ViewData["Title"] = Model ? "E-posta doğrulandı" : "Link geçersiz";
+    ViewData["Title"] = Model ? T["account.confirm.ok_title"] : T["account.confirm.bad_title"];
 }
 
 <div class="narrow">
     @if (Model)
     {
-        <h1>E-posta doğrulandı</h1>
-        <p>Hesabın hazır. Artık atölyene giriş yapabilirsin.</p>
-        <a asp-action="Login" class="btn btn-primary">Giriş yap</a>
+        <h1>@T["account.confirm.ok_title"]</h1>
+        <p>@T["account.confirm.ok_text"]</p>
+        <a asp-action="Login" class="btn btn-primary">@T["account.login.title"]</a>
     }
     else
     {
-        <h1>Link geçersiz</h1>
-        <p>Bu doğrulama linkinin süresi dolmuş ya da link eksik kopyalanmış.</p>
-        <a asp-action="ResendConfirmation" class="btn btn-primary">Yeni link iste</a>
+        <h1>@T["account.confirm.bad_title"]</h1>
+        <p>@T["account.confirm.bad_text"]</p>
+        <a asp-action="ResendConfirmation" class="btn btn-primary">@T["account.confirm.new_link"]</a>
     }
 </div>
