@@ -35,6 +35,11 @@
         <div class="notice notice-ok" role="status">Durum güncellendi: @Labels.Of(Model.Status).</div>
     }
 
+    @if (Model.WarrantyOf is { } previous)
+    {
+        <p class="notice notice-ok">Garanti kapsamında geri geldi. Önceki iş emri: <a asp-action="Details" asp-route-id="@previous.Id">@previous.Number</a></p>
+    }
+
     <div class="work-layout">
         <article class="ticket" aria-label="İş emri etiketi">
             <span class="work-no">@Model.Number</span>
@@ -144,6 +149,15 @@
                             @:Garanti @until.ToOffset(turkey).ToString("d MMMM yyyy") tarihine kadar.
                         }
                     </p>
+                    @foreach (var back in Model.WarrantyReturns)
+                    {
+                        <p>Garanti kapsamında geri geldi: <a asp-action="Details" asp-route-id="@back.Id">@back.Number</a></p>
+                    }
+                    @if (Model.CanReopenUnderWarranty)
+                    {
+                        @* Aynı müşteri ve cihazla yeni iş emri; ikisi birbirine bağlı görünür, işçilik ücretsiz önerilir. *@
+                        <a class="btn" asp-action="Warranty" asp-route-id="@Model.Id">Garanti kapsamında yeni kayıt</a>
+                    }
                 </section>
             }
 

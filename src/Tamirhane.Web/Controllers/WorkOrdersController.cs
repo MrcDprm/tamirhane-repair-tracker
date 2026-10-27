@@ -116,6 +116,53 @@ public sealed class WorkOrdersController : Controller
         return order.IsFailure ? NotFound() : View(order.Value);
     }
 
+    /// <summary>
+    /// Garanti kapsamında yeni kayıt (#34): teslim edilmiş ve garantisi süren iş emrinden. Müşteri ve cihaz aynı kalır,
+    /// yeni iş emri öncekine bağlanır; teklifte işçilik ücretsiz önerilir.
+    /// </summary>
+    [HttpGet("{id:guid}/warranty")]
+    public async Task<IActionResult> Warranty(Guid id, [FromServices] GetWorkOrder get, CancellationToken ct)
+    {
+        var previous = await get.HandleAsync(id, ct);
+        if (previous.IsFailure)
+            return NotFound();
+        if (!previous.Value.CanReopenUnderWarranty)
+        {
+            TempData["Error"] = WarrantyEnded;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        return View(new WarrantyPage(previous.Value, new WarrantyInput()));
+    }
+
+    [HttpPost("{id:guid}/warranty")]
+    public async Task<IActionResult> Warranty(
+        Guid id, [Bind(Prefix = nameof(WarrantyPage.Input))] WarrantyInput input,
+        [FromServices] GetWorkOrder get, [FromServices] ReopenUnderWarranty reopen, CancellationToken ct)
+    {
+        var previous = await get.HandleAsync(id, ct);
+        if (previous.IsFailure)
+            return NotFound();
+        if (!ModelState.IsValid)
+            return View(new WarrantyPage(previous.Value, input));
+
+        var result = await reopen.HandleAsync(
+            new ReopenUnderWarrantyCommand(id, input.Complaint, input.Condition, input.Accessories, input.Passcode), ct);
+        if (result.IsFailure)
+        {
+            if (result.Error == ApplicationErrors.WorkOrderNotFound)
+                return NotFound();
+            ModelState.AddModelError("", result.Error == WorkOrderErrors.NotUnderWarranty ? WarrantyEnded
+                : StepMessage(result.Error!));
+            return View(new WarrantyPage(previous.Value, input));
+        }
+
+        TempData["Created"] = true;
+        return RedirectToAction(nameof(Details), new { id = result.Value.WorkOrderId });
+    }
+
+    private const string WarrantyEnded =
+        "Bu iş emrinin garantisi bitmiş ya da cihaz henüz teslim edilmemiş. Yeni bir kabul olarak kaydet.";
+
     /// <summary>A5 kabul fişi: tarayıcının yazdırma özelliğiyle basılır (PDF kütüphanesi yok).</summary>
     [HttpGet("{id:guid}/receipt")]
     public async Task<IActionResult> Receipt(Guid id, [FromServices] GetReceipt get, CancellationToken ct)

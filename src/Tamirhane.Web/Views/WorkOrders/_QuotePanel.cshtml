@@ -159,7 +159,13 @@
                     </div>
                     <div class="field">
                         <label for="free-price">Birim fiyat</label>
-                        <input id="free-price" name="UnitPrice" type="number" min="0" step="0.01" inputmode="decimal" />
+                        @* Garanti dönüşünde işçilik ücretsiz önerilir (0); gerekiyorsa değiştirilebilir. *@
+                        <input id="free-price" name="UnitPrice" type="number" min="0" step="0.01" inputmode="decimal"
+                               value="@(Model.IsWarrantyReturn ? "0" : null)" aria-describedby="@(Model.IsWarrantyReturn ? "free-price-help" : null)" />
+                        @if (Model.IsWarrantyReturn)
+                        {
+                            <div id="free-price-help" class="field-help">Garanti kapsamında: işçilik ücretsiz önerildi.</div>
+                        }
                     </div>
                     <div class="field">
                         <label for="free-discount">İskonto %</label>
