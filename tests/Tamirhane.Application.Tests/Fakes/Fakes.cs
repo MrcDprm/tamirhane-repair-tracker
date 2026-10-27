@@ -17,6 +17,12 @@ public sealed class FakeUser(Guid shopId, bool isOwner = true) : ICurrentUser
     public bool IsOwner { get; set; } = isOwner;
 }
 
+/// <summary>Takip linki: https://tamirhane.test/t/{kod}.</summary>
+public sealed class FakeTrackingLinks : ITrackingLinks
+{
+    public Uri For(string trackingCode) => new($"https://tamirhane.test/t/{trackingCode}");
+}
+
 public sealed class FakeSettings(ShopSettings settings) : IShopSettings
 {
     public Task<ShopSettings> GetAsync(Guid shopId, CancellationToken ct) => Task.FromResult(settings);

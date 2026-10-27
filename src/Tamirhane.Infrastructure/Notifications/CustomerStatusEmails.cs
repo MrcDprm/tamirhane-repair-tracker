@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Tamirhane.Application.Abstractions;
+using Tamirhane.Application.Common;
 using Tamirhane.Domain.WorkOrders;
 using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;

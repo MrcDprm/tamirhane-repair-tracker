@@ -53,6 +53,8 @@ public sealed record WorkOrderView(
     public decimal Balance { get; init; }
     public DateTimeOffset? WarrantyUntil { get; init; }
     public DateOnly? PromisedDate { get; init; }
+    /// <summary>"WhatsApp'tan bildir": müşterinin sohbetini o anki durumun hazır mesajı ve takip linkiyle açar.</summary>
+    public Uri? WhatsAppLink { get; init; }
     /// <summary>Söz verilen gün değiştirilebilir mi (iş emri açıkken).</summary>
     public bool CanPromise => Status is not (WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled);
     public IReadOnlyList<QuoteLineView> QuoteLines { get; init; } = [];
@@ -80,7 +82,7 @@ public sealed record WorkOrderView(
 
 public sealed class GetWorkOrder(
     IWorkOrderRepository orders, ICustomerRepository customers, IDeviceRepository devices, IStaffRepository staff,
-    IPartRepository parts, IShopSettings settings, ICurrentUser user)
+    IPartRepository parts, IShopSettings settings, ICurrentUser user, ITrackingLinks links)
 {
     public async Task<Result<WorkOrderView>> HandleAsync(Guid id, CancellationToken ct)
     {
@@ -95,6 +97,7 @@ public sealed class GetWorkOrder(
         var names = await staff.NamesAsync(order.History.Select(h => h.StaffId).OfType<Guid>()
             .Concat(order.Notes.Select(n => n.StaffId)).Concat(order.Payments.Select(p => p.StaffId)), ct);
         var editable = order.IsQuoteEditable;
+        var shop = await settings.GetAsync(user.ShopId, ct);
         // Parça seçimi iş emrinin şubesinin stoğundan (onarım bitince stok oradan düşer).
         var options = editable
             ? (await parts.ListActiveWithStockAsync(order.BranchId, ct))
@@ -123,13 +126,15 @@ public sealed class GetWorkOrder(
             QuoteTotals = order.QuoteTotals,
             IsQuoteEditable = editable,
             PartOptions = options,
-            DefaultVatRate = editable ? (await settings.GetAsync(user.ShopId, ct)).DefaultVatRate : 0,
+            DefaultVatRate = editable ? shop.DefaultVatRate : 0,
             QuoteDecision = order.QuoteDecision,
             Payments = order.Payments.OrderBy(p => p.At)
                 .Select(p => new PaymentView(p.Kind, p.Amount, p.Method, p.At, names.GetValueOrDefault(p.StaffId, "?"), p.Note)).ToList(),
             PaidTotal = order.PaidTotal,
             DiagnosisFee = order.DiagnosisFee,
             BalanceAtDelivery = order.BalanceAtDelivery,
+            WhatsAppLink = WhatsAppMessage.Link(customer.Phone.Value, WhatsAppMessage.Text(
+                customer.Name, $"{device.Brand} {device.Model}", order.Number, order.Status, shop.Locale, links.For(order.TrackingCode))),
         };
     }
 

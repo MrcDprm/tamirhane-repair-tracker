@@ -184,6 +184,15 @@
                             <br /><a href="mailto:@Model.CustomerEmail">@Model.CustomerEmail</a>
                         }
                     </p>
+                    @if (Model.WhatsAppLink is { } whatsApp)
+                    {
+                        @* Mesajı Tamirhane göndermez: teknisyenin WhatsApp'ı o anki durumun hazır mesajıyla açılır, kendisi gönderir.
+                           Bu bölüm her adımda yenilenir; mesaj hep güncel durumu söyler. *@
+                        <a class="btn" href="@whatsApp" target="_blank" rel="noopener noreferrer" aria-describedby="whatsapp-help">
+                            <svg class="icon"><use href="/img/icons.svg#i-chat" /></svg>WhatsApp'tan bildir
+                        </a>
+                        <p id="whatsapp-help" class="field-help">Durumu ve takip linkini içeren mesaj hazır gelir; göndermeden önce düzenleyebilirsin.</p>
+                    }
                     <p class="muted">
                         Takip kodu <code>@Model.TrackingCode</code>
                         @if (Model.HasPasscode)
