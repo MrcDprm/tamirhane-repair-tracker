@@ -1,9 +1,12 @@
+using System.Buffers.Text;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Tamirhane.Application.Abstractions;
+using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Persistence;
@@ -37,6 +40,19 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
     /// <summary>Uygulamanın gönderdiği e-postalar (doğrulama linki buradan okunur).</summary>
     public CapturingEmailSender Emails { get; } = new();
 
+    /// <summary>Push servisi yerine: tarayıcı bildirimleri buraya gelir.</summary>
+    public FakePushService Push { get; } = new();
+
+    /// <summary>Testler için VAPID anahtar çifti; uygulamaya ortam değişkeni gibi verilir.</summary>
+    public static readonly (string Public, string Private) VapidKeys = NewVapidKeys();
+
+    private static (string, string) NewVapidKeys()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var p = key.ExportParameters(true);
+        return (Base64Url.EncodeToString([0x04, .. p.Q.X!, .. p.Q.Y!]), Base64Url.EncodeToString(p.D!));
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Program.cs bağlantıyı önce DATABASE_URL'den okur; böylece appsettings.Development.json'daki yerel veritabanı kullanılmaz.
@@ -44,10 +60,14 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<IEmailSender>(Emails);
+            services.AddHttpClient(DependencyInjection.WebPushClientName).ConfigurePrimaryHttpMessageHandler(() => Push);
             services.AddSingleton(new BackgroundJobOptions([TimeSpan.Zero, TimeSpan.Zero])); // testte denemeler arası beklenmez
         });
         // Yayındaki CF-Connecting-IP'nin yerine: her tarayıcı kendi IP'siyle gelir, testler birbirinin sınırını yemez.
         builder.UseSetting("CLIENT_IP_HEADER", ClientIpHeader);
+        builder.UseSetting("VAPID_PUBLIC_KEY", VapidKeys.Public);
+        builder.UseSetting("VAPID_PRIVATE_KEY", VapidKeys.Private);
+        builder.UseSetting("VAPID_SUBJECT", "mailto:test@tamirhane.test");
     }
 
     public const string ClientIpHeader = "X-Test-Client-IP";

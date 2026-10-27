@@ -8,6 +8,11 @@ public sealed partial class Browser(HttpClient client)
 {
     public Task<HttpResponseMessage> GetAsync(string url) => client.GetAsync(url);
 
+    /// <summary>Sayfadaki JavaScript'in attığı gibi bir istek (ör. JSON gövde, CSRF başlığı); çerezler aynı.</summary>
+    public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request) => client.SendAsync(request);
+
+    public Task<HttpResponseMessage> PostAsync(string url, HttpContent content) => client.PostAsync(url, content);
+
     /// <summary>
     /// Formun bulunduğu sayfayı açar, oradaki CSRF token'ını alır ve alanları gönderir; gerçek bir form gönderimi gibi.
     /// </summary>
