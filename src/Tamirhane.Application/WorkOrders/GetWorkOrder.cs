@@ -1,4 +1,5 @@
 using Tamirhane.Application.Abstractions;
+using Tamirhane.Application.Common;
 using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.WorkOrders;
@@ -19,6 +20,9 @@ public enum WorkOrderAction
 }
 
 /// <summary>Durum geçmişinde bir adım: hangi duruma, ne zaman, kim (müşterinin kendi kararında boş).</summary>
+/// <summary>Başka bir iş emrine link: garanti dönüşünde önceki iş emri ve önceki iş emrinde dönüşleri.</summary>
+public sealed record WorkOrderLink(Guid Id, string Number);
+
 public sealed record StatusStep(WorkOrderStatus Status, DateTimeOffset At, string? By, string? Note);
 
 public sealed record NoteView(string Text, bool VisibleToCustomer, string By, DateTimeOffset At);
@@ -53,6 +57,13 @@ public sealed record WorkOrderView(
     public decimal Balance { get; init; }
     public DateTimeOffset? WarrantyUntil { get; init; }
     public DateOnly? PromisedDate { get; init; }
+    /// <summary>Bu iş emri bir garanti dönüşüyse önceki iş emri.</summary>
+    public WorkOrderLink? WarrantyOf { get; init; }
+    /// <summary>Bu iş emrinin garanti kapsamında geri gelmiş kayıtları.</summary>
+    public IReadOnlyList<WorkOrderLink> WarrantyReturns { get; init; } = [];
+    /// <summary>Teslim edilmiş ve garantisi süren iş emrinden "Garanti kapsamında yeni kayıt" açılabilir.</summary>
+    public bool CanReopenUnderWarranty { get; init; }
+    public bool IsWarrantyReturn => WarrantyOf is not null;
     /// <summary>"WhatsApp'tan bildir": müşterinin sohbetini o anki durumun hazır mesajı ve takip linkiyle açar.</summary>
     public Uri? WhatsAppLink { get; init; }
     /// <summary>Söz verilen gün değiştirilebilir mi (iş emri açıkken).</summary>
@@ -82,7 +93,7 @@ public sealed record WorkOrderView(
 
 public sealed class GetWorkOrder(
     IWorkOrderRepository orders, ICustomerRepository customers, IDeviceRepository devices, IStaffRepository staff,
-    IPartRepository parts, IShopSettings settings, ICurrentUser user, ITrackingLinks links)
+    IPartRepository parts, IShopSettings settings, ICurrentUser user, ITrackingLinks links, TimeProvider clock)
 {
     public async Task<Result<WorkOrderView>> HandleAsync(Guid id, CancellationToken ct)
     {
@@ -98,6 +109,11 @@ public sealed class GetWorkOrder(
             .Concat(order.Notes.Select(n => n.StaffId)).Concat(order.Payments.Select(p => p.StaffId)), ct);
         var editable = order.IsQuoteEditable;
         var shop = await settings.GetAsync(user.ShopId, ct);
+        // İki yönlü bağ: garanti dönüşünde önceki iş emri, önceki iş emrinde dönüşler.
+        var warrantyOf = order.WarrantyOfId is { } previousId
+            && (await orders.NumbersAsync([previousId], ct)).TryGetValue(previousId, out var previousNumber)
+            ? new WorkOrderLink(previousId, previousNumber) : null;
+        var returns = order.Status == WorkOrderStatus.Delivered ? await orders.WarrantyReturnsAsync(order.Id, ct) : [];
         // Parça seçimi iş emrinin şubesinin stoğundan (onarım bitince stok oradan düşer).
         var options = editable
             ? (await parts.ListActiveWithStockAsync(order.BranchId, ct))
@@ -133,6 +149,9 @@ public sealed class GetWorkOrder(
             PaidTotal = order.PaidTotal,
             DiagnosisFee = order.DiagnosisFee,
             BalanceAtDelivery = order.BalanceAtDelivery,
+            WarrantyOf = warrantyOf,
+            WarrantyReturns = returns,
+            CanReopenUnderWarranty = order.Status == WorkOrderStatus.Delivered && order.IsUnderWarranty(TurkeyTime.Now(clock)),
             WhatsAppLink = WhatsAppMessage.Link(customer.Phone.Value, WhatsAppMessage.Text(
                 customer.Name, $"{device.Brand} {device.Model}", order.Number, order.Status, shop.Locale, links.For(order.TrackingCode))),
         };

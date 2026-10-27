@@ -123,4 +123,32 @@ public class PaymentAndWarrantyTests
 
         Assert.Equal(ApplicationErrors.WorkOrderNotFound, result.Error);
     }
+
+    [Fact]
+    public async Task Work_order_pages_link_the_warranty_return_and_the_previous_order_both_ways()
+    {
+        var (shop, previousId) = await DeliveredAsync();
+        Assert.True((await shop.GetWorkOrder().HandleAsync(previousId, default)).Value.CanReopenUnderWarranty);
+
+        var returned = (await shop.ReopenUnderWarranty().HandleAsync(new(previousId, "Ekran yine kararıyor", null, null, null), default)).Value;
+
+        var previous = (await shop.GetWorkOrder().HandleAsync(previousId, default)).Value;
+        var current = (await shop.GetWorkOrder().HandleAsync(returned.WorkOrderId, default)).Value;
+        Assert.Equal(new WorkOrderLink(previousId, previous.Number), current.WarrantyOf);
+        Assert.True(current.IsWarrantyReturn);
+        Assert.False(current.CanReopenUnderWarranty); // açık iş emrinden yeni garanti kaydı açılmaz
+        Assert.Equal([new WorkOrderLink(returned.WorkOrderId, returned.Number)], previous.WarrantyReturns);
+    }
+
+    [Fact]
+    public async Task After_the_warranty_ends_no_new_warranty_record_is_offered()
+    {
+        var (shop, previousId) = await DeliveredAsync();
+        shop.Clock.Advance(TimeSpan.FromDays(shop.Settings.WarrantyDays + 1));
+
+        var view = (await shop.GetWorkOrder().HandleAsync(previousId, default)).Value;
+
+        Assert.False(view.CanReopenUnderWarranty);
+        Assert.Null(view.WarrantyOf);
+    }
 }

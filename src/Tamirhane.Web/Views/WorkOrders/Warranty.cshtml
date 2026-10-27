@@ -1,0 +1,52 @@
+@using Tamirhane.Web.Models.WorkOrders
+@model WarrantyPage
+@{
+    ViewData["Title"] = $"Garanti kapsamında yeni kayıt: {Model.Previous.Number}";
+    var previous = Model.Previous;
+    var turkey = TimeSpan.FromHours(3);
+}
+
+<div class="page-head">
+    <div>
+        <h1>Garanti kapsamında yeni kayıt</h1>
+        <p>@previous.Brand @previous.Model, @previous.CustomerName · önceki iş emri <a asp-action="Details" asp-route-id="@previous.Id">@previous.Number</a></p>
+    </div>
+</div>
+
+<section class="panel narrow">
+    <form method="post" asp-action="Warranty" asp-route-id="@previous.Id" class="panel-body" novalidate>
+        <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+        <p class="muted">
+            Müşteri ve cihaz önceki iş emrinden gelir.
+            @if (previous.WarrantyUntil is { } until)
+            {
+                @:Garanti @until.ToOffset(turkey).ToString("d MMMM yyyy") tarihine kadar.
+            }
+            Yeni iş emri öncekine bağlanır; teklifte işçilik ücretsiz önerilir.
+        </p>
+        <div class="field">
+            <label asp-for="Input.Complaint"></label>
+            <textarea asp-for="Input.Complaint" rows="3" placeholder="ör. Değişen ekranda dokunmatik yine çalışmıyor"></textarea>
+            <span asp-validation-for="Input.Complaint"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Condition"></label>
+            <textarea asp-for="Input.Condition" rows="2"></textarea>
+            <span asp-validation-for="Input.Condition"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Accessories"></label>
+            <input asp-for="Input.Accessories" />
+            <span asp-validation-for="Input.Accessories"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Passcode"></label>
+            <input asp-for="Input.Passcode" autocomplete="off" />
+            <span asp-validation-for="Input.Passcode"></span>
+        </div>
+        <div class="inline-form">
+            <button type="submit" class="btn btn-primary">Yeni iş emrini aç</button>
+            <a class="btn" asp-action="Details" asp-route-id="@previous.Id">Vazgeç</a>
+        </div>
+    </form>
+</section>

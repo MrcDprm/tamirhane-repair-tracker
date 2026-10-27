@@ -42,7 +42,7 @@ public sealed class TestShop
 
     public ReceiveDevice ReceiveDevice() => new(Customers, Devices, Orders, UnitOfWork, Queue, User, Clock);
     public FindCustomerByPhone FindCustomerByPhone() => new(Customers, Devices);
-    public GetWorkOrder GetWorkOrder() => new(Orders, Customers, Devices, Staff, Parts, new FakeSettings(Settings), User, new FakeTrackingLinks());
+    public GetWorkOrder GetWorkOrder() => new(Orders, Customers, Devices, Staff, Parts, new FakeSettings(Settings), User, new FakeTrackingLinks(), Clock);
     public StartDiagnosis StartDiagnosis() => new(Orders, UnitOfWork, Queue, User, Clock);
     public StartRepair StartRepair() => new(Orders, UnitOfWork, Queue, User, Clock);
     public AddQuoteLine AddQuoteLine() => new(Orders, Parts, new FakeSettings(Settings), UnitOfWork, Queue, User, Clock);
