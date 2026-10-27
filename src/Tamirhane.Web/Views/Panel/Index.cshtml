@@ -1,22 +1,134 @@
+@using Tamirhane.Application.Dashboard
+@using Tamirhane.Application.WorkOrders
+@using Tamirhane.Domain.WorkOrders
+@using Tamirhane.Web.Display
+@model DashboardView
 @{
     ViewData["Title"] = "Panel";
-    var today = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(3));
+    var turkey = TimeSpan.FromHours(3);
+    var today = Model.Now.ToOffset(turkey);
+    var counts = Model.Counts;
+    // Günün sayıları: panoya asılı etiketler. Her biri iş emri listesini o süzgeçle açar.
+    var tags = new (string Label, int Count, WorkOrderFilter Filter, string Hint, bool Warn)[]
+    {
+        ("Onay bekliyor", counts.AwaitingApproval, WorkOrderFilter.AwaitingApproval, "Müşterinin teklif kararını bekleyen işler", false),
+        ("Onarımda", counts.InRepair, WorkOrderFilter.InRepair, "Tezgâhta onarılan cihazlar", false),
+        ("Teslime hazır", counts.ReadyForPickup, WorkOrderFilter.Ready, "Müşterinin almaya gelmesi beklenen cihazlar", false),
+        ("30 günü geçen", counts.Overdue, WorkOrderFilter.Overdue, "Kabulünden bu yana 30 günden fazla geçmiş açık işler", counts.Overdue > 0),
+    };
+    string Waiting(WorkOrderRow row)
+    {
+        var days = (today.Date - row.CreatedAt.ToOffset(turkey).Date).Days;
+        return days == 0 ? "bugün" : $"{days} gün";
+    }
 }
 
-@* Günün sayıları (panoya asılı etiketler) ve açık işler tablosu #33'te; şimdilik boş durum. *@
 <div class="page-head">
     <div>
         <h1>Bugün</h1>
         <p>@today.ToString("dddd, d MMMM")</p>
     </div>
+    <a class="btn btn-primary" asp-controller="WorkOrders" asp-action="New"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Cihaz kabul et</a>
 </div>
 
-<section class="panel empty">
-    <partial name="_EmptyHook" />
-    <div>
-        <h2>Tezgâhta açık iş yok</h2>
-        <p>Yeni bir cihaz geldiğinde <strong>Cihaz kabul et</strong>'e bas ya da klavyede <kbd>N</kbd> tuşuna bas. Kabul ettiğin cihazlar burada, en uzun bekleyen başta görünür.</p>
-        <p class="muted">Aramak için <kbd>/</kbd>: ad, telefon, IMEI ya da iş emri numarası.</p>
-        <a class="btn btn-primary" asp-controller="WorkOrders" asp-action="New"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Cihaz kabul et</a>
+<ul class="count-tags" aria-label="Günün sayıları">
+    @foreach (var tag in tags)
+    {
+        <li>
+            <a class="count-tag@(tag.Warn ? " is-warn" : "")" asp-controller="WorkOrders" asp-action="Index" asp-route-filter="@tag.Filter" title="@tag.Hint">
+                <strong>@tag.Count</strong>
+                <span>@tag.Label</span>
+            </a>
+        </li>
+    }
+</ul>
+
+@if (!Model.HasOpenWork)
+{
+    <section class="panel empty">
+        <partial name="_EmptyHook" />
+        <div>
+            <h2>Tezgâhta açık iş yok</h2>
+            <p>Yeni bir cihaz geldiğinde <strong>Cihaz kabul et</strong>'e bas ya da klavyede <kbd>N</kbd> tuşuna bas. Kabul ettiğin cihazlar burada, en uzun bekleyen başta görünür.</p>
+            <p class="muted">Aramak için <kbd>/</kbd>: ad, telefon, IMEI ya da iş emri numarası.</p>
+        </div>
+    </section>
+}
+
+<div class="dash-layout">
+    @if (Model.HasOpenWork)
+    {
+        <section class="panel" aria-labelledby="oldest-heading">
+            <div class="panel-head">
+                <h2 id="oldest-heading">En uzun bekleyenler</h2>
+                <a asp-controller="WorkOrders" asp-action="Index">Tüm açık işler (@counts.Open)</a>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table work-list">
+                    <thead>
+                        <tr>
+                            <th scope="col">No</th>
+                            <th scope="col">Cihaz</th>
+                            <th scope="col">Müşteri</th>
+                            <th scope="col">Durum</th>
+                            <th scope="col" class="num">Bekleme</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Oldest)
+                        {
+                            var late = row.CreatedAt < Model.Now.AddDays(-ListWorkOrders.OverdueDays);
+                            <tr>
+                                <td class="c-no"><a class="work-no" asp-controller="WorkOrders" asp-action="Details" asp-route-id="@row.Id">@row.Number</a></td>
+                                <td class="c-device">@row.Brand @row.Model</td>
+                                <td class="c-customer">@row.CustomerName</td>
+                                <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : row.Status == WorkOrderStatus.Ready ? " stamp-ok" : "")">@Labels.Of(row.Status)</span></td>
+                                <td class="c-wait num@(late ? " warn-text" : "")">@Waiting(row)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    <div class="dash-side">
+        @if (Model.Revenue is { } revenue)
+        {
+            @* Ciro sadece sahibe; teknisyen için hesaplanmaz bile. *@
+            <section class="panel" aria-labelledby="revenue-heading">
+                <div class="panel-head"><h2 id="revenue-heading">Bu ay ciro</h2></div>
+                <div class="panel-body">
+                    <p class="dash-money">@revenue.ThisMonth.ToString("C")</p>
+                    <p class="muted">Tahsilat eksi iade, @today.ToString("MMMM") başından bugüne. Geçen ay: @revenue.LastMonth.ToString("C")</p>
+                </div>
+            </section>
+        }
+
+        <section class="panel" aria-labelledby="stock-heading">
+            <div class="panel-head">
+                <h2 id="stock-heading">Kritik stok</h2>
+                @if (Model.LowStock.Count > 0)
+                {
+                    <a asp-controller="Inventory" asp-action="Index" asp-route-low="true">Tümü</a>
+                }
+            </div>
+            @if (Model.LowStock.Count == 0)
+            {
+                <p class="panel-body muted">Şubendeki parçaların hiçbiri kritik seviyede değil.</p>
+            }
+            else
+            {
+                <ul class="dash-stock">
+                    @foreach (var item in Model.LowStock)
+                    {
+                        <li>
+                            <a asp-controller="Inventory" asp-action="Part" asp-route-id="@item.PartId">@item.Name</a>
+                            <span class="@(item.Quantity == 0 ? "warn-text" : "muted")">@item.Quantity adet <small>(kritik @item.CriticalLevel)</small></span>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
     </div>
-</section>
+</div>

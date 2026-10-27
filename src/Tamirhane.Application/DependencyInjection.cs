@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Application.Customers;
+using Tamirhane.Application.Dashboard;
 using Tamirhane.Application.Inventory;
 using Tamirhane.Application.Shops;
 using Tamirhane.Application.WorkOrders;
@@ -55,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<UpdatePart>();
         services.AddScoped<ChangeStock>();
         services.AddScoped<ListLowStock>();
+        services.AddScoped<GetDashboard>();
         services.AddScoped<ListParts>();
         services.AddScoped<GetPart>();
         services.AddScoped<SetPartActive>();

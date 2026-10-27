@@ -343,6 +343,32 @@ kbd {
   .auth-form .field { margin-bottom: 12px; }
 }
 
+/* ---------- Panel sayfası: günün sayıları panoya asılı etiketler ---------- */
+
+.count-tags { list-style: none; margin: 0 0 24px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 16px; }
+.count-tag {
+  position: relative; display: flex; flex-direction: column; gap: 2px; min-height: var(--touch);
+  padding: 30px 18px 16px; text-decoration: none;
+  background: var(--card); color: var(--card-ink); border-radius: var(--radius-card);
+  box-shadow: 0 2px 0 var(--card-edge), 0 8px 18px rgb(31 42 48 / 0.14);
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%, 0 16px);
+  transition: transform 120ms ease;
+}
+.count-tag::before {
+  content: ""; position: absolute; top: 10px; left: 50%; width: 10px; height: 10px; margin-left: -5px;
+  border-radius: 50%; background: var(--board); box-shadow: 0 0 0 3px var(--card-edge);
+}
+.count-tag strong { font-family: var(--font-display); font-size: 2.6rem; line-height: 1; }
+.count-tag span { color: var(--card-dim); font-weight: 600; }
+.count-tag:hover { transform: translateY(-2px); }
+.count-tag.is-warn { box-shadow: inset 0 -5px 0 var(--warn), 0 2px 0 var(--card-edge), 0 8px 18px rgb(31 42 48 / 0.14); }
+.count-tag.is-warn strong { color: var(--warn-text); }
+.dash-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); gap: 24px; align-items: start; }
+.dash-money { margin: 0 0 4px; font-family: var(--font-display); font-size: 2.2rem; line-height: 1.1; }
+.dash-stock { list-style: none; margin: 0; padding: 0; }
+.dash-stock li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 20px; border-bottom: 1px solid var(--line); }
+.dash-stock li:last-child { border-bottom: 0; }
+
 /* ---------- Paneller (kart içinde kart yok: panelin içi düz) ---------- */
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow); margin-bottom: 24px; }
@@ -745,6 +771,7 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
   .scene { width: calc(100% + 40px); margin: 12px -20px 0; }
   .auth-art h2 { margin-top: 16px; }
   .work-layout { grid-template-columns: 1fr; }
+  .dash-layout { grid-template-columns: 1fr; }
   .work-columns { grid-template-columns: 1fr; }
   .quote-add { grid-template-columns: 1fr; }
   .stock-forms { grid-template-columns: 1fr; }
