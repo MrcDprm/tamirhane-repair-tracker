@@ -10,15 +10,17 @@
     <form asp-action="Register" method="post" novalidate>
         <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
 
-        <div class="field">
-            <label asp-for="ShopName"></label>
-            <input asp-for="ShopName" autocomplete="organization" />
-            <span asp-validation-for="ShopName"></span>
-        </div>
-        <div class="field">
-            <label asp-for="OwnerName"></label>
-            <input asp-for="OwnerName" autocomplete="name" />
-            <span asp-validation-for="OwnerName"></span>
+        <div class="field-row">
+            <div class="field">
+                <label asp-for="ShopName"></label>
+                <input asp-for="ShopName" autocomplete="organization" />
+                <span asp-validation-for="ShopName"></span>
+            </div>
+            <div class="field">
+                <label asp-for="OwnerName"></label>
+                <input asp-for="OwnerName" autocomplete="name" />
+                <span asp-validation-for="OwnerName"></span>
+            </div>
         </div>
         <div class="field">
             <label asp-for="Email"></label>
