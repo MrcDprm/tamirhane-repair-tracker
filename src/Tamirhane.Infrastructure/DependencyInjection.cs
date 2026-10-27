@@ -1,4 +1,6 @@
 using System.Net.Http.Headers;
+using Lib.Net.Http.WebPush;
+using Lib.Net.Http.WebPush.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -58,6 +60,8 @@ public static class DependencyInjection
         // Bildirim kanalları (#30 e-posta, #31 tarayıcı bildirimi). Veritabanı gerektikleri için arka plan kuyruğunun
         // kendisinde değil burada kaydedilir; kuyruk testleri veritabanı olmadan kendi sahte kanallarıyla çalışır.
         services.AddScoped<IWorkOrderNotificationHandler, CustomerStatusEmails>();
+        // Tarayıcı bildirimi varsayılan olarak kapalı; AddWebPush ayarla çağrılırsa açılır.
+        services.TryAddSingleton<IPushSettings>(new PushSettings(null));
 
         // /health ucu veritabanına bağlanılabiliyor mu diye bakar (yayında sunucunun sağlık kontrolü).
         services.AddHealthChecks().AddDbContextCheck<TamirhaneDbContext>("database");
@@ -79,6 +83,33 @@ public static class DependencyInjection
         services.AddScoped<WorkshopEmails>();
         return services;
     }
+
+    /// <summary>
+    /// Tarayıcı bildirimi (#31). Ayar yoksa (null) hiçbir şey kaydedilmez: özellik kapalıdır, takip sayfası düğmeyi
+    /// göstermez. Gönderim "webpush" adlı HttpClient ile yapılır (testler sahte bir push servisi bağlar).
+    /// </summary>
+    public static IServiceCollection AddWebPush(this IServiceCollection services, WebPushOptions? options)
+    {
+        if (options is null)
+            return services;
+
+        services.AddSingleton(options);
+        services.Replace(ServiceDescriptor.Singleton<IPushSettings>(new PushSettings(options.PublicKey)));
+        services.AddHttpClient(WebPushClientName, http => http.Timeout = TimeSpan.FromSeconds(15));
+        // İmza (JWT) tekrar tekrar üretilmesin diye kütüphane bir süre saklar; bu yüzden tek örnek.
+        services.AddSingleton(_ => new VapidAuthentication(options.PublicKey, options.PrivateKey) { Subject = options.Subject });
+        services.AddTransient(sp => new PushServiceClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(WebPushClientName))
+        {
+            DefaultAuthentication = sp.GetRequiredService<VapidAuthentication>(),
+            DefaultAuthenticationScheme = VapidAuthenticationScheme.Vapid,
+            AutoRetryAfter = false, // tekrar denemeyi arka plan kuyruğu yapar
+        });
+        services.AddScoped<PushDelivery>();
+        services.AddScoped<IWorkOrderNotificationHandler, CustomerPushNotifications>();
+        return services;
+    }
+
+    public const string WebPushClientName = "webpush";
 
     /// <summary>Oturum (çerez), oturumdaki personel, hesap servisi ve e-posta gönderimi.</summary>
     public static IServiceCollection AddAccounts(this IServiceCollection services, AccountOptions options)

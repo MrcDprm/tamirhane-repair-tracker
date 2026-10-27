@@ -13,4 +13,5 @@ public static class WorkOrderErrors
     public static readonly Error InvalidPromisedDate = Error.Validation("work_order.invalid_promised_date");
     public static readonly Error NoteRequired = Error.Validation("work_order.note_required");
     public static readonly Error CancelReasonRequired = Error.Validation("work_order.cancel_reason_required");
+    public static readonly Error InvalidPushSubscription = Error.Validation("work_order.invalid_push_subscription");
 }

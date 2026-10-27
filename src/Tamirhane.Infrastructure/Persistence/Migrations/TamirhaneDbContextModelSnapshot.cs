@@ -606,6 +606,48 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                     b.ToTable("payments", (string)null);
                 });
 
+            modelBuilder.Entity("Tamirhane.Domain.WorkOrders.PushSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("auth");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("endpoint");
+
+                    b.Property<string>("P256dh")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("p256dh");
+
+                    b.Property<Guid>("WorkOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("work_order_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_work_order_push_subscriptions");
+
+                    b.HasIndex("WorkOrderId", "Endpoint")
+                        .IsUnique()
+                        .HasDatabaseName("ix_work_order_push_subscriptions_work_order_id_endpoint");
+
+                    b.ToTable("work_order_push_subscriptions", (string)null);
+                });
+
             modelBuilder.Entity("Tamirhane.Domain.WorkOrders.QuoteLine", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1075,6 +1117,16 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_payments_work_orders_work_order_id");
                 });
 
+            modelBuilder.Entity("Tamirhane.Domain.WorkOrders.PushSubscription", b =>
+                {
+                    b.HasOne("Tamirhane.Domain.WorkOrders.WorkOrder", null)
+                        .WithMany("PushSubscriptions")
+                        .HasForeignKey("WorkOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_work_order_push_subscriptions_work_orders_work_order_id");
+                });
+
             modelBuilder.Entity("Tamirhane.Domain.WorkOrders.QuoteLine", b =>
                 {
                     b.HasOne("Tamirhane.Domain.WorkOrders.WorkOrder", null)
@@ -1125,7 +1177,7 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
 
                             b1.HasKey("WorkOrderId");
 
-                            b1.ToTable("work_orders", (string)null);
+                            b1.ToTable("work_orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("WorkOrderId")
@@ -1152,6 +1204,8 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                     b.Navigation("Notes");
 
                     b.Navigation("Payments");
+
+                    b.Navigation("PushSubscriptions");
 
                     b.Navigation("QuoteLines");
                 });

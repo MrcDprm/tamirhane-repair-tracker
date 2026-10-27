@@ -13,6 +13,8 @@ public sealed class WorkOrder : Entity
     public const int MaxWarrantyDays = 3650;
     /// <summary>Söz verilen teslim günü en fazla bu kadar ileri olabilir (yanlış yıl yazımına karşı).</summary>
     public const int MaxPromiseDays = 180;
+    /// <summary>Bir iş emrine en fazla bu kadar tarayıcı abone olabilir (telefon, bilgisayar, aile).</summary>
+    public const int MaxPushSubscriptions = 5;
 
     private static readonly Dictionary<WorkOrderStatus, WorkOrderStatus[]> AllowedTransitions = new()
     {
@@ -33,6 +35,7 @@ public sealed class WorkOrder : Entity
     private readonly List<QuoteLine> _quoteLines = [];
     private readonly List<Payment> _payments = [];
     private readonly List<WorkOrderNote> _notes = [];
+    private readonly List<PushSubscription> _pushSubscriptions = [];
 
     private WorkOrder() { }
 
@@ -59,6 +62,7 @@ public sealed class WorkOrder : Entity
     public QuoteTotals QuoteTotals => QuoteTotals.Of(_quoteLines);
     public IReadOnlyList<Payment> Payments => _payments;
     public IReadOnlyList<WorkOrderNote> Notes => _notes;
+    public IReadOnlyList<PushSubscription> PushSubscriptions => _pushSubscriptions;
     /// <summary>Teklif reddedildiğinde istenen inceleme ücreti (KDV dahil). Varsayılan 0.</summary>
     public decimal DiagnosisFee { get; private set; }
 
@@ -180,6 +184,38 @@ public sealed class WorkOrder : Entity
         var note = new WorkOrderNote(Id, text, visibleToCustomer, staffId, now);
         _notes.Add(note);
         return note;
+    }
+
+    /// <summary>
+    /// Müşterinin tarayıcısı durum değişikliklerine abone olur. Aynı tarayıcı tekrar abone olursa kayıt yenilenir;
+    /// sınır doluysa en eski abonelik düşer (yeni cihaz her zaman çalışsın). Kapanmış iş emrine abone olunmaz.
+    /// </summary>
+    public Result SubscribeToPush(string? endpoint, string? p256dh, string? auth, DateTimeOffset now)
+    {
+        if (IsClosed)
+            return WorkOrderErrors.Closed;
+        var created = PushSubscription.Create(Id, endpoint, p256dh, auth, now);
+        if (created.IsFailure)
+            return created.Error!;
+
+        var existing = _pushSubscriptions.FirstOrDefault(s => s.Endpoint == created.Value.Endpoint);
+        if (existing is not null)
+        {
+            existing.Renew(created.Value);
+            return Result.Success();
+        }
+        if (_pushSubscriptions.Count >= MaxPushSubscriptions)
+            _pushSubscriptions.Remove(_pushSubscriptions.MinBy(s => s.CreatedAt)!);
+        _pushSubscriptions.Add(created.Value);
+        return Result.Success();
+    }
+
+    /// <summary>Tarayıcı aboneliği bırakır. Bilinmeyen adres hata değildir (zaten abone değil).</summary>
+    public void UnsubscribeFromPush(string? endpoint)
+    {
+        var subscription = _pushSubscriptions.FirstOrDefault(s => s.Endpoint == endpoint?.Trim());
+        if (subscription is not null)
+            _pushSubscriptions.Remove(subscription);
     }
 
     public bool CanMoveTo(WorkOrderStatus to) => AllowedTransitions[Status].Contains(to);

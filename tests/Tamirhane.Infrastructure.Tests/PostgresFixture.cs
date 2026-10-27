@@ -1,3 +1,5 @@
+using System.Buffers.Text;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +9,7 @@ using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Identity;
+using Tamirhane.Infrastructure.Notifications;
 using Tamirhane.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
 
@@ -25,6 +28,20 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public CapturingEmailSender Emails { get; } = new();
 
+    /// <summary>Push servisi yerine: tarayıcı bildirimi istekleri buraya gelir.</summary>
+    public FakePushService Push { get; } = new();
+
+    /// <summary>Testler için üretilmiş VAPID anahtar çifti (her çalıştırmada yeni).</summary>
+    public static readonly WebPushOptions PushOptions = NewVapidKeys();
+
+    private static WebPushOptions NewVapidKeys()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var p = key.ExportParameters(true);
+        return new WebPushOptions(Base64Url.EncodeToString([0x04, .. p.Q.X!, .. p.Q.Y!]), Base64Url.EncodeToString(p.D!),
+            "mailto:test@tamirhane.test");
+    }
+
     public async Task InitializeAsync()
     {
         // Docker yoksa testler [DockerFact] ile atlanır; xUnit fixture'ı yine de kurar, burada hiçbir şey yapılmaz.
@@ -39,6 +56,8 @@ public sealed class PostgresFixture : IAsyncLifetime
         services.AddInfrastructure(_container.GetConnectionString());
         services.AddAccounts(new AccountOptions(PublicOrigin, null, AccountOptions.DefaultFrom));
         services.AddSingleton<IEmailSender>(Emails); // gönderilen e-postalar testte okunur
+        services.AddWebPush(PushOptions);
+        services.AddHttpClient(DependencyInjection.WebPushClientName).ConfigurePrimaryHttpMessageHandler(() => Push);
         services.AddSingleton(new BackgroundJobOptions([TimeSpan.Zero, TimeSpan.Zero]));
         services.AddScoped<TestUser>();
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<TestUser>());
@@ -62,6 +81,9 @@ public sealed class PostgresFixture : IAsyncLifetime
         await _services.DisposeAsync();
         await _container.DisposeAsync();
     }
+
+    /// <summary>Arka plan kuyruğundaki bütün işler (ve tekrar denemeleri) bitene kadar bekler.</summary>
+    public Task IdleAsync() => _services.GetRequiredService<BackgroundJobQueue>().WhenIdleAsync(TimeSpan.FromSeconds(10));
 
     /// <summary>Uygulamadaki bir isteği taklit eder: verilen atölyenin personeli olarak yeni bir kapsam.</summary>
     public ShopScope AsShop(Guid shopId)

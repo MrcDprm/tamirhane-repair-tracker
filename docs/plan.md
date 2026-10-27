@@ -73,7 +73,7 @@ tests/
 - **Para:** `decimal(18,2)`, TL. KDV kalem başına; toplamlar domain'de hesaplanır, formdan gelen toplam kullanılmaz.
 - **Yazdırma:** Kabul fişi ve etiket ayrı yazdırma sayfaları (`@media print`, `@page size: A5`); PDF kütüphanesi ve sunucu tarafı render yok.
 - **QR:** QRCoder (MIT), SVG çıktısı.
-- **Web Push:** `WebPush` NuGet paketi (MIT), VAPID anahtarları ortam değişkeninde.
+- **Web Push:** `Lib.Net.Http.WebPush` NuGet paketi (MIT; .NET 10'da ek kripto kütüphanesi gerektirmez), VAPID anahtarları ortam değişkeninde. (İlk planda `WebPush` yazıyordu; o paket MPL-2.0 lisanslı ve 2021'den beri güncellenmeyen Portable.BouncyCastle'a bağlı olduğu için #31'de değiştirildi.)
 - **Entegrasyon testleri:** Testcontainers her test çalıştırmasında Docker'da geçici bir PostgreSQL açar, testler bitince siler. Gerçek veritabanına hiç dokunulmaz; kiracı filtresi ve migration'lar gerçek PostgreSQL'de denenir. Docker Desktop gerekir (2026-10-20 kararı: kurulacak).
 - **Arka plan işleri:** E-posta ve push gönderimi `Channel` tabanlı bir `BackgroundService` kuyruğunda; istek beklemez, hata loglanır ve 3 kez denenir.
 

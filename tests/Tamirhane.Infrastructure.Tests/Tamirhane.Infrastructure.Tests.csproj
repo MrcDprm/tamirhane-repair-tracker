@@ -24,6 +24,7 @@
     <!-- Docker yoksa testleri atlayan ortak özellik; iki entegrasyon test projesi de kullanır. -->
     <Compile Include="..\Shared\DockerFactAttribute.cs" Link="DockerFactAttribute.cs" />
     <Compile Include="..\Shared\CapturingEmailSender.cs" Link="CapturingEmailSender.cs" />
+    <Compile Include="..\Shared\FakePushService.cs" Link="FakePushService.cs" />
   </ItemGroup>
 
   <ItemGroup>

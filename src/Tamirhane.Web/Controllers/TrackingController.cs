@@ -20,9 +20,10 @@ namespace Tamirhane.Web.Controllers;
 public sealed class TrackingController : Controller
 {
     [HttpGet("{code}")]
-    public async Task<IActionResult> Show(string code, [FromServices] GetTracking get, CancellationToken ct)
+    public async Task<IActionResult> Show(string code, [FromServices] GetTracking get, [FromServices] IPushSettings push, CancellationToken ct)
     {
         KeepPrivate();
+        ViewData["PushKey"] = push.PublicKey; // boşsa "haber ver" düğmesi çıkmaz
         var view = await get.HandleAsync(code, ct);
         return view is null ? Missing() : View(view);
     }
@@ -56,6 +57,56 @@ public sealed class TrackingController : Controller
             : "Bu teklif için karar zaten verilmiş; sayfadaki son durum geçerli.";
         return RedirectToAction(nameof(Show), new { code });
     }
+
+    // --- Tarayıcı bildirimi (#31): tracking.js JSON gönderir, CSRF token'ı RequestVerificationToken başlığında. ---
+
+    /// <summary>Bu tarayıcı bu iş emrine abone mi? Gövdede tarayıcının adresi (adresler URL'ye yazılmaz).</summary>
+    [HttpPost("{code}/push/state")]
+    [Consumes("application/json")]
+    [RequestSizeLimit(PushBodyLimit)]
+    public async Task<IActionResult> PushState(
+        string code, [FromBody] PushInput input, [FromServices] IPushSettings push, [FromServices] GetPushState get, CancellationToken ct)
+    {
+        KeepPrivate();
+        if (push.PublicKey is null)
+            return NotFound();
+        var subscribed = await get.HandleAsync(code, input.Endpoint, ct);
+        return subscribed is null ? NotFound() : Ok(new { subscribed });
+    }
+
+    [HttpPost("{code}/push")]
+    [Consumes("application/json")]
+    [RequestSizeLimit(PushBodyLimit)]
+    public async Task<IActionResult> Subscribe(
+        string code, [FromBody] PushInput input, [FromServices] IPushSettings push, [FromServices] SubscribeToPush subscribe,
+        CancellationToken ct)
+    {
+        KeepPrivate();
+        if (push.PublicKey is null)
+            return NotFound();
+        var result = await subscribe.HandleAsync(code, new PushSubscriptionInput(input.Endpoint, input.Keys?.P256dh, input.Keys?.Auth), ct);
+        if (result.Error == ApplicationErrors.WorkOrderNotFound)
+            return NotFound();
+        // Geçersiz abonelik ya da kapanmış iş emri: ayrıntı verilmez, düğme genel bir mesaj gösterir.
+        return result.IsSuccess ? NoContent() : BadRequest();
+    }
+
+    [HttpPost("{code}/push/remove")]
+    [Consumes("application/json")]
+    [RequestSizeLimit(PushBodyLimit)]
+    public async Task<IActionResult> Unsubscribe(
+        string code, [FromBody] PushInput input, [FromServices] IPushSettings push, [FromServices] UnsubscribeFromPush unsubscribe,
+        CancellationToken ct)
+    {
+        KeepPrivate();
+        if (push.PublicKey is null)
+            return NotFound();
+        var result = await unsubscribe.HandleAsync(code, input.Endpoint, ct);
+        return result.IsSuccess ? NoContent() : NotFound();
+    }
+
+    // Abonelik gövdesi birkaç yüz bayttır; büyük gövde hiç okunmaz.
+    private const int PushBodyLimit = 4096;
 
     // Adresteki kod gizli bir anahtar gibi: başka siteye geçerken Referer ile gitmesin, arama motoru dizine eklemesin,
     // ortak bir bilgisayarda tarayıcı önbelleğinde kalmasın.

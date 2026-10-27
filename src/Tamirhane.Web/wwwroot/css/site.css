@@ -647,6 +647,10 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
 .track-totals dt { color: var(--lead-text); }
 .track-totals dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 .track-totals .track-total { color: var(--ink); font-family: var(--font-display); font-size: 1.4rem; margin-top: 6px; }
+.track-push { margin-top: 20px; padding: 16px; border: 1px dashed var(--lead); border-radius: var(--radius-card); background: var(--surface); }
+.track-push h2 { margin-top: 0; }
+.track-push p { margin: 0 0 12px; }
+.track-push .field-help:empty { display: none; }
 .track-decide { margin-top: 20px; }
 .track-decide .track-actions .btn { flex: 1 1 12rem; }
 .track-decided { display: flex; align-items: center; gap: 12px; margin: 16px 0 0; color: var(--lead-text); }

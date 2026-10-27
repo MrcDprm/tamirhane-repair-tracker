@@ -41,6 +41,9 @@ public static class DependencyInjection
         services.AddScoped<SendQuote>();
         services.AddScoped<RecordQuoteDecision>();
         services.AddScoped<DecideQuoteByCustomer>();
+        services.AddScoped<SubscribeToPush>();
+        services.AddScoped<UnsubscribeFromPush>();
+        services.AddScoped<GetPushState>();
         services.AddScoped<MarkReady>();
         services.AddScoped<DeliverWorkOrder>();
         services.AddScoped<CancelWorkOrder>();

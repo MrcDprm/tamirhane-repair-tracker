@@ -93,6 +93,7 @@ internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRep
         .Include(o => o.QuoteLines)
         .Include(o => o.Payments)
         .Include(o => o.Notes)
+        .Include(o => o.PushSubscriptions)
         .AsSplitQuery();
 
     public Task<WorkOrder?> GetAsync(Guid id, CancellationToken ct) =>
