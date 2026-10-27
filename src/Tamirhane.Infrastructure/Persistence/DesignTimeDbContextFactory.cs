@@ -5,8 +5,8 @@ using Tamirhane.Application.Abstractions;
 namespace Tamirhane.Infrastructure.Persistence;
 
 /// <summary>
-/// "dotnet ef migrations add" komutunun DbContext'i kurması için. Bağlantı DATABASE_URL ortam
-/// değişkeninden; yoksa yerel Docker'daki geliştirme veritabanı (gerçek şifre içermez).
+/// "dotnet ef" komutlarının (migrations add, database update) DbContext'i kurması için. Bağlantı DATABASE_URL
+/// ortam değişkeninden, yoksa repodaki .env'den, o da yoksa yerel Docker'daki geliştirme veritabanından (gerçek şifre içermez).
 /// </summary>
 internal sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<TamirhaneDbContext>
 {
@@ -15,7 +15,11 @@ internal sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<T
     public TamirhaneDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<TamirhaneDbContext>();
-        DependencyInjection.Configure(options, Environment.GetEnvironmentVariable("DATABASE_URL") ?? LocalDevelopment);
+        // Önce gerçek ortam değişkeni, sonra repodaki .env (uygulamayla aynı veritabanına bağlansın), sonra yerel varsayılan.
+        var connection = Environment.GetEnvironmentVariable("DATABASE_URL")
+            ?? DotEnvFile.Read(Directory.GetCurrentDirectory()).GetValueOrDefault("DATABASE_URL")
+            ?? LocalDevelopment;
+        DependencyInjection.Configure(options, connection);
         return new TamirhaneDbContext(options.Options, new NoUser());
     }
 

@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.WebEncoders;
 using Tamirhane.Application;
 using Tamirhane.Infrastructure;
@@ -13,6 +14,15 @@ using Tamirhane.Web.ModelBinding;
 using Tamirhane.Web.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Geliştirmede repodaki .env okunur (ortam değişkenlerini her pencerede elle yüklemek gerekmesin). En düşük öncelikle
+// eklenir: appsettings, gerçek ortam değişkenleri ve testlerin verdiği ayarlar her zaman ondan üstündür.
+// Testler DOTENV=off verir; geliştiricinin .env'i test sonuçlarını değiştirmesin.
+if (builder.Environment.IsDevelopment() && builder.Configuration["DOTENV"] != "off")
+{
+    var dotEnv = DotEnvFile.Read(builder.Environment.ContentRootPath);
+    builder.Configuration.Sources.Insert(0, new MemoryConfigurationSource { InitialData = dotEnv! });
+}
 
 // Yayında bağlantı DATABASE_URL ortam değişkeninden gelir (Neon/Render); geliştirmede appsettings.Development.json'dan.
 var connectionString = builder.Configuration["DATABASE_URL"]

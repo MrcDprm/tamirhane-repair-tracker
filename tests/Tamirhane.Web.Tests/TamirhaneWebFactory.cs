@@ -64,6 +64,8 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
             services.AddSingleton(new BackgroundJobOptions([TimeSpan.Zero, TimeSpan.Zero])); // testte denemeler arası beklenmez
         });
         // Yayındaki CF-Connecting-IP'nin yerine: her tarayıcı kendi IP'siyle gelir, testler birbirinin sınırını yemez.
+        // Geliştiricinin .env'i (ör. PUBLIC_ORIGIN, RESEND_API_KEY) testleri etkilemesin.
+        builder.UseSetting("DOTENV", "off");
         builder.UseSetting("CLIENT_IP_HEADER", ClientIpHeader);
         builder.UseSetting("VAPID_PUBLIC_KEY", VapidKeys.Public);
         builder.UseSetting("VAPID_PRIVATE_KEY", VapidKeys.Private);
