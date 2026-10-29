@@ -13,6 +13,7 @@ internal sealed class ShopConfiguration : IEntityTypeConfiguration<Shop>
         b.Property(s => s.Id).ValueGeneratedNever();
         b.Property(s => s.Name).HasMaxLength(Shop.MaxNameLength);
         b.Property(s => s.Locale).HasMaxLength(5);
+        b.Property(s => s.IsDemo);
     }
 }
 

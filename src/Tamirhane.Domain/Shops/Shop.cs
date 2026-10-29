@@ -23,12 +23,26 @@ public sealed class Shop : Entity
     /// <summary>Müşteriye giden e-postaların ve takip sayfasının varsayılan dili.</summary>
     public string Locale { get; private set; } = "tr";
     public DateTimeOffset CreatedAt { get; private set; }
+    /// <summary>
+    /// Herkese açık demo (#36): ziyaretçiye özel açılır, <see cref="DemoLifetime"/> sonra silinir, dışarıya e-posta göndermez.
+    /// </summary>
+    public bool IsDemo { get; private set; }
+
+    public static readonly TimeSpan DemoLifetime = TimeSpan.FromHours(24);
 
     public static Result<Shop> Create(string name, string locale, DateTimeOffset now)
     {
         var shop = new Shop { CreatedAt = now };
         var updated = shop.UpdateSettings(name, DefaultWarrantyDays, DefaultVat, locale);
         return updated.IsSuccess ? shop : updated.Error!;
+    }
+
+    public static Result<Shop> CreateDemo(string name, string locale, DateTimeOffset now)
+    {
+        var shop = Create(name, locale, now);
+        if (shop.IsSuccess)
+            shop.Value.IsDemo = true;
+        return shop;
     }
 
     /// <summary>

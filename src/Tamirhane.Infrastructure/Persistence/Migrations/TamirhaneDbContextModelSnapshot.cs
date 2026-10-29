@@ -485,6 +485,10 @@ namespace Tamirhane.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("default_vat_rate");
 
+                    b.Property<bool>("IsDemo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_demo");
+
                     b.Property<string>("Locale")
                         .IsRequired()
                         .HasMaxLength(5)

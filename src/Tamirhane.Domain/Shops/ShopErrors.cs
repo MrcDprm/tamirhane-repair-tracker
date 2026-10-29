@@ -19,4 +19,6 @@ public static class ShopErrors
     public static readonly Error CannotRemoveOwner = Error.Validation("staff.cannot_remove_owner");
     public static readonly Error StaffNotFound = Error.NotFound("staff.not_found");
     public static readonly Error InvalidInvitation = Error.Validation("invitation.invalid");
+    /// <summary>Demo atölye dışarıya e-posta göndermez: davet linki gidemez.</summary>
+    public static readonly Error DemoSendsNoEmail = Error.Conflict("shop.demo_sends_no_email");
 }
