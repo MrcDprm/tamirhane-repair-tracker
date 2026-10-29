@@ -1,50 +1,70 @@
+using Microsoft.Extensions.Localization;
 using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.WorkOrders;
 
 namespace Tamirhane.Web.Display;
 
-/// <summary>Ekranda görünen adlar (Türkçe; İngilizcesi #35'te).</summary>
+/// <summary>
+/// Ekranda görünen adlar: enum değeri → Resources/*.json anahtarı (#35). Görünümde <c>T.Of(Model.Status)</c> gibi kullanılır;
+/// metin o anki arayüz dilinde gelir.
+/// </summary>
 public static class Labels
 {
-    public static readonly IReadOnlyList<(DeviceKind Kind, string Label)> DeviceKinds =
+    public static readonly IReadOnlyList<DeviceKind> DeviceKinds =
     [
-        (DeviceKind.Phone, "Telefon"),
-        (DeviceKind.Tablet, "Tablet"),
-        (DeviceKind.Computer, "Bilgisayar"),
-        (DeviceKind.Console, "Oyun konsolu"),
-        (DeviceKind.Watch, "Akıllı saat"),
-        (DeviceKind.Appliance, "Ev aleti"),
-        (DeviceKind.Other, "Diğer"),
+        DeviceKind.Phone, DeviceKind.Tablet, DeviceKind.Computer, DeviceKind.Console,
+        DeviceKind.Watch, DeviceKind.Appliance, DeviceKind.Other,
     ];
 
-    public static string Of(DeviceKind kind) => DeviceKinds.First(k => k.Kind == kind).Label;
-
-    public static string Of(WorkOrderStatus status) => status switch
+    public static string Of(this IStringLocalizer t, DeviceKind kind) => t[kind switch
     {
-        WorkOrderStatus.Received => "Teslim alındı",
-        WorkOrderStatus.Diagnosing => "Arıza tespiti",
-        WorkOrderStatus.AwaitingApproval => "Onay bekliyor",
-        WorkOrderStatus.InRepair => "Onarımda",
-        WorkOrderStatus.Ready => "Teslime hazır",
-        WorkOrderStatus.Delivered => "Teslim edildi",
-        WorkOrderStatus.Declined => "Onarım istenmedi",
-        WorkOrderStatus.Cancelled => "İptal",
+        DeviceKind.Phone => "kind.phone",
+        DeviceKind.Tablet => "kind.tablet",
+        DeviceKind.Computer => "kind.computer",
+        DeviceKind.Console => "kind.console",
+        DeviceKind.Watch => "kind.watch",
+        DeviceKind.Appliance => "kind.appliance",
+        _ => "kind.other",
+    }];
+
+    public static string Of(this IStringLocalizer t, WorkOrderStatus status) => status switch
+    {
+        WorkOrderStatus.Received => t["status.received"],
+        WorkOrderStatus.Diagnosing => t["status.diagnosing"],
+        WorkOrderStatus.AwaitingApproval => t["status.awaiting_approval"],
+        WorkOrderStatus.InRepair => t["status.in_repair"],
+        WorkOrderStatus.Ready => t["status.ready"],
+        WorkOrderStatus.Delivered => t["status.delivered"],
+        WorkOrderStatus.Declined => t["status.declined"],
+        WorkOrderStatus.Cancelled => t["status.cancelled"],
         _ => status.ToString(),
     };
 
     /// <summary>İş emri sayfasındaki düğmelerin metni: ne olacağını söyler.</summary>
-    public static string Of(WorkOrderAction action) => action switch
+    public static string Of(this IStringLocalizer t, WorkOrderAction action) => action switch
     {
-        WorkOrderAction.StartDiagnosis => "İncelemeye başla",
-        WorkOrderAction.SendQuote => "Teklifi müşteriye gönder",
-        WorkOrderAction.StartRepair => "Teklifsiz onarıma başla",
-        WorkOrderAction.RecordApproval => "Müşteri onayladı",
-        WorkOrderAction.RecordDecline => "Müşteri reddetti",
-        WorkOrderAction.MarkReady => "Onarım bitti, teslime hazır",
-        WorkOrderAction.Deliver => "Müşteriye teslim et",
-        WorkOrderAction.Cancel => "İş emrini iptal et",
+        WorkOrderAction.StartDiagnosis => t["action.start_diagnosis"],
+        WorkOrderAction.SendQuote => t["action.send_quote"],
+        WorkOrderAction.StartRepair => t["action.start_repair"],
+        WorkOrderAction.RecordApproval => t["action.record_approval"],
+        WorkOrderAction.RecordDecline => t["action.record_decline"],
+        WorkOrderAction.MarkReady => t["action.mark_ready"],
+        WorkOrderAction.Deliver => t["action.deliver"],
+        WorkOrderAction.Cancel => t["action.cancel"],
         _ => action.ToString(),
+    };
+
+    public static string Of(this IStringLocalizer t, WorkOrderFilter filter) => filter switch
+    {
+        WorkOrderFilter.Open => t["filter.open"],
+        WorkOrderFilter.AwaitingApproval => t["status.awaiting_approval"],
+        WorkOrderFilter.InRepair => t["status.in_repair"],
+        WorkOrderFilter.Ready => t["status.ready"],
+        WorkOrderFilter.Overdue => t["filter.overdue", ListWorkOrders.OverdueDays],
+        WorkOrderFilter.Closed => t["filter.closed"],
+        WorkOrderFilter.All => t["common.all"],
+        _ => filter.ToString(),
     };
 
     /// <summary>"+905321234567" → "0532 123 45 67"; yurt dışı numaralar olduğu gibi.</summary>

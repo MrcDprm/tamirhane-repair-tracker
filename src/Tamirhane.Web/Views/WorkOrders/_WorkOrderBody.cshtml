@@ -32,7 +32,7 @@
     }
     else if (pressed)
     {
-        <div class="notice notice-ok" role="status">Durum güncellendi: @Labels.Of(Model.Status).</div>
+        <div class="notice notice-ok" role="status">Durum güncellendi: @T.Of(Model.Status).</div>
     }
 
     @if (Model.WarrantyOf is { } previous)
@@ -45,7 +45,7 @@
             <span class="work-no">@Model.Number</span>
             <dl>
                 <dt>Müşteri</dt><dd>@Model.CustomerName</dd>
-                <dt>Cihaz</dt><dd>@Model.Brand @Model.Model <span class="is-empty">(@Labels.Of(Model.DeviceKind))</span></dd>
+                <dt>Cihaz</dt><dd>@Model.Brand @Model.Model <span class="is-empty">(@T.Of(Model.DeviceKind))</span></dd>
                 @if (Model.Imei is not null)
                 {
                     <dt>IMEI</dt><dd><code>@Model.Imei</code></dd>
@@ -75,7 +75,7 @@
                     var last = i == stamps.Count - 1;
                     var tone = stamps[i] is WorkOrderStatus.Cancelled or WorkOrderStatus.Declined ? " stamp-warn"
                         : stamps[i] is WorkOrderStatus.Ready or WorkOrderStatus.Delivered ? " stamp-ok" : "";
-                    <span class="stamp@(tone)@(last ? " is-current" : "")@(last && pressed ? " is-pressed" : "")">@Labels.Of(stamps[i])</span>
+                    <span class="stamp@(tone)@(last ? " is-current" : "")@(last && pressed ? " is-pressed" : "")">@T.Of(stamps[i])</span>
                 }
             </p>
         </article>
@@ -95,8 +95,8 @@
                                     <input id="decided-by" name="DecidedBy" value="@Model.CustomerName" maxlength="100" autocomplete="off" />
                                 </div>
                                 <div class="inline-form">
-                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordApproval" class="btn btn-primary">@Labels.Of(WorkOrderAction.RecordApproval)</button>
-                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordDecline" class="btn">@Labels.Of(WorkOrderAction.RecordDecline)</button>
+                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordApproval" class="btn btn-primary">@T.Of(WorkOrderAction.RecordApproval)</button>
+                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordDecline" class="btn">@T.Of(WorkOrderAction.RecordDecline)</button>
                                 </div>
                             </form>
                         }
@@ -114,12 +114,12 @@
                                         </div>
                                     }
                                 }
-                                <button type="submit" name="Step" value="@step" class="btn btn-primary btn-block">@Labels.Of(step)</button>
+                                <button type="submit" name="Step" value="@step" class="btn btn-primary btn-block">@T.Of(step)</button>
                             </form>
                             @foreach (var other in others)
                             {
                                 <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML" class="other-step">
-                                    <button type="submit" name="Step" value="@other" class="btn btn-block">@Labels.Of(other)</button>
+                                    <button type="submit" name="Step" value="@other" class="btn btn-block">@T.Of(other)</button>
                                 </form>
                             }
                         }
@@ -127,7 +127,7 @@
                         @if (Model.Actions.Contains(WorkOrderAction.Cancel))
                         {
                             <details class="cancel">
-                                <summary>@Labels.Of(WorkOrderAction.Cancel)</summary>
+                                <summary>@T.Of(WorkOrderAction.Cancel)</summary>
                                 <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML">
                                     <div class="field">
                                         <label for="cancel-reason">Neden?</label>
@@ -228,7 +228,7 @@
                 @foreach (var h in Model.History.Reverse())
                 {
                     <li>
-                        <strong>@Labels.Of(h.Status)</strong>
+                        <strong>@T.Of(h.Status)</strong>
                         <span class="muted">@h.At.ToOffset(turkey).ToString("d MMMM HH:mm"), @(h.By ?? "müşteri (takip sayfasından)")</span>
                         @if (h.Note is not null)
                         {

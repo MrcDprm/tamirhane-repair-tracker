@@ -5,7 +5,7 @@
 @model TrackingView
 @{
     Layout = "_TrackingLayout";
-    ViewData["Title"] = $"{Model.Brand} {Model.Model}: {Labels.Of(Model.Status)}";
+    ViewData["Title"] = $"{Model.Brand} {Model.Model}: {T.Of(Model.Status)}";
     var turkey = TimeSpan.FromHours(3);
     var lead = Model.Status switch
     {
@@ -41,7 +41,7 @@
         <h1 id="track-device">@Model.Brand @Model.Model</h1>
         <p class="track-owner">@Model.MaskedCustomerName</p>
         <p class="track-complaint">@Model.Complaint</p>
-        <span class="stamp is-pressed@(tone)">@Labels.Of(Model.Status)</span>
+        <span class="stamp is-pressed@(tone)">@T.Of(Model.Status)</span>
     </article>
 </header>
 
@@ -144,7 +144,7 @@
                 var step = Model.Steps[i];
                 <li class="@(step.At is null ? "is-ahead" : i == current ? "is-current" : "is-done")" aria-current="@(i == current ? "step" : null)">
                     <span class="track-dot" aria-hidden="true"></span>
-                    <span class="track-step">@Labels.Of(step.Status)</span>
+                    <span class="track-step">@T.Of(step.Status)</span>
                     @if (step.At is { } at)
                     {
                         <time datetime="@at.ToString("O")">@at.ToOffset(turkey).ToString("d MMM HH:mm")</time>

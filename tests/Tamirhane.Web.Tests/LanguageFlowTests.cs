@@ -89,6 +89,28 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         Assert.Contains("<h1>Bugün</h1>", await ShopFlows.BodyAsync(other, "/panel"));
     }
 
+    [DockerFact]
+    public async Task Work_order_list_and_intake_follow_the_language()
+    {
+        var flows = new ShopFlows(app);
+        var owner = await flows.OwnerAsync("dil-is-emri@example.com");
+        var order = await ShopFlows.ReceiveAsync(owner, "0532 211 01 01");
+        await EnglishAsync(owner, "/panel");
+
+        // Durum, süzgeç ve bekleme süresi sözlükten; müşterinin yazdığı metin olduğu gibi.
+        var list = await ShopFlows.BodyAsync(owner, "/work-orders");
+        foreach (var expected in new[] { ">Checked in<", ">Open</a>", ">Over 30 days</a>", "today", "Ekran kırık" })
+            Assert.Contains(expected, list);
+        Assert.DoesNotContain("Teslim alındı", list);
+
+        // Kullanım senaryosunun hata kodu da İngilizce metne çevrilir.
+        var intake = await ShopFlows.BodyAsync(owner, "/work-orders/new?phone=12345");
+        Assert.Contains("Enter the phone like 0532 123 45 67.", intake);
+        Assert.Contains("Find customer", intake);
+        Assert.Contains(">Check in a device</h1>", await ShopFlows.BodyAsync(owner, "/work-orders/new"));
+        Assert.Contains(order, list);
+    }
+
     /// <summary>Dil düğmesine basar; formun CSRF token'ı verilen sayfadan alınır.</summary>
     private static async Task<Browser> EnglishAsync(Browser browser, string page)
     {

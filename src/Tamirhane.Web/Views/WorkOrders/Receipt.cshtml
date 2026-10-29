@@ -43,7 +43,7 @@
         <section>
             <h2>Cihaz</h2>
             <p>
-                <strong>@Model.Brand @Model.Model</strong> (@Labels.Of(Model.DeviceKind))
+                <strong>@Model.Brand @Model.Model</strong> (@T.Of(Model.DeviceKind))
                 @if (Model.Imei is not null)
                 {
                     <br />@:IMEI <code>@Model.Imei</code>

@@ -82,7 +82,7 @@
                                 <td class="c-no"><a class="work-no" asp-controller="WorkOrders" asp-action="Details" asp-route-id="@row.Id">@row.Number</a></td>
                                 <td class="c-device">@row.Brand @row.Model</td>
                                 <td class="c-customer">@row.CustomerName</td>
-                                <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : row.Status == WorkOrderStatus.Ready ? " stamp-ok" : "")">@Labels.Of(row.Status)</span></td>
+                                <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : row.Status == WorkOrderStatus.Ready ? " stamp-ok" : "")">@T.Of(row.Status)</span></td>
                                 <td class="c-wait num@(late ? " warn-text" : "")">@Waiting(row)</td>
                             </tr>
                         }

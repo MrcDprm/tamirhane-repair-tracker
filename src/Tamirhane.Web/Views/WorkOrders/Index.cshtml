@@ -3,27 +3,22 @@
 @using Tamirhane.Web.Display
 @model WorkOrderList
 @{
-    ViewData["Title"] = "İş emirleri";
-    var filters = new (WorkOrderFilter Filter, string Label)[]
+    ViewData["Title"] = T["nav.work_orders"];
+    var filters = new[]
     {
-        (WorkOrderFilter.Open, "Açık"),
-        (WorkOrderFilter.AwaitingApproval, "Onay bekliyor"),
-        (WorkOrderFilter.InRepair, "Onarımda"),
-        (WorkOrderFilter.Ready, "Teslime hazır"),
-        (WorkOrderFilter.Overdue, "30 günü geçen"),
-        (WorkOrderFilter.Closed, "Kapanan"),
-        (WorkOrderFilter.All, "Tümü"),
+        WorkOrderFilter.Open, WorkOrderFilter.AwaitingApproval, WorkOrderFilter.InRepair, WorkOrderFilter.Ready,
+        WorkOrderFilter.Overdue, WorkOrderFilter.Closed, WorkOrderFilter.All,
     };
     var turkey = TimeSpan.FromHours(3);
     var today = Model.Now.ToOffset(turkey).Date;
     string Waiting(WorkOrderRow row)
     {
         if (row.Status == WorkOrderStatus.Delivered && row.DeliveredAt is { } at)
-            return at.ToOffset(turkey).ToString("d MMM") + " teslim";
+            return T["list.delivered_on", at.ToOffset(turkey).ToString("d MMM")];
         if (row.Status == WorkOrderStatus.Cancelled)
-            return "iptal";
+            return T["list.cancelled"];
         var days = (today - row.CreatedAt.ToOffset(turkey).Date).Days;
-        return days == 0 ? "bugün" : $"{days} gün";
+        return days == 0 ? T["common.today"] : T["common.days", days];
     }
     bool Overdue(WorkOrderRow row) =>
         row.Status is not (WorkOrderStatus.Delivered or WorkOrderStatus.Cancelled)
@@ -38,26 +33,26 @@
 
 <div class="page-head">
     <div>
-        <h1>İş emirleri</h1>
-        <p>Açık işlerde en uzun bekleyen başta. Ad, telefon, IMEI, iş emri ya da takip koduyla ara.</p>
+        <h1>@T["nav.work_orders"]</h1>
+        <p>@T["list.text"]</p>
     </div>
 </div>
 
 <section class="panel" aria-labelledby="list-heading">
     <div class="panel-head">
-        <h2 id="list-heading" class="visually-hidden">Liste</h2>
-        <nav class="tabs" aria-label="Durum süzgeci">
-            @foreach (var (filter, label) in filters)
+        <h2 id="list-heading" class="visually-hidden">@T["list.heading"]</h2>
+        <nav class="tabs" aria-label="@T["list.filters"]">
+            @foreach (var filter in filters)
             {
                 <a asp-action="Index" asp-route-filter="@filter" asp-route-q="@Model.Query"
-                   aria-current="@(Model.Filter == filter ? "page" : null)">@label</a>
+                   aria-current="@(Model.Filter == filter ? "page" : null)">@T.Of(filter)</a>
             }
         </nav>
         <form method="get" asp-action="Index" class="inline-form" role="search">
-            <label for="list-search" class="visually-hidden">İş emirlerinde ara</label>
-            <input id="list-search" name="q" type="search" value="@Model.Query" placeholder="Ad, telefon, IMEI, no" autocomplete="off" />
+            <label for="list-search" class="visually-hidden">@T["list.search_label"]</label>
+            <input id="list-search" name="q" type="search" value="@Model.Query" placeholder="@T["list.search_placeholder"]" autocomplete="off" />
             <input type="hidden" name="filter" value="@Model.Filter" />
-            <button type="submit" class="btn"><svg class="icon"><use href="/img/icons.svg#i-search" /></svg>Ara</button>
+            <button type="submit" class="btn"><svg class="icon"><use href="/img/icons.svg#i-search" /></svg>@T["list.search"]</button>
         </form>
     </div>
 
@@ -68,21 +63,21 @@
             <div>
                 @if (Model.Query is { Length: > 0 })
                 {
-                    <h3>"@Model.Query" için iş emri yok</h3>
-                    <p>Ad, telefon (0532 123 45 67 gibi), IMEI, iş emri numarası (2026-0042 ya da 42) ya da takip koduyla ara.@if (Model.Filter != WorkOrderFilter.All)
+                    <h3>@T["list.no_match", Model.Query]</h3>
+                    <p>@T["list.no_match_text"]@if (Model.Filter != WorkOrderFilter.All)
                     {
-                        <text> Süzgeç "@filters.First(f => f.Filter == Model.Filter).Label" seçili; <a asp-action="Index" asp-route-q="@Model.Query" asp-route-filter="@WorkOrderFilter.All">tümünde ara</a>.</text>
+                        <text> @H["list.search_all_html", T.Of(Model.Filter), Url.Action("Index", new { q = Model.Query, filter = WorkOrderFilter.All })!]</text>
                     }</p>
                 }
                 else if (Model.Filter == WorkOrderFilter.Open)
                 {
-                    <h3>Tezgâhta açık iş yok</h3>
-                    <p>Yeni bir cihaz geldiğinde <a asp-action="New">Cihaz kabul et</a>'e bas.</p>
+                    <h3>@T["list.empty_open"]</h3>
+                    <p>@H["list.empty_open_text_html", Url.Action("New")!]</p>
                 }
                 else
                 {
-                    <h3>Bu süzgeçte iş emri yok</h3>
-                    <p><a asp-action="Index">Açık işlere dön</a>.</p>
+                    <h3>@T["list.empty_filter"]</h3>
+                    <p><a asp-action="Index">@T["list.back_to_open"]</a></p>
                 }
             </div>
         </div>
@@ -93,12 +88,12 @@
             <table class="data-table work-list">
                 <thead>
                     <tr>
-                        <th scope="col">No</th>
-                        <th scope="col">Cihaz</th>
-                        <th scope="col">Arıza</th>
-                        <th scope="col">Müşteri</th>
-                        <th scope="col">Durum</th>
-                        <th scope="col" class="num">Bekleme</th>
+                        <th scope="col">@T["table.number"]</th>
+                        <th scope="col">@T["table.device"]</th>
+                        <th scope="col">@T["table.issue"]</th>
+                        <th scope="col">@T["table.customer"]</th>
+                        <th scope="col">@T["table.status"]</th>
+                        <th scope="col" class="num">@T["table.waiting"]</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -110,7 +105,7 @@
                             <td class="c-device">@row.Brand @row.Model</td>
                             <td class="c-issue clip">@row.Complaint</td>
                             <td class="c-customer">@row.CustomerName</td>
-                            <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : Tone(row.Status))">@Labels.Of(row.Status)</span></td>
+                            <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : Tone(row.Status))">@T.Of(row.Status)</span></td>
                             <td class="c-wait num@(late ? " warn-text" : "")">@Waiting(row)</td>
                         </tr>
                     }
@@ -119,7 +114,7 @@
         </div>
         @if (Model.Truncated)
         {
-            <p class="panel-foot">İlk @ListWorkOrders.Limit iş emri gösteriliyor; aramayı daralt ya da süzgeç seç.</p>
+            <p class="panel-foot">@T["list.truncated", ListWorkOrders.Limit]</p>
         }
     }
 </section>
