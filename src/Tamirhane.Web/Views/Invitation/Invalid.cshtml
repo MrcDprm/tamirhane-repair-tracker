@@ -1,9 +1,9 @@
 @{
-    ViewData["Title"] = "Davet linki geçersiz";
+    ViewData["Title"] = T["invitation.invalid_title"];
 }
 
 <div class="narrow">
-    <h1>Davet linki geçersiz</h1>
-    <p>Bu linkin süresi dolmuş, daha önce kullanılmış ya da atölye sahibi daveti geri almış olabilir. Atölye sahibinden yeni bir davet iste.</p>
-    <p>Hesabın zaten açıldıysa <a asp-controller="Account" asp-action="Login">giriş yap</a>.</p>
+    <h1>@T["invitation.invalid_title"]</h1>
+    <p>@T["invitation.invalid_text"]</p>
+    <p>@H["invitation.invalid_login_html", Url.Action("Login", "Account")!]</p>
 </div>

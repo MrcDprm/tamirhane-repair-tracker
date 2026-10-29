@@ -46,10 +46,9 @@ public sealed class InvitationController(IAccountService accounts, IStringLocali
         if (result.IsFailure)
         {
             var (field, message) = result.Error == AccountErrors.EmailTaken
-                ? ("", "Bu e-posta adresinin zaten bir Tamirhane hesabı var. Bir hesap tek atölyede çalışır; " +
-                       "bu atölyeye katılmak için atölye sahibinden başka bir adrese davet iste.")
+                ? ("", "invitation.error.email_taken")
                 : result.Error == ShopErrors.InvalidDisplayName
-                    ? (nameof(AcceptInvitationInput.DisplayName), "Ad 2 ile 100 karakter arasında olmalı.")
+                    ? (nameof(AcceptInvitationInput.DisplayName), "account.error.name")
                     : AccountController.MessageFor(result.Error!);
             ModelState.AddModelError(field == "" ? "" : $"{nameof(AcceptInvitationPage.Input)}.{field}", t[message]);
             return View(page);

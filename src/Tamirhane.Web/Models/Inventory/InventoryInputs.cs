@@ -4,32 +4,33 @@ using Tamirhane.Application.Inventory;
 namespace Tamirhane.Web.Models.Inventory;
 
 // Uzunluk ve aralık sınırları kabaca; asıl kurallar domain'de (Part, StockLevel), hata metinleri InventoryController'da.
+// Alan adları ve mesajlar Resources/*.json anahtarlarıdır (#35).
 
 public sealed class PartInput
 {
-    [Display(Name = "Kod")]
-    [Required(ErrorMessage = "Parçanın kodunu yaz (ör. IP13-SCR).")]
-    [StringLength(40, ErrorMessage = "Kod en fazla 40 karakter olabilir.")]
+    [Display(Name = "field.sku")]
+    [Required(ErrorMessage = "validation.sku.required")]
+    [StringLength(40, ErrorMessage = "validation.max_chars")]
     public string Sku { get; set; } = "";
 
-    [Display(Name = "Parçanın adı")]
-    [Required(ErrorMessage = "Parçanın adını yaz.")]
-    [StringLength(200, ErrorMessage = "Ad en fazla 200 karakter olabilir.")]
+    [Display(Name = "field.part_name")]
+    [Required(ErrorMessage = "validation.part_name.required")]
+    [StringLength(200, ErrorMessage = "validation.max_chars")]
     public string Name { get; set; } = "";
 
-    [Display(Name = "Alış fiyatı")]
+    [Display(Name = "field.cost_price")]
     public decimal CostPrice { get; set; }
 
-    [Display(Name = "Satış fiyatı")]
+    [Display(Name = "field.sale_price")]
     public decimal SalePrice { get; set; }
 
-    [Display(Name = "Kritik seviye")]
-    [Range(0, 1_000_000, ErrorMessage = "Kritik seviye 0 ya da daha büyük olmalı.")]
+    [Display(Name = "field.critical_level")]
+    [Range(0, 1_000_000, ErrorMessage = "error.critical_level")]
     public int CriticalLevel { get; set; }
 
     /// <summary>Sadece yeni parçada: elde olan adet, "alış" olarak girer.</summary>
-    [Display(Name = "Eldeki adet")]
-    [Range(0, 1_000_000, ErrorMessage = "Adet 0 ya da daha büyük olmalı.")]
+    [Display(Name = "field.opening_quantity")]
+    [Range(0, 1_000_000, ErrorMessage = "validation.quantity.range")]
     public int OpeningQuantity { get; set; }
 }
 

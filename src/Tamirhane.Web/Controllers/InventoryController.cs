@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Inventory;
 using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Inventory;
+using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.Inventory;
 
 namespace Tamirhane.Web.Controllers;
@@ -14,19 +16,20 @@ namespace Tamirhane.Web.Controllers;
 /// </summary>
 [Authorize]
 [Route("inventory")]
-public sealed class InventoryController : Controller
+public sealed class InventoryController(IStringLocalizer<SharedResource> t) : Controller
 {
-    private static readonly Dictionary<string, (string Field, string Message)> Errors = new()
+    // Hata kodu → formdaki alan ve metnin anahtarı.
+    private static readonly Dictionary<string, (string Field, string Key)> Errors = new()
     {
-        [InventoryErrors.InvalidSku.Code] = (nameof(PartInput.Sku), "Kod 1 ile 40 karakter arasında olmalı."),
-        [InventoryErrors.InvalidName.Code] = (nameof(PartInput.Name), "Parçanın adını yaz (en fazla 200 karakter)."),
-        [InventoryErrors.InvalidPrice.Code] = (nameof(PartInput.SalePrice), "Fiyatlar sıfır ya da daha büyük, en fazla iki ondalık olmalı."),
-        [InventoryErrors.InvalidCriticalLevel.Code] = (nameof(PartInput.CriticalLevel), "Kritik seviye 0 ya da daha büyük olmalı."),
-        [InventoryErrors.InvalidQuantity.Code] = ("", "Adet geçersiz: girişte sıfırdan büyük olmalı, sayımda şimdiki adetten farklı olmalı."),
-        [InventoryErrors.ReasonRequired.Code] = ("", "Sayım düzeltmesinin nedenini yaz (ör. Sayım farkı, Kırıldı)."),
-        [InventoryErrors.NoteTooLong.Code] = ("", "Not en fazla 200 karakter olabilir."),
-        [ApplicationErrors.DuplicateSku.Code] = (nameof(PartInput.Sku), "Bu kodla bir parça zaten var."),
-        [ApplicationErrors.OwnerOnly.Code] = ("", "Parça ekleme ve düzenleme sadece atölye sahibinin işi."),
+        [InventoryErrors.InvalidSku.Code] = (nameof(PartInput.Sku), "error.sku"),
+        [InventoryErrors.InvalidName.Code] = (nameof(PartInput.Name), "error.part_name"),
+        [InventoryErrors.InvalidPrice.Code] = (nameof(PartInput.SalePrice), "error.price"),
+        [InventoryErrors.InvalidCriticalLevel.Code] = (nameof(PartInput.CriticalLevel), "error.critical_level"),
+        [InventoryErrors.InvalidQuantity.Code] = ("", "error.stock_quantity"),
+        [InventoryErrors.ReasonRequired.Code] = ("", "error.adjust_reason"),
+        [InventoryErrors.NoteTooLong.Code] = ("", "error.payment_note_too_long"),
+        [ApplicationErrors.DuplicateSku.Code] = (nameof(PartInput.Sku), "error.duplicate_sku"),
+        [ApplicationErrors.OwnerOnly.Code] = ("", "error.parts_owner_only"),
     };
 
     [HttpGet("")]
@@ -43,7 +46,7 @@ public sealed class InventoryController : Controller
             var result = await add.HandleAsync(Command(input), input.OpeningQuantity, ct);
             if (result.IsSuccess)
             {
-                TempData["Status"] = $"{input.Name.Trim()} eklendi.";
+                TempData["Status"] = t["inventory.added", input.Name.Trim()].Value;
                 return RedirectToAction(nameof(Part), new { id = result.Value });
             }
             AddError(result.Error!, nameof(InventoryPage.NewPart));
@@ -73,7 +76,7 @@ public sealed class InventoryController : Controller
         {
             var result = await update.HandleAsync(id, Command(input), ct);
             if (result.IsSuccess)
-                return Done(id, "Parça bilgileri kaydedildi.");
+                return Done(id, t["inventory.saved"]);
             if (result.Error == ApplicationErrors.PartNotFound)
                 return NotFound();
             AddError(result.Error!, nameof(PartPage.Edit));
@@ -84,15 +87,15 @@ public sealed class InventoryController : Controller
 
     [HttpPost("{id:guid}/receive")]
     public async Task<IActionResult> Receive(Guid id, int quantity, string? note, [FromServices] ChangeStock change, CancellationToken ct) =>
-        After(id, await change.ReceiveAsync(id, quantity, note, ct), $"{quantity} adet stoğa girdi.");
+        After(id, await change.ReceiveAsync(id, quantity, note, ct), t["inventory.received", quantity]);
 
     [HttpPost("{id:guid}/adjust")]
     public async Task<IActionResult> Adjust(Guid id, int counted, string? reason, [FromServices] ChangeStock change, CancellationToken ct) =>
-        After(id, await change.AdjustAsync(id, counted, reason ?? "", ct), $"Stok sayıma göre {counted} adet olarak düzeltildi.");
+        After(id, await change.AdjustAsync(id, counted, reason ?? "", ct), t["inventory.adjusted", counted]);
 
     [HttpPost("{id:guid}/active")]
     public async Task<IActionResult> SetActive(Guid id, bool active, [FromServices] SetPartActive set, CancellationToken ct) =>
-        After(id, await set.HandleAsync(id, active, ct), active ? "Parça yeniden kullanımda." : "Parça kullanımdan kaldırıldı; geçmiş kayıtları duruyor.");
+        After(id, await set.HandleAsync(id, active, ct), t[active ? "inventory.reactivated" : "inventory.retired"]);
 
     private async Task<IActionResult> IndexAsync(string? q, bool low, bool inactive, PartInput newPart, ListParts list, CancellationToken ct) =>
         View(nameof(Index), new InventoryPage(await list.HandleAsync(q, low, inactive, ct), q, low, inactive, newPart));
@@ -103,7 +106,7 @@ public sealed class InventoryController : Controller
             return NotFound();
         if (result.IsSuccess)
             return Done(id, success);
-        TempData["Error"] = Errors.GetValueOrDefault(result.Error!.Code, (Field: "", Message: "İşlem yapılamadı. Bilgileri kontrol edip tekrar dene.")).Message;
+        TempData["Error"] = t[Errors.GetValueOrDefault(result.Error!.Code, (Field: "", Key: "error.action_failed")).Key].Value;
         return RedirectToAction(nameof(Part), new { id });
     }
 
@@ -115,8 +118,8 @@ public sealed class InventoryController : Controller
 
     private void AddError(Error error, string prefix)
     {
-        var (field, message) = Errors.GetValueOrDefault(error.Code, ("", "İşlem yapılamadı. Bilgileri kontrol edip tekrar dene."));
-        ModelState.AddModelError(field.Length == 0 ? "" : $"{prefix}.{field}", message);
+        var (field, key) = Errors.GetValueOrDefault(error.Code, ("", "error.action_failed"));
+        ModelState.AddModelError(field.Length == 0 ? "" : $"{prefix}.{field}", t[key]);
     }
 
     private static PartCommand Command(PartInput input) =>

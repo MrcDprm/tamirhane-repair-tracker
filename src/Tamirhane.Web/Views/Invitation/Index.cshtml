@@ -1,12 +1,12 @@
 @model AcceptInvitationPage
 @{
-    ViewData["Title"] = "Daveti kabul et";
+    ViewData["Title"] = T["invitation.title"];
 }
 
 <div class="narrow">
-    <h1>@Model.Invitation.ShopName seni davet etti</h1>
+    <h1>@T["invitation.heading", Model.Invitation.ShopName]</h1>
     <p class="muted">
-        <strong>@Model.Invitation.Email</strong> adresiyle teknisyen olarak katılıyorsun. Adını ve şifreni belirle; hesabın hemen açılır.
+        @H["invitation.text_html", Model.Invitation.Email]
     </p>
 
     <form asp-action="Index" method="post" novalidate>
@@ -21,7 +21,7 @@
         <div class="field">
             <label asp-for="Input.Password"></label>
             <input asp-for="Input.Password" autocomplete="new-password" aria-describedby="password-help" />
-            <div id="password-help" class="field-help">En az 10 karakter; içinde harf ve rakam olsun. Uzun bir cümle de olur.</div>
+            <div id="password-help" class="field-help">@T["account.password.help"]</div>
             <span asp-validation-for="Input.Password"></span>
         </div>
         <div class="field">
@@ -30,6 +30,6 @@
             <span asp-validation-for="Input.ConfirmPassword"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Katıl</button>
+        <button type="submit" class="btn btn-primary btn-block">@T["invitation.submit"]</button>
     </form>
 </div>

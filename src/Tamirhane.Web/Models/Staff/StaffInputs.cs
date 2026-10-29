@@ -3,12 +3,14 @@ using Tamirhane.Application.Shops;
 
 namespace Tamirhane.Web.Models.Staff;
 
+// Alan adları ve mesajlar Resources/*.json anahtarlarıdır (#35).
+
 public sealed class InviteInput
 {
-    [Display(Name = "Teknisyenin e-postası")]
-    [Required(ErrorMessage = "Davet edeceğin kişinin e-posta adresini yaz.")]
-    [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi yaz.")]
-    [StringLength(256, ErrorMessage = "E-posta en fazla 256 karakter olabilir.")]
+    [Display(Name = "field.technician_email")]
+    [Required(ErrorMessage = "validation.invite_email.required")]
+    [EmailAddress(ErrorMessage = "error.email")]
+    [StringLength(256, ErrorMessage = "validation.max_chars")]
     public string Email { get; set; } = "";
 }
 
@@ -19,20 +21,20 @@ public sealed class AcceptInvitationInput
 {
     public string Token { get; set; } = "";
 
-    [Display(Name = "Adın soyadın")]
-    [Required(ErrorMessage = "Adını yaz; iş emirlerinde bu ad görünür.")]
-    [StringLength(100, ErrorMessage = "Ad en fazla 100 karakter olabilir.")]
+    [Display(Name = "field.full_name")]
+    [Required(ErrorMessage = "validation.full_name.required")]
+    [StringLength(100, ErrorMessage = "validation.max_chars")]
     public string DisplayName { get; set; } = "";
 
-    [Display(Name = "Şifre")]
-    [Required(ErrorMessage = "Bir şifre belirle.")]
-    [StringLength(128, ErrorMessage = "Şifre en fazla 128 karakter olabilir.")]
+    [Display(Name = "field.password")]
+    [Required(ErrorMessage = "validation.password.set")]
+    [StringLength(128, ErrorMessage = "validation.password.length")]
     [DataType(DataType.Password)]
     public string Password { get; set; } = "";
 
-    [Display(Name = "Şifre (tekrar)")]
-    [Required(ErrorMessage = "Şifreni bir kez daha yaz.")]
-    [Compare(nameof(Password), ErrorMessage = "İki şifre aynı değil.")]
+    [Display(Name = "field.password_again")]
+    [Required(ErrorMessage = "validation.password.again")]
+    [Compare(nameof(Password), ErrorMessage = "validation.password.mismatch")]
     [DataType(DataType.Password)]
     public string ConfirmPassword { get; set; } = "";
 }

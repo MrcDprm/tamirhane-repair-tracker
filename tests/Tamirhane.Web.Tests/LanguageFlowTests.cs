@@ -133,6 +133,28 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         Assert.Contains("<html lang=\"en\">", receipt);
     }
 
+    [DockerFact]
+    public async Task Inventory_staff_and_settings_follow_the_language()
+    {
+        var flows = new ShopFlows(app);
+        var owner = await flows.OwnerAsync("dil-ayarlar@example.com");
+        await EnglishAsync(owner, "/panel");
+
+        Assert.Contains(">New part</h2>", await ShopFlows.BodyAsync(owner, "/inventory"));
+        var part = await owner.SubmitAsync("/inventory", "/inventory", new() { ["NewPart.Sku"] = "", ["NewPart.Name"] = "Ekran" });
+        Assert.Contains("Enter the part code (e.g. IP13-SCR).", await part.Content.ReadAsStringAsync()); // DataAnnotations
+
+        Assert.Contains(">Invite a technician</h2>", await ShopFlows.BodyAsync(owner, "/staff"));
+
+        var settings = await owner.SubmitAsync("/settings", "/settings", new()
+        {
+            ["Shop.Name"] = "Kaya Telefon", ["Shop.WarrantyDays"] = "5000", ["Shop.DefaultVatRate"] = "20", ["Shop.Locale"] = "tr",
+        });
+        var html = await settings.Content.ReadAsStringAsync();
+        Assert.Contains("The warranty period must be between 0 and 3650 days.", html);
+        Assert.Contains(">Save settings</button>", html);
+    }
+
     /// <summary>Dil düğmesine basar; formun CSRF token'ı verilen sayfadan alınır.</summary>
     private static async Task<Browser> EnglishAsync(Browser browser, string page)
     {

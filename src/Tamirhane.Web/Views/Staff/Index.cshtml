@@ -1,14 +1,14 @@
 @using Tamirhane.Domain.Shops
 @model StaffPage
 @{
-    ViewData["Title"] = "Personel";
+    ViewData["Title"] = T["nav.staff"];
     var turkey = TimeSpan.FromHours(3);
 }
 
 <div class="page-head">
     <div>
-        <h1>Personel</h1>
-        <p>Teknisyenler iş emri ve stokla çalışır; ayarları, personeli ve ciroyu göremez.</p>
+        <h1>@T["nav.staff"]</h1>
+        <p>@T["staff.text"]</p>
     </div>
 </div>
 
@@ -22,11 +22,11 @@
 }
 
 <section class="panel" aria-labelledby="members-heading">
-    <div class="panel-head"><h2 id="members-heading">Çalışanlar</h2></div>
+    <div class="panel-head"><h2 id="members-heading">@T["staff.members"]</h2></div>
     <div class="table-wrap">
         <table class="data-table">
             <thead>
-                <tr><th scope="col">Ad</th><th scope="col">Rol</th><th scope="col"><span class="visually-hidden">İşlem</span></th></tr>
+                <tr><th scope="col">@T["staff.name"]</th><th scope="col">@T["staff.role"]</th><th scope="col"><span class="visually-hidden">@T["quote.actions"]</span></th></tr>
             </thead>
             <tbody>
                 @foreach (var member in Model.Overview.Members)
@@ -36,17 +36,17 @@
                             <strong>@member.DisplayName</strong>
                             @if (member.IsYou)
                             {
-                                <span class="muted">(sen)</span>
+                                <span class="muted">@T["staff.you"]</span>
                             }
                         </td>
-                        <td><span class="stamp stamp-sm@(member.Role == StaffRole.Owner ? "" : " stamp-ok")">@(member.Role == StaffRole.Owner ? "Sahip" : "Teknisyen")</span></td>
+                        <td><span class="stamp stamp-sm@(member.Role == StaffRole.Owner ? "" : " stamp-ok")">@T[member.Role == StaffRole.Owner ? "staff.owner" : "staff.technician"]</span></td>
                         <td class="actions">
                             @if (member.Role != StaffRole.Owner)
                             {
                                 @* Onay metni data özelliğinde: ad JavaScript içine yazılmaz, Razor onu HTML olarak kaçışlar. *@
                                 <form asp-action="Remove" asp-route-id="@member.Id" method="post"
-                                      data-confirm="@member.DisplayName atölyeden çıkarılsın mı? Hesabı silinir, iş emri geçmişinde adı kalır.">
-                                    <button type="submit" class="btn btn-danger">Çıkar</button>
+                                      data-confirm="@T["staff.remove_confirm", member.DisplayName]">
+                                    <button type="submit" class="btn btn-danger">@T["quote.remove"]</button>
                                 </form>
                             }
                         </td>
@@ -58,18 +58,18 @@
 </section>
 
 <section class="panel" aria-labelledby="invite-heading">
-    <div class="panel-head"><h2 id="invite-heading">Teknisyen davet et</h2></div>
+    <div class="panel-head"><h2 id="invite-heading">@T["staff.invite"]</h2></div>
     <div class="panel-body">
-        <p class="muted">Davet linki e-postayla gider; 7 gün geçerli ve bir kez kullanılabilir.</p>
+        <p class="muted">@T["staff.invite_text"]</p>
         <form asp-action="Invite" method="post" novalidate>
             <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
             <div class="inline-form">
                 <div class="wide">
                     <label asp-for="Invite.Email" class="visually-hidden"></label>
-                    <input asp-for="Invite.Email" placeholder="teknisyen@ornek.com" autocomplete="off" />
+                    <input asp-for="Invite.Email" placeholder="@T["staff.invite_example"]" autocomplete="off" />
                     <span asp-validation-for="Invite.Email"></span>
                 </div>
-                <button type="submit" class="btn btn-primary">Davet gönder</button>
+                <button type="submit" class="btn btn-primary">@T["staff.invite_submit"]</button>
             </div>
         </form>
     </div>
@@ -78,17 +78,17 @@
 @if (Model.Overview.Invitations.Count > 0)
 {
     <section class="panel" aria-labelledby="pending-heading">
-        <div class="panel-head"><h2 id="pending-heading">Bekleyen davetler</h2></div>
+        <div class="panel-head"><h2 id="pending-heading">@T["staff.pending"]</h2></div>
         <ul class="plain-list">
             @foreach (var invitation in Model.Overview.Invitations)
             {
                 <li>
                     <span>
                         <strong>@invitation.Email</strong>
-                        <span class="muted">, @invitation.ExpiresAt.ToOffset(turkey).ToString("d MMMM HH:mm") tarihine kadar geçerli</span>
+                        <span class="muted">, @T["staff.valid_until", invitation.ExpiresAt.ToOffset(turkey).ToString("d MMMM HH:mm")]</span>
                     </span>
                     <form asp-action="Revoke" asp-route-id="@invitation.Id" method="post">
-                        <button type="submit" class="btn">Geri al</button>
+                        <button type="submit" class="btn">@T["staff.revoke"]</button>
                     </form>
                 </li>
             }

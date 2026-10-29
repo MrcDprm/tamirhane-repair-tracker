@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Shops;
 using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Shops;
 using Tamirhane.Web.Authorization;
+using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.Settings;
 
 namespace Tamirhane.Web.Controllers;
@@ -12,19 +14,20 @@ namespace Tamirhane.Web.Controllers;
 /// <summary>Atölye ayarları (ad, garanti, KDV, dil) ve şubeler. Sadece sahip.</summary>
 [Authorize(Policy = Policies.OwnerOnly)]
 [Route("settings")]
-public sealed class SettingsController(ListBranches listBranches) : Controller
+public sealed class SettingsController(ListBranches listBranches, IStringLocalizer<SharedResource> t) : Controller
 {
-    private static readonly Dictionary<string, (string Field, string Message)> Errors = new()
+    // Hata kodu → formdaki alan ve metnin anahtarı.
+    private static readonly Dictionary<string, (string Field, string Key)> Errors = new()
     {
-        [ShopErrors.InvalidName.Code] = ("Shop.Name", "Atölye adı 2 ile 100 karakter arasında olmalı."),
-        [ShopErrors.InvalidWarrantyDays.Code] = ("Shop.WarrantyDays", "Garanti süresi 0 ile 3650 gün arasında olmalı."),
-        [ShopErrors.InvalidVatRate.Code] = ("Shop.DefaultVatRate", "KDV oranı 0 ile 100 arasında, en fazla iki ondalıklı olmalı."),
-        [ShopErrors.InvalidLocale.Code] = ("Shop.Locale", "Listeden bir dil seç."),
-        [ShopErrors.InvalidBranchName.Code] = ("NewBranch.Name", "Şube adı 2 ile 100 karakter arasında olmalı."),
-        [ShopErrors.InvalidBranchAddress.Code] = ("NewBranch.Address", "Adres en fazla 300 karakter olabilir."),
-        [ShopErrors.InvalidBranchPhone.Code] = ("NewBranch.Phone", "Telefonu 0532 123 45 67 gibi yaz."),
-        [ShopErrors.TooManyBranches.Code] = ("", $"Bir atölyenin en fazla {Branch.MaxPerShop} şubesi olabilir."),
-        [ShopErrors.BranchNotFound.Code] = ("", "Bu şube bulunamadı."),
+        [ShopErrors.InvalidName.Code] = ("Shop.Name", "account.error.shop_name"),
+        [ShopErrors.InvalidWarrantyDays.Code] = ("Shop.WarrantyDays", "error.warranty_days"),
+        [ShopErrors.InvalidVatRate.Code] = ("Shop.DefaultVatRate", "error.default_vat"),
+        [ShopErrors.InvalidLocale.Code] = ("Shop.Locale", "error.locale"),
+        [ShopErrors.InvalidBranchName.Code] = ("NewBranch.Name", "error.branch_name"),
+        [ShopErrors.InvalidBranchAddress.Code] = ("NewBranch.Address", "error.branch_address"),
+        [ShopErrors.InvalidBranchPhone.Code] = ("NewBranch.Phone", "error.phone"),
+        [ShopErrors.TooManyBranches.Code] = ("", "error.too_many_branches"),
+        [ShopErrors.BranchNotFound.Code] = ("", "error.branch_not_found"),
     };
 
     [HttpGet("")]
@@ -52,7 +55,7 @@ public sealed class SettingsController(ListBranches listBranches) : Controller
         if (result.IsFailure)
             return await FailAsync(result.Error!, input, new BranchInput(), ct);
 
-        TempData["Status"] = "Ayarlar kaydedildi. Garanti ve KDV yeni iş emirlerine ve yeni teklif kalemlerine uygulanır.";
+        TempData["Status"] = t["settings.saved"].Value;
         return RedirectToAction(nameof(Index));
     }
 
@@ -68,7 +71,7 @@ public sealed class SettingsController(ListBranches listBranches) : Controller
         if (result.IsFailure)
             return await FailAsync(result.Error!, await CurrentSettingsAsync(get, ct), input, ct);
 
-        TempData["Status"] = $"{input.Name.Trim()} şubesi eklendi. Menüdeki şube seçiciyle o şubeye geçebilirsin.";
+        TempData["Status"] = t["settings.branch_added", input.Name.Trim()].Value;
         return RedirectToAction(nameof(Index));
     }
 
@@ -83,8 +86,8 @@ public sealed class SettingsController(ListBranches listBranches) : Controller
             return Forbid();
 
         TempData[result.IsSuccess ? "Status" : "Error"] = result.IsSuccess
-            ? "Şube güncellendi."
-            : Errors.GetValueOrDefault(result.Error!.Code, (Field: "", Message: "Şube güncellenemedi.")).Message;
+            ? t["settings.branch_saved"].Value
+            : Message(Errors.GetValueOrDefault(result.Error!.Code, (Field: "", Key: "error.branch_update"))).Value;
         return RedirectToAction(nameof(Index));
     }
 
@@ -95,10 +98,13 @@ public sealed class SettingsController(ListBranches listBranches) : Controller
     {
         if (error.Kind == ErrorKind.Forbidden)
             return Forbid();
-        var (field, message) = Errors.GetValueOrDefault(error.Code, ("", "İşlem tamamlanamadı. Bilgileri kontrol edip tekrar dene."));
-        ModelState.AddModelError(field, message);
+        var entry = Errors.GetValueOrDefault(error.Code, (Field: "", Key: "account.error.generic"));
+        ModelState.AddModelError(entry.Field, Message(entry));
         return await PageAsync(shop, newBranch, ct);
     }
+
+    // Yer tutuculu tek metin şube sınırı; diğerlerinde fazladan argüman yok sayılır.
+    private LocalizedString Message((string Field, string Key) entry) => t[entry.Key, Branch.MaxPerShop];
 
     private static async Task<ShopSettingsInput> CurrentSettingsAsync(GetShopSettings get, CancellationToken ct)
     {
