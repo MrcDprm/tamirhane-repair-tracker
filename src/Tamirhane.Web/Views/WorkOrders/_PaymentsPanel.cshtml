@@ -8,38 +8,38 @@
     var declined = Model.QuoteDecision?.Kind == QuoteDecisionKind.Declined;
     string Method(PaymentMethod m) => m switch
     {
-        PaymentMethod.Cash => "nakit",
-        PaymentMethod.Card => "kart",
-        PaymentMethod.Transfer => "havale",
+        PaymentMethod.Cash => T["payment.cash"],
+        PaymentMethod.Card => T["payment.card"],
+        PaymentMethod.Transfer => T["payment.transfer"],
         _ => m.ToString(),
     };
-    // "nakit, Kapora" ya da "iade (havale), Kapora geri": tek parça metin, Razor boşluk eklemesin.
+    // "Nakit, Kapora" ya da "iade (Havale), Kapora geri": tek parça metin, Razor boşluk eklemesin.
     string Describe(PaymentView p) =>
-        (p.Kind == PaymentKind.Refund ? $"iade ({Method(p.Method)})" : Method(p.Method)) + (p.Note is null ? "" : $", {p.Note}");
+        (p.Kind == PaymentKind.Refund ? T["payment.refund_of", Method(p.Method)] : Method(p.Method)) + (p.Note is null ? "" : $", {p.Note}");
         string Plain(decimal value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 }
 
 @* Tahsilat: para sistemden geçmez, bu kasanın kaydıdır. Tutarları domain hesaplar. *@
 <section class="panel" aria-labelledby="payments-heading">
-    <div class="panel-head"><h2 id="payments-heading">Tahsilat</h2></div>
+    <div class="panel-head"><h2 id="payments-heading">@T["payment.title"]</h2></div>
     <dl class="panel-body money">
-        <dt>@(declined ? "İnceleme ücreti" : "Teklif toplamı")</dt><dd>@Model.AmountDue.ToString("C")</dd>
-        <dt>Alınan</dt><dd>@Model.PaidTotal.ToString("C")</dd>
+        <dt>@T[declined ? "payment.diagnosis_fee" : "payment.quote_total"]</dt><dd>@Model.AmountDue.ToString("C")</dd>
+        <dt>@T["payment.paid"]</dt><dd>@Model.PaidTotal.ToString("C")</dd>
         @if (Model.Balance > 0)
         {
-            <dt>Kalan borç</dt><dd class="warn-text">@Model.Balance.ToString("C")</dd>
+            <dt>@T["payment.balance"]</dt><dd class="warn-text">@Model.Balance.ToString("C")</dd>
         }
         else if (Model.Balance < 0)
         {
-            <dt>Fazla ödeme</dt><dd class="warn-text">@((-Model.Balance).ToString("C")), iade edilmeli</dd>
+            <dt>@T["payment.overpaid"]</dt><dd class="warn-text">@T["payment.overpaid_amount", -Model.Balance]</dd>
         }
         else if (Model.AmountDue > 0)
         {
-            <dt>Kalan borç</dt><dd><span class="stamp stamp-sm stamp-ok">Ödendi</span></dd>
+            <dt>@T["payment.balance"]</dt><dd><span class="stamp stamp-sm stamp-ok">@T["payment.settled"]</span></dd>
         }
         @if (Model.BalanceAtDelivery is { } debt)
         {
-            <dt>Borçlu teslim</dt><dd class="warn-text">@debt.ToString("C")</dd>
+            <dt>@T["payment.delivered_with_balance"]</dt><dd class="warn-text">@debt.ToString("C")</dd>
         }
     </dl>
 
@@ -48,10 +48,10 @@
         <form method="post" asp-action="DiagnosisFee" asp-route-id="@Model.Id" class="panel-body inline-form bordered"
               hx-post="/work-orders/@Model.Id/diagnosis-fee" hx-target="#work-order" hx-swap="outerHTML">
             <div class="grow">
-                <label for="diagnosis-fee">İnceleme ücreti (KDV dahil)</label>
+                <label for="diagnosis-fee">@T["payment.diagnosis_fee_label"]</label>
                 <input id="diagnosis-fee" name="fee" type="number" min="0" step="0.01" inputmode="decimal" value="@Plain(Model.DiagnosisFee)" />
             </div>
-            <button type="submit" class="btn">Ücreti kaydet</button>
+            <button type="submit" class="btn">@T["payment.diagnosis_fee_submit"]</button>
         </form>
     }
 
@@ -60,26 +60,26 @@
         <form method="post" asp-action="Pay" asp-route-id="@Model.Id" class="panel-body bordered"
               hx-post="/work-orders/@Model.Id/payments" hx-target="#work-order" hx-swap="outerHTML">
             <fieldset class="choices">
-                <legend class="label">Ödeme yolu</legend>
+                <legend class="label">@T["payment.method"]</legend>
                 @foreach (var method in new[] { PaymentMethod.Cash, PaymentMethod.Card, PaymentMethod.Transfer })
                 {
                     <label class="choice">
                         <input type="radio" name="Method" value="@method" checked="@(method == PaymentMethod.Cash)" />
-                        <span>@(method == PaymentMethod.Cash ? "Nakit" : method == PaymentMethod.Card ? "Kart (POS)" : "Havale")</span>
+                        <span>@Method(method)</span>
                     </label>
                 }
             </fieldset>
             <div class="field-row">
                 <div class="field">
-                    <label for="pay-amount">Tutar</label>
+                    <label for="pay-amount">@T["quote.amount"]</label>
                     <input id="pay-amount" name="Amount" type="number" min="0.01" step="0.01" inputmode="decimal" value="@Plain(Model.Balance)" />
                 </div>
                 <div class="field">
-                    <label for="pay-note">Not (isteğe bağlı)</label>
-                    <input id="pay-note" name="Note" maxlength="200" placeholder="ör. Kapora" autocomplete="off" />
+                    <label for="pay-note">@T["payment.note_optional"]</label>
+                    <input id="pay-note" name="Note" maxlength="200" placeholder="@T["payment.note_example"]" autocomplete="off" />
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Tahsilatı kaydet</button>
+            <button type="submit" class="btn btn-primary btn-block">@T["payment.submit"]</button>
         </form>
     }
 
@@ -102,28 +102,29 @@
     @if (isOwner && Model.CanRefund)
     {
         <details class="cancel panel-body">
-            <summary>Para iadesi</summary>
+            <summary>@T["payment.refund"]</summary>
             <form method="post" asp-action="Refund" asp-route-id="@Model.Id"
                   hx-post="/work-orders/@Model.Id/refunds" hx-target="#work-order" hx-swap="outerHTML">
                 <div class="field-row">
                     <div class="field">
-                        <label for="refund-amount">Tutar</label>
+                        <label for="refund-amount">@T["quote.amount"]</label>
                         <input id="refund-amount" name="Amount" type="number" min="0.01" step="0.01" inputmode="decimal" />
                     </div>
                     <div class="field">
-                        <label for="refund-method">Nasıl</label>
+                        <label for="refund-method">@T["payment.refund_method"]</label>
                         <select id="refund-method" name="Method">
-                            <option value="@PaymentMethod.Cash">Nakit</option>
-                            <option value="@PaymentMethod.Card">Kart (POS)</option>
-                            <option value="@PaymentMethod.Transfer">Havale</option>
+                            @foreach (var method in new[] { PaymentMethod.Cash, PaymentMethod.Card, PaymentMethod.Transfer })
+                            {
+                                <option value="@method">@Method(method)</option>
+                            }
                         </select>
                     </div>
                 </div>
                 <div class="field">
-                    <label for="refund-note">Not</label>
-                    <input id="refund-note" name="Note" maxlength="200" placeholder="ör. İptal edilen işin kaporası" autocomplete="off" />
+                    <label for="refund-note">@T["payment.note"]</label>
+                    <input id="refund-note" name="Note" maxlength="200" placeholder="@T["payment.refund_note_example"]" autocomplete="off" />
                 </div>
-                <button type="submit" class="btn btn-danger">İadeyi kaydet</button>
+                <button type="submit" class="btn btn-danger">@T["payment.refund_submit"]</button>
             </form>
         </details>
     }

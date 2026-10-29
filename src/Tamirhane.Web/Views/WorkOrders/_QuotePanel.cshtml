@@ -12,27 +12,25 @@
 @* Teklif: kalemler, sunucuda hesaplanan toplamlar; düzenlenebilirken kalem ekleme ve silme (htmx ile yerinde). *@
 <section class="panel quote" aria-labelledby="quote-heading">
     <div class="panel-head">
-        <h2 id="quote-heading">Teklif</h2>
+        <h2 id="quote-heading">@T["quote.title"]</h2>
         @if (Model.QuoteDecision is { } decision)
         {
             <span class="stamp stamp-sm@(decision.Kind == QuoteDecisionKind.Approved ? " stamp-ok" : " stamp-warn")">
-                @(decision.Kind == QuoteDecisionKind.Approved ? "Onaylandı" : "Reddedildi")
+                @T[decision.Kind == QuoteDecisionKind.Approved ? "quote.approved" : "quote.declined"]
             </span>
             @* Müşteri takip sayfasından verdiyse personel kaydı yoktur; telefonla bildirdiyse personel onun adına kaydetmiştir. *@
-            <span class="muted">@decision.ByName, @(decision.StaffId is null ? "takip sayfasından" : "telefonla"), @decision.At.ToOffset(TimeSpan.FromHours(3)).ToString("d MMMM HH:mm")</span>
+            <span class="muted">@decision.ByName, @T[decision.StaffId is null ? "quote.via_tracking" : "quote.via_phone"], @decision.At.ToOffset(TimeSpan.FromHours(3)).ToString("d MMMM HH:mm")</span>
         }
         else if (Model.Status == WorkOrderStatus.AwaitingApproval)
         {
-            <span class="muted">Müşterinin onayı bekleniyor; teklif kilitli.</span>
+            <span class="muted">@T["quote.locked"]</span>
         }
     </div>
 
     @if (lines.Count == 0 && !Model.IsQuoteEditable)
     {
         <p class="panel-body muted">
-            @(Model.Status == WorkOrderStatus.Received
-                ? "Teklif, incelemeye başlayınca hazırlanır."
-                : "Bu iş emrinde teklif yok.")
+            @T[Model.Status == WorkOrderStatus.Received ? "quote.after_diagnosis" : "quote.none"]
         </p>
     }
 
@@ -42,15 +40,15 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th scope="col">Kalem</th>
-                        <th scope="col" class="num">Miktar</th>
-                        <th scope="col" class="num">Birim fiyat</th>
-                        <th scope="col" class="num">İskonto</th>
-                        <th scope="col" class="num">KDV</th>
-                        <th scope="col" class="num">Tutar</th>
+                        <th scope="col">@T["quote.line"]</th>
+                        <th scope="col" class="num">@T["quote.quantity"]</th>
+                        <th scope="col" class="num">@T["quote.unit_price"]</th>
+                        <th scope="col" class="num">@T["quote.discount"]</th>
+                        <th scope="col" class="num">@T["quote.vat"]</th>
+                        <th scope="col" class="num">@T["quote.amount"]</th>
                         @if (Model.IsQuoteEditable)
                         {
-                            <th scope="col"><span class="visually-hidden">İşlem</span></th>
+                            <th scope="col"><span class="visually-hidden">@T["quote.actions"]</span></th>
                         }
                     </tr>
                 </thead>
@@ -60,7 +58,7 @@
                         <tr>
                             <td>
                                 @line.Description
-                                <span class="muted small">@(line.Kind == QuoteLineKind.Labor ? "işçilik" : line.FromStock ? "stoktan" : "stok dışı parça")</span>
+                                <span class="muted small">@T[line.Kind == QuoteLineKind.Labor ? "quote.kind_labor" : line.FromStock ? "quote.kind_stock" : "quote.kind_ordered"]</span>
                             </td>
                             <td class="num">@line.Quantity.ToString("0.##")</td>
                             <td class="num">@line.UnitPrice.ToString("C")</td>
@@ -72,7 +70,7 @@
                                 <td class="actions">
                                     <form method="post" asp-action="RemoveLine" asp-route-id="@Model.Id" asp-route-lineId="@line.Id"
                                           hx-post="/work-orders/@Model.Id/quote-lines/@line.Id/remove" hx-target="#work-order" hx-swap="outerHTML">
-                                        <button type="submit" class="btn btn-danger" aria-label="@line.Description kalemini çıkar">Çıkar</button>
+                                        <button type="submit" class="btn btn-danger" aria-label="@T["quote.remove_label", line.Description]">@T["quote.remove"]</button>
                                     </form>
                                 </td>
                             }
@@ -82,13 +80,13 @@
             </table>
         </div>
         <dl class="quote-totals">
-            <dt>Ara toplam</dt><dd>@totals.Gross.ToString("C")</dd>
+            <dt>@T["quote.subtotal"]</dt><dd>@totals.Gross.ToString("C")</dd>
             @if (totals.Discount > 0)
             {
-                <dt>İskonto</dt><dd>−@totals.Discount.ToString("C")</dd>
+                <dt>@T["quote.discount"]</dt><dd>−@totals.Discount.ToString("C")</dd>
             }
-            <dt>KDV</dt><dd>@totals.Vat.ToString("C")</dd>
-            <dt class="grand">Genel toplam</dt><dd class="grand">@totals.Total.ToString("C")</dd>
+            <dt>@T["quote.vat"]</dt><dd>@totals.Vat.ToString("C")</dd>
+            <dt class="grand">@T["quote.total"]</dt><dd class="grand">@totals.Total.ToString("C")</dd>
         </dl>
     }
 
@@ -97,86 +95,86 @@
         <div class="quote-add">
             <form method="post" asp-action="AddLine" asp-route-id="@Model.Id"
                   hx-post="/work-orders/@Model.Id/quote-lines" hx-target="#work-order" hx-swap="outerHTML">
-                <h3>Stoktan parça ekle</h3>
+                <h3>@T["quote.add_part"]</h3>
                 <input type="hidden" name="Kind" value="@QuoteLineKind.Part" />
                 @if (Model.PartOptions.Count == 0)
                 {
-                    <p class="muted">Bu şubenin stoğunda henüz parça yok. Stokta olmayan parçayı yandaki formdan "stok dışı parça" olarak ekleyebilirsin.</p>
+                    <p class="muted">@T["quote.no_parts"]</p>
                 }
                 else
                 {
                     <div class="field">
-                        <label for="quote-part">Parça</label>
+                        <label for="quote-part">@T["quote.part"]</label>
                         <select id="quote-part" name="PartId" required>
                             @foreach (var option in Model.PartOptions)
                             {
-                                <option value="@option.Id">@option.Name (@option.Sku), stokta @option.Quantity, @option.SalePrice.ToString("C")</option>
+                                <option value="@option.Id">@T["quote.part_option", option.Name, option.Sku, option.Quantity, option.SalePrice]</option>
                             }
                         </select>
                     </div>
                     <div class="field-row">
                         <div class="field">
-                            <label for="part-qty">Adet</label>
+                            <label for="part-qty">@T["quote.pieces"]</label>
                             <input id="part-qty" name="Quantity" type="number" min="1" step="1" value="1" inputmode="numeric" />
                         </div>
                         <div class="field">
-                            <label for="part-price">Birim fiyat</label>
-                            <input id="part-price" name="UnitPrice" type="number" min="0" step="0.01" inputmode="decimal" placeholder="satış fiyatı" />
+                            <label for="part-price">@T["quote.unit_price"]</label>
+                            <input id="part-price" name="UnitPrice" type="number" min="0" step="0.01" inputmode="decimal" placeholder="@T["quote.sale_price"]" />
                         </div>
                         <div class="field">
-                            <label for="part-discount">İskonto %</label>
+                            <label for="part-discount">@T["quote.discount_percent"]</label>
                             <input id="part-discount" name="DiscountRate" type="number" min="0" max="100" step="0.01" value="0" inputmode="decimal" />
                         </div>
                         <div class="field">
-                            <label for="part-vat">KDV %</label>
+                            <label for="part-vat">@T["quote.vat_percent"]</label>
                             <input id="part-vat" name="VatRate" type="number" min="0" max="100" step="0.01" value="@vat" inputmode="decimal" />
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Parçayı ekle</button>
+                    <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["quote.add_part_submit"]</button>
                 }
             </form>
 
             <form method="post" asp-action="AddLine" asp-route-id="@Model.Id"
                   hx-post="/work-orders/@Model.Id/quote-lines" hx-target="#work-order" hx-swap="outerHTML">
-                <h3>İşçilik ya da serbest kalem ekle</h3>
+                <h3>@T["quote.add_free"]</h3>
                 <div class="field-row">
                     <div class="field">
-                        <label for="free-kind">Tür</label>
+                        <label for="free-kind">@T["field.device_kind"]</label>
                         <select id="free-kind" name="Kind">
-                            <option value="@QuoteLineKind.Labor">İşçilik</option>
-                            <option value="@QuoteLineKind.Part">Stok dışı parça (sipariş)</option>
+                            <option value="@QuoteLineKind.Labor">@T["quote.labor"]</option>
+                            <option value="@QuoteLineKind.Part">@T["quote.ordered_part"]</option>
                         </select>
                     </div>
                     <div class="field">
-                        <label for="free-desc">Açıklama</label>
-                        <input id="free-desc" name="Description" maxlength="200" placeholder="ör. Ekran değişimi işçiliği" autocomplete="off" />
+                        <label for="free-desc">@T["quote.description"]</label>
+                        <input id="free-desc" name="Description" maxlength="200" placeholder="@T["quote.description_example"]" autocomplete="off" />
                     </div>
                 </div>
                 <div class="field-row">
                     <div class="field">
-                        <label for="free-qty">Miktar</label>
+                        <label for="free-qty">@T["quote.quantity"]</label>
                         <input id="free-qty" name="Quantity" type="number" min="0.01" step="0.01" value="1" inputmode="decimal" />
                     </div>
                     <div class="field">
-                        <label for="free-price">Birim fiyat</label>
+                        <label for="free-price">@T["quote.unit_price"]</label>
                         @* Garanti dönüşünde işçilik ücretsiz önerilir (0); gerekiyorsa değiştirilebilir. *@
                         <input id="free-price" name="UnitPrice" type="number" min="0" step="0.01" inputmode="decimal"
                                value="@(Model.IsWarrantyReturn ? "0" : null)" aria-describedby="@(Model.IsWarrantyReturn ? "free-price-help" : null)" />
                         @if (Model.IsWarrantyReturn)
                         {
-                            <div id="free-price-help" class="field-help">Garanti kapsamında: işçilik ücretsiz önerildi.</div>
+                            <div id="free-price-help" class="field-help">@T["quote.warranty_free"]</div>
                         }
                     </div>
                     <div class="field">
-                        <label for="free-discount">İskonto %</label>
+                        <label for="free-discount">@T["quote.discount_percent"]</label>
                         <input id="free-discount" name="DiscountRate" type="number" min="0" max="100" step="0.01" value="0" inputmode="decimal" />
                     </div>
                     <div class="field">
-                        <label for="free-vat">KDV %</label>
+                        <label for="free-vat">@T["quote.vat_percent"]</label>
                         <input id="free-vat" name="VatRate" type="number" min="0" max="100" step="0.01" value="@vat" inputmode="decimal" />
                     </div>
                 </div>
-                <button type="submit" class="btn"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Kalemi ekle</button>
+                <button type="submit" class="btn"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["quote.add_free_submit"]</button>
             </form>
         </div>
     }

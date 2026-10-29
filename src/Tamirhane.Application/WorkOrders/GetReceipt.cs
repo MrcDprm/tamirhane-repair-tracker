@@ -7,13 +7,14 @@ namespace Tamirhane.Application.WorkOrders;
 /// <summary>
 /// Kabul fişi ve cihaz etiketi. Cihaz şifresi fişe basılmaz, sadece alınıp alınmadığı.
 /// Etiket cihazın üstünde durur ve atölyede başkaları da görür: orada müşterinin sadece adı ve soyadının baş harfi var.
+/// Locale: fiş müşteriye verilir, atölyenin müşteri dilinde basılır (personelin panel dili değil).
 /// </summary>
 public sealed record ReceiptView(
     string Number, string TrackingCode, Uri TrackingUrl, DateTimeOffset CreatedAt,
     string ShopName, string BranchName, string? BranchAddress, int WarrantyDays, string? ReceivedBy,
     string CustomerName, string CustomerPhone, string? CustomerEmail,
     DeviceKind DeviceKind, string Brand, string Model, string? Serial, string? Imei,
-    string Complaint, string? Condition, string? Accessories, bool HasPasscode)
+    string Complaint, string? Condition, string? Accessories, bool HasPasscode, string Locale)
 {
     /// <summary>"Zeynep Arslan" → "Zeynep A." (cihaz etiketi için).</summary>
     public string CustomerShortName
@@ -43,13 +44,13 @@ public sealed class GetReceipt(
         var receivedBy = order.History.OrderBy(h => h.At).FirstOrDefault()?.StaffId is { } s
             ? (await staff.NamesAsync([s], ct)).GetValueOrDefault(s)
             : null;
-        var warranty = (await settings.GetAsync(user.ShopId, ct)).WarrantyDays;
+        var shopSettings = await settings.GetAsync(user.ShopId, ct);
 
         return new ReceiptView(
             order.Number, order.TrackingCode, links.For(order.TrackingCode), order.CreatedAt,
-            shop.Name, branch?.Name ?? "", branch?.Address, warranty, receivedBy,
+            shop.Name, branch?.Name ?? "", branch?.Address, shopSettings.WarrantyDays, receivedBy,
             customer.Name, customer.Phone.Value, customer.Email,
             device.Kind, device.Brand, device.Model, device.Serial, device.Imei,
-            order.Complaint, order.Condition, order.Accessories, order.Passcode is not null);
+            order.Complaint, order.Condition, order.Accessories, order.Passcode is not null, shopSettings.Locale);
     }
 }

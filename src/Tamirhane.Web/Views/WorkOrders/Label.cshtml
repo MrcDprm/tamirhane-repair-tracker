@@ -1,19 +1,19 @@
 @model Tamirhane.Application.WorkOrders.ReceiptView
 @{
     Layout = "_PrintLayout";
-    ViewData["Title"] = $"Cihaz etiketi {Model.Number}";
+    ViewData["Title"] = T["label.title", Model.Number];
     ViewData["Back"] = Url.Action("Details", new { id = ViewContext.RouteData.Values["id"] });
-    ViewData["Hint"] = "Etiket yazıcısı: 62 × 40 mm. Yazdırma ayarında kenar boşluğunu \"yok\" seç.";
+    ViewData["Hint"] = T["label.hint"].Value;
     var id = ViewContext.RouteData.Values["id"];
 }
 
 @* Etiket cihazın üstünde durur, atölyede başkaları da görür: müşterinin sadece adı ve soyadının baş harfi. *@
-<article class="sheet device-label" aria-label="Cihaz etiketi">
+<article class="sheet device-label" aria-label="@T["label.name"]">
     <div>
         <strong class="label-no">@Model.Number</strong>
         <span>@Model.Brand @Model.Model</span>
         <span>@Model.CustomerShortName</span>
         <span>@Model.CreatedAt.ToOffset(TimeSpan.FromHours(3)).ToString("dd.MM.yyyy")</span>
     </div>
-    <img src="/work-orders/@id/qr.svg" alt="Takip sayfasının QR kodu" width="120" height="120" />
+    <img src="/work-orders/@id/qr.svg" alt="@T["receipt.qr"]" width="120" height="120" />
 </article>

@@ -10,7 +10,7 @@ public class ReceiptViewTests
         "2026-0001", "CODE", new Uri("https://tamirhane.test/t/CODE"), DateTimeOffset.UtcNow,
         "Kaya Telefon", "Merkez", null, 90, "Ayşe Kaya",
         customerName, "+905321112233", null, DeviceKind.Phone, "Apple", "iPhone 13", null, null,
-        "Ekran kırık", null, null, false);
+        "Ekran kırık", null, null, false, "tr");
 
     [Theory]
     [InlineData("Zeynep Arslan", "Zeynep A.")]

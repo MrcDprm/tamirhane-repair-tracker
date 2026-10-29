@@ -111,6 +111,28 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         Assert.Contains(order, list);
     }
 
+    [DockerFact]
+    public async Task Work_order_page_follows_the_staff_language_but_the_receipt_uses_the_customer_language()
+    {
+        var flows = new ShopFlows(app);
+        var owner = await flows.OwnerAsync("dil-fis@example.com"); // atölyenin müşteri dili Türkçe
+        var order = await ShopFlows.ReceiveAsync(owner, "0532 212 01 01");
+        await EnglishAsync(owner, "/panel");
+
+        var page = await ShopFlows.BodyAsync(owner, order);
+        foreach (var expected in new[] { ">Next step</h2>", ">Start diagnosis</button>", ">Quote</h2>", ">Payments</h2>", ">Print receipt</a>" })
+            Assert.Contains(expected, page);
+        Assert.DoesNotContain("Sıradaki adım", page);
+
+        // Fiş müşteriye verilir: kâğıt Türkçe; araç çubuğu personelin dilinde kalır (görünümdeki dil değişikliği düzene sızmaz).
+        var receipt = await ShopFlows.BodyAsync(owner, order + "/receipt");
+        Assert.Contains("<article class=\"sheet receipt\" lang=\"tr\"", receipt);
+        Assert.Contains("<span>Kabul fişi</span>", receipt);
+        Assert.Contains("Teslim eden: Zeynep Arslan", receipt);
+        Assert.Contains(">Back to the work order</a>", receipt);
+        Assert.Contains("<html lang=\"en\">", receipt);
+    }
+
     /// <summary>Dil düğmesine basar; formun CSRF token'ı verilen sayfadan alınır.</summary>
     private static async Task<Browser> EnglishAsync(Browser browser, string page)
     {

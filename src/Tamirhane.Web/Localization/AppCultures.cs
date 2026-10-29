@@ -28,6 +28,16 @@ public static class AppCultures
         return null;
     }
 
+    /// <summary>
+    /// Bundan sonraki metin, tarih ve para biçimi verilen dilde. Değişiklik çağıran async metodun içinde kalır (dönüşte
+    /// eski kültür geri gelir): görünümün başında çağrılırsa sadece o görünüm etkilenir, düzen (layout) personelin dilinde kalır.
+    /// </summary>
+    public static void Use(CultureInfo culture)
+    {
+        CultureInfo.CurrentCulture = culture;
+        CultureInfo.CurrentUICulture = culture;
+    }
+
     private static CultureInfo CreateEnglish()
     {
         var culture = (CultureInfo)CultureInfo.GetCultureInfo("en-GB").Clone();

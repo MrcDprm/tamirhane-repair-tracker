@@ -1,15 +1,19 @@
 @using Tamirhane.Web.Display
+@using Tamirhane.Web.Localization
 @model Tamirhane.Application.WorkOrders.ReceiptView
 @{
     Layout = "_PrintLayout";
-    ViewData["Title"] = $"Kabul fişi {Model.Number}";
+    // Sekme başlığı ve araç çubuğu personelin dilinde; kâğıt müşteriye verilir, atölyenin müşteri dilinde basılır.
+    ViewData["Title"] = T["receipt.title", Model.Number].Value;
     ViewData["Back"] = Url.Action("Details", new { id = ViewContext.RouteData.Values["id"] });
-    ViewData["Hint"] = "A5 kâğıt, dikey. İki nüsha bas: biri müşteriye, biri atölyeye.";
+    ViewData["Hint"] = T["receipt.hint"].Value;
+    var paper = AppCultures.From(Model.Locale) ?? AppCultures.Turkish;
+    AppCultures.Use(paper);
     var turkey = TimeSpan.FromHours(3);
     var id = ViewContext.RouteData.Values["id"];
 }
 
-<article class="sheet receipt" aria-label="Kabul fişi">
+<article class="sheet receipt" lang="@paper.TwoLetterISOLanguageName" aria-label="@T["receipt.name"]">
     <header class="receipt-head">
         <div>
             <h1>@Model.ShopName</h1>
@@ -22,7 +26,7 @@
             </p>
         </div>
         <div class="receipt-no">
-            <span>Kabul fişi</span>
+            <span>@T["receipt.name"]</span>
             <strong>@Model.Number</strong>
             <span>@Model.CreatedAt.ToOffset(turkey).ToString("d MMMM yyyy HH:mm")</span>
         </div>
@@ -30,7 +34,7 @@
 
     <div class="receipt-grid">
         <section>
-            <h2>Müşteri</h2>
+            <h2>@T["table.customer"]</h2>
             <p>
                 <strong>@Model.CustomerName</strong><br />
                 @Labels.Phone(Model.CustomerPhone)
@@ -41,7 +45,7 @@
             </p>
         </section>
         <section>
-            <h2>Cihaz</h2>
+            <h2>@T["table.device"]</h2>
             <p>
                 <strong>@Model.Brand @Model.Model</strong> (@T.Of(Model.DeviceKind))
                 @if (Model.Imei is not null)
@@ -50,59 +54,59 @@
                 }
                 @if (Model.Serial is not null)
                 {
-                    <br />@:Seri no <code>@Model.Serial</code>
+                    <br />@T["workorder.serial"] <code>@Model.Serial</code>
                 }
             </p>
         </section>
     </div>
 
     <section>
-        <h2>Müşterinin şikâyeti</h2>
+        <h2>@T["field.complaint"]</h2>
         <p>@Model.Complaint</p>
     </section>
     <div class="receipt-grid">
         <section>
-            <h2>Görünür durum</h2>
-            <p>@(Model.Condition ?? "Belirtilmedi")</p>
+            <h2>@T["receipt.condition"]</h2>
+            <p>@(Model.Condition ?? T["receipt.not_given"])</p>
         </section>
         <section>
-            <h2>Teslim alınanlar</h2>
-            <p>@(Model.Accessories ?? "Sadece cihaz")</p>
+            <h2>@T["receipt.received_items"]</h2>
+            <p>@(Model.Accessories ?? T["receipt.device_only"])</p>
             @if (Model.HasPasscode)
             {
-                <p class="small">Cihaz şifresi alındı; iş emri kapanınca silinir.</p>
+                <p class="small">@T["receipt.passcode"]</p>
             }
         </section>
     </div>
 
     <section class="receipt-track">
-        <img src="/work-orders/@id/qr.svg" alt="Takip sayfasının QR kodu" width="96" height="96" />
+        <img src="/work-orders/@id/qr.svg" alt="@T["receipt.qr"]" width="96" height="96" />
         <div>
-            <h2>Cihazının durumunu takip et</h2>
-            <p>Telefonunla QR kodu okut ya da adresi aç. Teklif onayı da bu sayfadan.</p>
-            <p><span class="url">@Model.TrackingUrl.AbsoluteUri</span><br />Takip kodu <code>@Model.TrackingCode</code></p>
+            <h2>@T["receipt.track_title"]</h2>
+            <p>@T["receipt.track_text"]</p>
+            <p><span class="url">@Model.TrackingUrl.AbsoluteUri</span><br />@T["workorder.tracking_code"] <code>@Model.TrackingCode</code></p>
         </div>
     </section>
 
     <section class="terms">
-        <h2>Şartlar</h2>
+        <h2>@T["receipt.terms"]</h2>
         <ol>
-            <li>Teklif onaylanmadan onarıma başlanmaz. Onarım sırasında tutar değişirse yeniden onay alınır.</li>
+            <li>@T["receipt.term_quote"]</li>
             @if (Model.WarrantyDays > 0)
             {
-                <li>Onarılan cihazda değişen parça ve işçilik, teslimden itibaren @Model.WarrantyDays gün garantilidir. Sıvı teması, düşme ve başka yerde açılma garanti dışıdır.</li>
+                <li>@T["receipt.term_warranty", Model.WarrantyDays]</li>
             }
             else
             {
-                <li>Bu atölye onarım için ayrıca garanti vermez.</li>
+                <li>@T["receipt.term_no_warranty"]</li>
             }
-            <li>Cihazdaki verilerin yedeği müşteriye aittir; onarım sırasında veri kaybolabilir.</li>
-            <li>Cihaz teslim alınırken bu fiş ya da takip kodu gösterilir.</li>
+            <li>@T["receipt.term_data"]</li>
+            <li>@T["receipt.term_pickup"]</li>
         </ol>
     </section>
 
     <footer class="signatures">
-        <div><span class="line"></span>Teslim eden: @Model.CustomerName</div>
-        <div><span class="line"></span>Teslim alan: @(Model.ReceivedBy ?? Model.ShopName)</div>
+        <div><span class="line"></span>@T["receipt.handed_by", Model.CustomerName]</div>
+        <div><span class="line"></span>@T["receipt.received_by", Model.ReceivedBy ?? Model.ShopName]</div>
     </footer>
 </article>
