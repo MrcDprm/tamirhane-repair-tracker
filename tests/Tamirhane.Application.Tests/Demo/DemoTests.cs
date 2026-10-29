@@ -20,6 +20,7 @@ public class DemoTests
         var demo = Build();
 
         Assert.True(demo.Shop.IsDemo);
+        Assert.Equal(Now, demo.Shop.CreatedAt); // ömrü açıldığı andan sayılır; örnek geçmiş daha eski olsa da
         Assert.Equal([StaffRole.Owner, StaffRole.Technician], demo.Staff.Select(s => s.Role));
         Assert.All(demo.Staff, s => Assert.Equal(demo.Branch.Id, s.BranchId));
     }
@@ -139,6 +140,36 @@ public class DemoTests
         Assert.Equal(Now - Shop.DemoLifetime, demos.CountedSince);
     }
 
+    [Fact]
+    public async Task Cleanup_deletes_only_demos_older_than_their_lifetime()
+    {
+        var demos = new FakeDemoShops();
+        var expired = Guid.NewGuid();
+        var fresh = Guid.NewGuid();
+        demos.Opened[expired] = Now - Shop.DemoLifetime - TimeSpan.FromMinutes(1);
+        demos.Opened[fresh] = Now - Shop.DemoLifetime + TimeSpan.FromMinutes(1);
+
+        var deleted = await new DeleteExpiredDemos(demos, new FakeTimeProvider(Now)).HandleAsync(default);
+
+        Assert.Equal(1, deleted);
+        Assert.Equal([expired], demos.Deleted);
+    }
+
+    [Fact]
+    public async Task Cleanup_works_through_a_large_backlog_in_batches()
+    {
+        var demos = new FakeDemoShops();
+        var count = DeleteExpiredDemos.BatchSize * 2 + 3; // sunucu uzun süre uyuduysa birikmiş olabilir
+        for (var i = 0; i < count; i++)
+            demos.Opened[Guid.NewGuid()] = Now.AddDays(-3).AddMinutes(i);
+
+        var deleted = await new DeleteExpiredDemos(demos, new FakeTimeProvider(Now)).HandleAsync(default);
+
+        Assert.Equal(count, deleted);
+        Assert.Equal(count, demos.Deleted.Distinct().Count());
+        Assert.Equal(3, demos.Takes.Count);
+    }
+
     private static (StartDemo, FakeDemoShops, FakeAccounts, FakeUnitOfWork) Start()
     {
         var demos = new FakeDemoShops();
@@ -160,5 +191,23 @@ public class DemoTests
         }
 
         public void Add(DemoWorkshop workshop) => Added.Add(workshop);
+
+        /// <summary>Temizlik testleri için: atölye kimliği → açıldığı an.</summary>
+        public Dictionary<Guid, DateTimeOffset> Opened { get; } = [];
+        public List<Guid> Deleted { get; } = [];
+        public List<int> Takes { get; } = [];
+
+        public Task<IReadOnlyList<Guid>> ListOpenedBeforeAsync(DateTimeOffset before, int take, CancellationToken ct)
+        {
+            Takes.Add(take);
+            return Task.FromResult<IReadOnlyList<Guid>>(Opened.Where(o => o.Value < before && !Deleted.Contains(o.Key))
+                .OrderBy(o => o.Value).Select(o => o.Key).Take(take).ToList());
+        }
+
+        public Task DeleteAsync(Guid shopId, CancellationToken ct)
+        {
+            Deleted.Add(shopId);
+            return Task.CompletedTask;
+        }
     }
 }

@@ -33,9 +33,11 @@ public static class DemoData
     {
         var en = locale == "en";
         string L(string tr, string english) => en ? english : tr;
+        // Örnek geçmiş 45 gün önce başlar; atölyenin kendisi ise şimdi açılır: demonun ömrü (temizlik, üst sınır)
+        // Shop.CreatedAt'ten sayılır.
         var opened = now.AddDays(-45);
 
-        var shop = Ok(Shop.CreateDemo(L("Örnek Teknik Servis", "Sample Repair Shop"), locale, opened));
+        var shop = Ok(Shop.CreateDemo(L("Örnek Teknik Servis", "Sample Repair Shop"), locale, now));
         var branch = Ok(Branch.Create(shop.Id, Branch.DefaultName(locale),
             L("Caferağa Mah. Moda Cd. No: 12, Kadıköy", "12 Moda Street, Kadıköy, Istanbul"), opened, "0216 555 01 23"));
         var owner = Ok(Staff.Create(shop.Id, ownerUserId, StaffRole.Owner, L("Selin Kaya", "Emma Clarke"), branch.Id));

@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<PromiseDelivery>();
         services.AddScoped<GetTracking>();
         services.AddScoped<StartDemo>();
+        services.AddScoped<DeleteExpiredDemos>();
         services.AddScoped<AddNote>();
         services.AddScoped<StartDiagnosis>();
         services.AddScoped<StartRepair>();

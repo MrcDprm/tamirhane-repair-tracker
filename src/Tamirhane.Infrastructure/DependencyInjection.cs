@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IWorkOrderRepository, WorkOrderRepository>();
         services.AddScoped<ITrackingDirectory, TrackingDirectory>();
         services.AddScoped<IDemoShops, DemoShops>();
+        services.AddHostedService<DemoCleanupWorker>();
         services.AddScoped<IDashboardQueries, DashboardQueries>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();

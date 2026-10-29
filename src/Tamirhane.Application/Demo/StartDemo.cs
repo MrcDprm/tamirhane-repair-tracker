@@ -13,6 +13,15 @@ public interface IDemoShops
 
     /// <summary>Demo atölyenin bütün kayıtlarını ekler; kaydetme çağıranın işi (aynı transaction).</summary>
     void Add(DemoWorkshop workshop);
+
+    /// <summary>Verilen andan önce açılmış demo atölyeler, en eskisi başta.</summary>
+    Task<IReadOnlyList<Guid>> ListOpenedBeforeAsync(DateTimeOffset before, int take, CancellationToken ct);
+
+    /// <summary>
+    /// Demo atölyeyi bütün kayıtları ve personel hesaplarıyla tek transaction'da siler.
+    /// Demo olmayan bir atölye kimliğiyle çağrılırsa hiçbir şey silmez, hata fırlatır.
+    /// </summary>
+    Task DeleteAsync(Guid shopId, CancellationToken ct);
 }
 
 /// <summary>
