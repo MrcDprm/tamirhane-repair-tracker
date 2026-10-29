@@ -54,7 +54,8 @@
                     <div class="side-who">
                         <strong>@displayName</strong>@User.Identity?.Name
                         <div class="side-actions">
-                            <button type="button" id="theme-toggle" class="side-btn" aria-label="@T["layout.dark_theme"]" title="@T["layout.dark_theme"]"><svg class="icon"><use href="/img/icons.svg#i-moon" /></svg></button>
+                            <button type="button" id="theme-toggle" class="side-btn" aria-label="@T["layout.dark_theme"]" title="@T["layout.dark_theme"]"
+                                    data-dark="@T["layout.dark_theme"]" data-light="@T["layout.light_theme"]"><svg class="icon"><use href="/img/icons.svg#i-moon" /></svg></button>
                             <partial name="_LanguageSwitch" model="@("side-btn")" />
                             @* Çıkış POST'tur: bir resim etiketi ya da link ile kullanıcının oturumu dışarıdan kapatılamaz. *@
                             <form asp-controller="Account" asp-action="Logout" method="post">

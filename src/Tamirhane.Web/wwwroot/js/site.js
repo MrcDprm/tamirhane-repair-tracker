@@ -45,9 +45,9 @@ if (themeButton) {
     return document.documentElement.dataset.theme === "dark" ||
       (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
   };
-  // Düğmede sadece ikon var; ne yapacağı ekran okuyucuya ve fare ipucuna yazılır.
+  // Düğmede sadece ikon var; ne yapacağı ekran okuyucuya ve fare ipucuna yazılır (metinler sayfanın dilinde, data-*'dan).
   var label = function () {
-    var text = isDark() ? "Açık tema" : "Koyu tema";
+    var text = isDark() ? themeButton.dataset.light : themeButton.dataset.dark;
     themeButton.setAttribute("aria-label", text);
     themeButton.title = text;
   };
