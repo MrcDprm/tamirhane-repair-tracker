@@ -64,6 +64,20 @@ public class StaffTests
     }
 
     [Fact]
+    public async Task Demo_shop_sends_no_invitation()
+    {
+        var demo = Shop.CreateDemo("Demo Telefon", "tr", _clock.GetLocalNow()).Value;
+        _shops.Add(demo, _branch, _owner);
+        var user = new FakeUser(demo.Id) { StaffId = _owner.Id };
+        var invitations = new FakeInvitations(user, _shops);
+        var invite = new InviteStaff(invitations, _shops, _staff, _accounts, _unitOfWork, user, _clock);
+
+        Assert.Equal(ShopErrors.DemoSendsNoEmail, (await invite.HandleAsync("birisi@example.com", default)).Error);
+        Assert.Empty(_accounts.InvitationsSent);
+        Assert.Empty(invitations.Items);
+    }
+
+    [Fact]
     public async Task Technician_cannot_invite()
     {
         _user.IsOwner = false;

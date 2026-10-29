@@ -571,5 +571,6 @@
   "tracking.decision.approved": "Your approval was sent to the shop. You'll see it on this page when the repair starts.",
   "tracking.decision.declined": "Your decision was sent to the shop. You can call the shop to arrange picking up your device.",
   "tracking.decision.already": "A decision was already made on this quote; the latest status on the page is what counts.",
-  "layout.light_theme": "Light theme"
+  "layout.light_theme": "Light theme",
+  "error.demo_no_invite": "The demo shop sends no email, so invitations can't be sent. In your real shop you invite technicians by email."
 }

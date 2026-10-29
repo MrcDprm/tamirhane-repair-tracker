@@ -571,5 +571,6 @@
   "tracking.decision.approved": "Onayın atölyeye iletildi. Onarım başlayınca bu sayfada görünür.",
   "tracking.decision.declined": "Kararın atölyeye iletildi. Cihazını teslim almak için atölyeyi arayabilirsin.",
   "tracking.decision.already": "Bu teklif için karar zaten verilmiş; sayfadaki son durum geçerli.",
-  "layout.light_theme": "Açık tema"
+  "layout.light_theme": "Açık tema",
+  "error.demo_no_invite": "Demo atölye e-posta göndermez; davet de gönderilemez. Gerçek atölyende teknisyenlerini e-postayla davet edersin."
 }
