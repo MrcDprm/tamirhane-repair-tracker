@@ -110,6 +110,41 @@ public sealed partial class TrackingFlowTests(TamirhaneWebFactory app)
         Assert.NotEqual(HttpStatusCode.TooManyRequests, (await app.NewBrowser().GetAsync("/t/7K3M9QX2HFDA")).StatusCode); // başka adres etkilenmez
     }
 
+    [DockerFact]
+    public async Task Page_opens_in_the_shop_customer_language_and_the_customer_can_switch()
+    {
+        var owner = await _flows.OwnerAsync("takip-dil@example.com");
+        var (_, tracking) = await ReceiveAsync(owner, "0532 304 04 04");
+
+        // Personelin panel dili İngilizce olsa da müşterinin gördüğü sayfa atölyenin müşteri dilinde (Türkçe).
+        await owner.SubmitAsync("/panel", "/language", new() { ["culture"] = "en", ["returnUrl"] = "/" });
+        var page = await BodyAsync(owner, tracking);
+        Assert.Contains("<html lang=\"tr\">", page);
+        Assert.Contains(">Onarımın adımları</h2>", page);
+        Assert.Contains($"href=\"{tracking}?lang=en\"", page);
+
+        // Geçiş linki sayfayı ve düzeni (altbilgi) birlikte çevirir.
+        var english = await BodyAsync(app.NewBrowser(), tracking + "?lang=en");
+        foreach (var expected in new[] { "<html lang=\"en\">", ">Repair steps</h2>", ">Checked in<", "This page is just for you.", $"href=\"{tracking}?lang=tr\"" })
+            Assert.Contains(expected, english);
+        Assert.DoesNotContain("Teslim alındı", english);
+    }
+
+    [DockerFact]
+    public async Task Shop_that_writes_to_customers_in_english_gets_an_english_page()
+    {
+        var owner = await _flows.OwnerAsync("takip-en@example.com");
+        Assert.Equal("/settings", Browser.RedirectOf(await owner.SubmitAsync("/settings", "/settings", new()
+        {
+            ["Shop.Name"] = "Kaya Telefon", ["Shop.WarrantyDays"] = "90", ["Shop.DefaultVatRate"] = "20", ["Shop.Locale"] = "en",
+        })));
+        var (_, tracking) = await ReceiveAsync(owner, "0532 305 05 05");
+
+        var page = await BodyAsync(app.NewBrowser(), tracking);
+        Assert.Contains("<html lang=\"en\">", page);
+        Assert.Contains("Your device is at the shop.", page);
+    }
+
     private static async Task<(string Order, string Tracking)> ReceiveAsync(Browser owner, string phone)
     {
         var response = await owner.SubmitAsync($"/work-orders/new?phone={Uri.EscapeDataString(phone)}", "/work-orders/new", new()

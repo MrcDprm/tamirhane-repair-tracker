@@ -177,7 +177,7 @@ internal sealed class TrackingDirectory(TamirhaneDbContext db) : ITrackingDirect
          join c in db.Customers.IgnoreQueryFilters() on s.Id equals c.ShopId
          join d in db.Devices.IgnoreQueryFilters() on c.Id equals d.CustomerId
          where s.Id == shopId && b.Id == branchId && c.Id == customerId && d.Id == deviceId && d.ShopId == shopId
-         select new TrackingParties(s.Name, b.Name, b.Address, b.Phone, c.Name, d.Kind, d.Brand, d.Model))
+         select new TrackingParties(s.Name, b.Name, b.Address, b.Phone, c.Name, d.Kind, d.Brand, d.Model, s.Locale))
         .AsNoTracking()
         .SingleOrDefaultAsync(ct);
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,8 +11,8 @@
 @* Yazdırma sayfaları: ekranda tezgâh üstünde kâğıt ve araç çubuğu; yazdırırken sadece kâğıt. Her zaman açık tema. *@
 <body class="print-page">
     <div class="print-toolbar">
-        <a class="btn" href="@ViewData["Back"]">İş emrine dön</a>
-        <button type="button" class="btn btn-primary" data-print><svg class="icon"><use href="/img/icons.svg#i-printer" /></svg>Yazdır</button>
+        <a class="btn" href="@ViewData["Back"]">@T["print.back"]</a>
+        <button type="button" class="btn btn-primary" data-print><svg class="icon"><use href="/img/icons.svg#i-printer" /></svg>@T["print.print"]</button>
         <span class="muted">@ViewData["Hint"]</span>
     </div>
     @RenderBody()

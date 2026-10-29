@@ -42,6 +42,12 @@ public class TrackingViewTests
     }
 
     [Fact]
+    public async Task Page_opens_in_the_shop_customer_language()
+    {
+        Assert.Equal("en", (await _get.HandleAsync(Code, default))!.Locale);
+    }
+
+    [Fact]
     public async Task Customer_name_is_masked_and_shop_contact_is_shown()
     {
         var view = (await _get.HandleAsync(Code, default))!;
@@ -132,6 +138,6 @@ public class TrackingViewTests
     {
         public Task<TrackingParties?> GetAsync(Guid shopId, Guid branchId, Guid customerId, Guid deviceId, CancellationToken ct) =>
             Task.FromResult<TrackingParties?>(new TrackingParties(
-                "Kaya Telefon", "Merkez", "Moda Cd. No: 12", "+902163456789", "Ayşe Kaya", DeviceKind.Phone, "Apple", "iPhone 13"));
+                "Kaya Telefon", "Merkez", "Moda Cd. No: 12", "+902163456789", "Ayşe Kaya", DeviceKind.Phone, "Apple", "iPhone 13", "en"));
     }
 }

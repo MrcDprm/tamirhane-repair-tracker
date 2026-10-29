@@ -7,10 +7,10 @@
     var turkey = TimeSpan.FromHours(3);
     string Reason(StockMovementReason r) => r switch
     {
-        StockMovementReason.Purchase => "Stok girişi",
-        StockMovementReason.Used => "Onarımda kullanıldı",
-        StockMovementReason.Returned => "İptalden geri döndü",
-        StockMovementReason.Adjustment => "Sayım düzeltmesi",
+        StockMovementReason.Purchase => T["stock.purchase"],
+        StockMovementReason.Used => T["stock.used"],
+        StockMovementReason.Returned => T["stock.returned"],
+        StockMovementReason.Adjustment => T["stock.adjustment"],
         _ => r.ToString(),
     };
 }
@@ -18,9 +18,9 @@
 <div class="page-head">
     <div>
         <h1>@part.Name</h1>
-        <p><code>@part.Sku</code>@(part.IsActive ? "" : ", kullanımdan kalktı")</p>
+        <p><code>@part.Sku</code>@(part.IsActive ? "" : T["inventory.retired_suffix"])</p>
     </div>
-    <a class="btn" asp-action="Index">Stok listesine dön</a>
+    <a class="btn" asp-action="Index">@T["inventory.back"]</a>
 </div>
 
 @if (TempData["Status"] is string status)
@@ -35,46 +35,46 @@
 <div class="work-columns">
     <section class="panel" aria-labelledby="stock-heading">
         <div class="panel-head">
-            <h2 id="stock-heading">Bu şubedeki stok</h2>
+            <h2 id="stock-heading">@T["inventory.branch_stock"]</h2>
             @if (part.IsLow)
             {
-                <span class="stamp stamp-sm stamp-warn">Kritik</span>
+                <span class="stamp stamp-sm stamp-warn">@T["inventory.critical"]</span>
             }
         </div>
         <div class="panel-body">
             <p class="stock-count@(part.IsLow ? " warn-text" : "")">@part.Quantity</p>
-            <p class="muted">@(part.CriticalLevel > 0 ? $"adet, kritik seviye {part.CriticalLevel}" : "adet")</p>
+            <p class="muted">@(part.CriticalLevel > 0 ? T["inventory.pieces_critical", part.CriticalLevel] : T["inventory.pieces"])</p>
         </div>
         <div class="stock-forms">
             <form method="post" asp-action="Receive" asp-route-id="@part.Id">
-                <h3>Stok girişi</h3>
+                <h3>@T["stock.purchase"]</h3>
                 <div class="field">
-                    <label for="receive-qty">Gelen adet</label>
+                    <label for="receive-qty">@T["inventory.received_qty"]</label>
                     <input id="receive-qty" name="quantity" type="number" min="1" step="1" value="1" inputmode="numeric" />
                 </div>
                 <div class="field">
-                    <label for="receive-note">Not (isteğe bağlı)</label>
-                    <input id="receive-note" name="note" maxlength="200" placeholder="ör. Tedarikçi faturası 1234" autocomplete="off" />
+                    <label for="receive-note">@T["payment.note_optional"]</label>
+                    <input id="receive-note" name="note" maxlength="200" placeholder="@T["inventory.receive_note_example"]" autocomplete="off" />
                 </div>
-                <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Stoğa ekle</button>
+                <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["inventory.receive_submit"]</button>
             </form>
             <form method="post" asp-action="Adjust" asp-route-id="@part.Id">
-                <h3>Sayım düzeltmesi</h3>
+                <h3>@T["stock.adjustment"]</h3>
                 <div class="field">
-                    <label for="adjust-count">Sayılan adet</label>
+                    <label for="adjust-count">@T["inventory.counted"]</label>
                     <input id="adjust-count" name="counted" type="number" min="0" step="1" value="@part.Quantity" inputmode="numeric" />
                 </div>
                 <div class="field">
-                    <label for="adjust-reason">Neden</label>
-                    <input id="adjust-reason" name="reason" maxlength="200" placeholder="ör. Sayım farkı, Kırıldı" autocomplete="off" />
+                    <label for="adjust-reason">@T["inventory.reason"]</label>
+                    <input id="adjust-reason" name="reason" maxlength="200" placeholder="@T["inventory.reason_example"]" autocomplete="off" />
                 </div>
-                <button type="submit" class="btn">Düzelt</button>
+                <button type="submit" class="btn">@T["inventory.adjust_submit"]</button>
             </form>
         </div>
     </section>
 
     <section class="panel" aria-labelledby="info-heading">
-        <div class="panel-head"><h2 id="info-heading">Parça bilgileri</h2></div>
+        <div class="panel-head"><h2 id="info-heading">@T["inventory.info"]</h2></div>
         @if (isOwner)
         {
             <form method="post" asp-action="Update" asp-route-id="@part.Id" novalidate class="panel-body">
@@ -109,19 +109,19 @@
                         <span asp-validation-for="Edit.SalePrice"></span>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Bilgileri kaydet</button>
+                <button type="submit" class="btn btn-primary">@T["inventory.save"]</button>
             </form>
             <form method="post" asp-action="SetActive" asp-route-id="@part.Id" class="panel-foot">
                 <input type="hidden" name="active" value="@(part.IsActive ? "false" : "true")" />
-                <button type="submit" class="link-button">@(part.IsActive ? "Kullanımdan kaldır (geçmiş kayıtlar durur)" : "Yeniden kullanıma al")</button>
+                <button type="submit" class="link-button">@T[part.IsActive ? "inventory.retire" : "inventory.reactivate"]</button>
             </form>
         }
         else
         {
             <dl class="panel-body facts">
-                <dt>Kod</dt><dd><code>@part.Sku</code></dd>
-                <dt>Satış fiyatı</dt><dd>@part.SalePrice.ToString("C")</dd>
-                <dt>Kritik seviye</dt><dd>@(part.CriticalLevel == 0 ? "uyarı yok" : part.CriticalLevel)</dd>
+                <dt>@T["field.sku"]</dt><dd><code>@part.Sku</code></dd>
+                <dt>@T["field.sale_price"]</dt><dd>@part.SalePrice.ToString("C")</dd>
+                <dt>@T["field.critical_level"]</dt><dd>@(part.CriticalLevel == 0 ? T["inventory.no_alert"] : part.CriticalLevel.ToString())</dd>
             </dl>
         }
     </section>
@@ -129,19 +129,19 @@
 
 <section class="panel" aria-labelledby="moves-heading">
     <div class="panel-head">
-        <h2 id="moves-heading">Hareketler</h2>
-        <span class="muted">Son @Tamirhane.Application.Inventory.GetPart.MovementLimit hareket, en yenisi başta</span>
+        <h2 id="moves-heading">@T["inventory.movements"]</h2>
+        <span class="muted">@T["inventory.movements_note", Tamirhane.Application.Inventory.GetPart.MovementLimit]</span>
     </div>
     @if (Model.Detail.Movements.Count == 0)
     {
-        <p class="panel-body muted">Henüz hareket yok. Stok girişi yapınca burada görünür.</p>
+        <p class="panel-body muted">@T["inventory.no_movements"]</p>
     }
     else
     {
         <div class="table-wrap">
             <table class="data-table">
                 <thead>
-                    <tr><th scope="col">Tarih</th><th scope="col">Hareket</th><th scope="col" class="num">Adet</th><th scope="col">Kim</th><th scope="col">Not</th></tr>
+                    <tr><th scope="col">@T["inventory.date"]</th><th scope="col">@T["inventory.movement"]</th><th scope="col" class="num">@T["quote.pieces"]</th><th scope="col">@T["inventory.who"]</th><th scope="col">@T["payment.note"]</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var m in Model.Detail.Movements)
@@ -154,7 +154,7 @@
                             <td>
                                 @if (m.WorkOrderId is { } orderId)
                                 {
-                                    <a href="/work-orders/@orderId">İş emri @m.WorkOrderNumber</a>
+                                    <a href="/work-orders/@orderId">@T["inventory.work_order", m.WorkOrderNumber ?? ""]</a>
                                 }
                                 @m.Note
                             </td>

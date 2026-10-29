@@ -1,9 +1,9 @@
 @{
-    ViewData["Title"] = "E-postanı kontrol et";
+    ViewData["Title"] = T["account.check_email.title"];
 }
 
 <div class="narrow">
-    <h1>E-postanı kontrol et</h1>
-    <p>Bu adresle bir hesap açıldıysa doğrulama linkini e-postana gönderdik. Link 24 saat geçerli.</p>
-    <p class="muted">Birkaç dakika içinde gelmezse istenmeyen (spam) klasörüne bak ya da <a asp-action="ResendConfirmation">yeni bir link iste</a>.</p>
+    <h1>@T["account.check_email.title"]</h1>
+    <p>@T["account.check_email.text"]</p>
+    <p class="muted">@H["account.check_email.spam_html", Url.Action("ResendConfirmation")!]</p>
 </div>

@@ -6,69 +6,69 @@ namespace Tamirhane.Web.Models.WorkOrders;
 
 /// <summary>
 /// Cihaz kabul formu. Sadece bu alanlar bağlanır: atölye, şube, personel, durum, numara ve takip kodu
-/// formdan değil oturumdan ve sunucudan gelir (overposting yok). Asıl kurallar domain'de.
+/// formdan değil oturumdan ve sunucudan gelir (overposting yok). Asıl kurallar domain'de; alan adları ve mesajlar Resources/*.json anahtarları (#35).
 /// </summary>
 public sealed class IntakeInput
 {
-    [Display(Name = "Telefon")]
-    [Required(ErrorMessage = "Müşterinin telefonunu yaz.")]
-    [StringLength(30)]
+    [Display(Name = "field.phone")]
+    [Required(ErrorMessage = "validation.phone.required")]
+    [StringLength(30, ErrorMessage = "validation.max_chars")]
     public string Phone { get; set; } = "";
 
     /// <summary>Telefonla bulunan müşteri; boşsa yeni müşteri açılır.</summary>
     public Guid? CustomerId { get; set; }
 
-    [Display(Name = "Müşterinin adı soyadı")]
-    [StringLength(100, ErrorMessage = "Ad en fazla 100 karakter olabilir.")]
+    [Display(Name = "field.customer_name")]
+    [StringLength(100, ErrorMessage = "validation.max_chars")]
     public string? CustomerName { get; set; }
 
-    [Display(Name = "E-posta (isteğe bağlı)")]
-    [StringLength(254, ErrorMessage = "E-posta en fazla 254 karakter olabilir.")]
+    [Display(Name = "field.email_optional")]
+    [StringLength(254, ErrorMessage = "validation.max_chars")]
     public string? CustomerEmail { get; set; }
 
-    [Display(Name = "Aydınlatma metni müşteriye okundu, kişisel verilerinin işlenmesini onayladı")]
+    [Display(Name = "field.kvkk_consent")]
     public bool KvkkConsent { get; set; }
 
     /// <summary>Müşterinin kayıtlı cihazı; boşsa yeni cihaz.</summary>
     public Guid? DeviceId { get; set; }
 
-    [Display(Name = "Tür")]
+    [Display(Name = "field.device_kind")]
     public DeviceKind DeviceKind { get; set; } = DeviceKind.Phone;
 
-    [Display(Name = "Marka")]
-    [StringLength(60, ErrorMessage = "Marka en fazla 60 karakter olabilir.")]
+    [Display(Name = "field.brand")]
+    [StringLength(60, ErrorMessage = "validation.max_chars")]
     public string? Brand { get; set; }
 
-    [Display(Name = "Model")]
-    [StringLength(100, ErrorMessage = "Model en fazla 100 karakter olabilir.")]
+    [Display(Name = "field.model")]
+    [StringLength(100, ErrorMessage = "validation.max_chars")]
     public string? Model { get; set; }
 
-    [Display(Name = "Seri no (isteğe bağlı)")]
-    [StringLength(60, ErrorMessage = "Seri no en fazla 60 karakter olabilir.")]
+    [Display(Name = "field.serial")]
+    [StringLength(60, ErrorMessage = "validation.max_chars")]
     public string? Serial { get; set; }
 
-    [Display(Name = "IMEI (isteğe bağlı)")]
-    [StringLength(30)]
+    [Display(Name = "field.imei")]
+    [StringLength(30, ErrorMessage = "validation.max_chars")]
     public string? Imei { get; set; }
 
-    [Display(Name = "Müşterinin şikâyeti")]
-    [Required(ErrorMessage = "Müşterinin şikâyetini yaz.")]
-    [StringLength(1000, ErrorMessage = "En fazla 1000 karakter.")]
+    [Display(Name = "field.complaint")]
+    [Required(ErrorMessage = "validation.complaint.required")]
+    [StringLength(1000, ErrorMessage = "validation.max_chars")]
     public string Complaint { get; set; } = "";
 
-    [Display(Name = "Görünür durum (isteğe bağlı)")]
-    [StringLength(1000, ErrorMessage = "En fazla 1000 karakter.")]
+    [Display(Name = "field.condition")]
+    [StringLength(1000, ErrorMessage = "validation.max_chars")]
     public string? Condition { get; set; }
 
-    [Display(Name = "Teslim alınan aksesuarlar (isteğe bağlı)")]
-    [StringLength(1000, ErrorMessage = "En fazla 1000 karakter.")]
+    [Display(Name = "field.accessories")]
+    [StringLength(1000, ErrorMessage = "validation.max_chars")]
     public string? Accessories { get; set; }
 
-    [Display(Name = "Ekran kilidi ya da cihaz şifresi (isteğe bağlı)")]
-    [StringLength(100, ErrorMessage = "En fazla 100 karakter.")]
+    [Display(Name = "field.passcode")]
+    [StringLength(100, ErrorMessage = "validation.max_chars")]
     public string? Passcode { get; set; }
 
-    [Display(Name = "Söz verilen teslim günü (isteğe bağlı)")]
+    [Display(Name = "field.promised_date")]
     public DateOnly? PromisedDate { get; set; }
 }
 

@@ -139,6 +139,26 @@ public sealed partial class QuoteApprovalFlowTests(TamirhaneWebFactory app)
         Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
     }
 
+    [DockerFact]
+    public async Task Customer_who_switched_to_english_decides_in_english()
+    {
+        var owner = await _flows.OwnerAsync("onay-en@example.com");
+        var (_, tracking) = await QuotedAsync(owner, "0532 709 09 09");
+        var customer = app.NewBrowser();
+        var english = tracking + "?lang=en";
+
+        var page = await BodyAsync(customer, english);
+        Assert.Contains($"action=\"{tracking}/decision?lang=en\"", page); // form seçilen dili taşır
+        Assert.Contains(">Approve the repair</button>", page);
+
+        var noName = await customer.SubmitAsync(english, tracking + "/decision?lang=en", new() { ["Approved"] = "true", ["DecidedBy"] = " " });
+        Assert.Contains("Enter your full name so we can record who decided", await noName.Content.ReadAsStringAsync());
+
+        var done = await customer.SubmitAsync(english, tracking + "/decision?lang=en", new() { ["Approved"] = "true", ["DecidedBy"] = "Zeynep Arslan" });
+        Assert.Equal(english, Browser.RedirectOf(done));
+        Assert.Contains("Your approval was sent to the shop.", await BodyAsync(customer, english));
+    }
+
     private static async Task<(string Order, string Tracking)> QuotedAsync(Browser owner, string phone)
     {
         var order = await ReceiveAsync(owner, phone);

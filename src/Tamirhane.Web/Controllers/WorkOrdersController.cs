@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Customers;
 using Tamirhane.Application.WorkOrders;
@@ -7,6 +8,7 @@ using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.Inventory;
 using Tamirhane.Domain.WorkOrders;
+using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.WorkOrders;
 
 namespace Tamirhane.Web.Controllers;
@@ -17,32 +19,28 @@ namespace Tamirhane.Web.Controllers;
 /// </summary>
 [Authorize]
 [Route("work-orders")]
-public sealed class WorkOrdersController : Controller
+public sealed class WorkOrdersController(IStringLocalizer<SharedResource> t) : Controller
 {
     private const string Prefix = nameof(IntakePage.Input) + ".";
 
-    // Kullanım senaryosunun hata kodu → formdaki alan ve metin.
-    private static readonly Dictionary<string, (string Field, string Message)> Errors = new()
+    // Kullanım senaryosunun hata kodu → formdaki alan ve metnin anahtarı (Resources/*.json).
+    private static readonly Dictionary<string, (string Field, string Key)> Errors = new()
     {
-        [CustomerErrors.InvalidPhone.Code] = (nameof(IntakeInput.Phone), "Telefonu 0532 123 45 67 gibi yaz."),
-        [CustomerErrors.InvalidName.Code] = (nameof(IntakeInput.CustomerName), "Müşterinin adını yaz (2 ile 100 karakter)."),
-        [CustomerErrors.InvalidEmail.Code] = (nameof(IntakeInput.CustomerEmail), "Geçerli bir e-posta yaz ya da boş bırak."),
-        [CustomerErrors.ConsentRequired.Code] = (nameof(IntakeInput.KvkkConsent),
-            "Aydınlatma metni müşteriye okunup onayı alınmadan yeni müşteri kaydedilemez."),
-        [CustomerErrors.InvalidKind.Code] = (nameof(IntakeInput.DeviceKind), "Listeden bir cihaz türü seç."),
-        [CustomerErrors.InvalidBrand.Code] = (nameof(IntakeInput.Brand), "Cihazın markasını yaz."),
-        [CustomerErrors.InvalidModel.Code] = (nameof(IntakeInput.Model), "Cihazın modelini yaz."),
-        [CustomerErrors.InvalidSerial.Code] = (nameof(IntakeInput.Serial), "Seri no en fazla 60 karakter olabilir."),
-        [CustomerErrors.InvalidImei.Code] = (nameof(IntakeInput.Imei),
-            "IMEI 15 rakam olmalı ve son rakamı tutmalı. Telefonda *#06# tuşlayınca görünür; emin değilsen boş bırak."),
-        [WorkOrderErrors.ComplaintRequired.Code] = (nameof(IntakeInput.Complaint), "Müşterinin şikâyetini yaz."),
-        [WorkOrderErrors.TextTooLong.Code] = ("", "Metin alanları en fazla 1000 karakter olabilir."),
-        [WorkOrderErrors.InvalidPromisedDate.Code] = (nameof(IntakeInput.PromisedDate),
-            $"Teslim günü bugün ya da sonraki {WorkOrder.MaxPromiseDays} gün içinde olmalı."),
-        [ApplicationErrors.CustomerNotFound.Code] = ("", "Seçilen müşteri bulunamadı. Telefonla yeniden ara."),
-        [ApplicationErrors.DeviceNotFound.Code] = ("", "Seçilen cihaz bu müşterinin değil. Listeden seç ya da yeni cihaz ekle."),
-        [ApplicationErrors.DuplicatePhone.Code] = ("",
-            "Bu telefonla kayıtlı bir müşteri var. Telefonla yeniden arayıp kayıtlı müşteriyi seç."),
+        [CustomerErrors.InvalidPhone.Code] = (nameof(IntakeInput.Phone), "error.phone"),
+        [CustomerErrors.InvalidName.Code] = (nameof(IntakeInput.CustomerName), "error.customer_name"),
+        [CustomerErrors.InvalidEmail.Code] = (nameof(IntakeInput.CustomerEmail), "error.customer_email"),
+        [CustomerErrors.ConsentRequired.Code] = (nameof(IntakeInput.KvkkConsent), "error.kvkk_consent"),
+        [CustomerErrors.InvalidKind.Code] = (nameof(IntakeInput.DeviceKind), "error.device_kind"),
+        [CustomerErrors.InvalidBrand.Code] = (nameof(IntakeInput.Brand), "error.brand"),
+        [CustomerErrors.InvalidModel.Code] = (nameof(IntakeInput.Model), "error.model"),
+        [CustomerErrors.InvalidSerial.Code] = (nameof(IntakeInput.Serial), "error.serial"),
+        [CustomerErrors.InvalidImei.Code] = (nameof(IntakeInput.Imei), "error.imei"),
+        [WorkOrderErrors.ComplaintRequired.Code] = (nameof(IntakeInput.Complaint), "validation.complaint.required"),
+        [WorkOrderErrors.TextTooLong.Code] = ("", "error.text_fields_too_long"),
+        [WorkOrderErrors.InvalidPromisedDate.Code] = (nameof(IntakeInput.PromisedDate), "error.promised_date"),
+        [ApplicationErrors.CustomerNotFound.Code] = ("", "error.customer_not_found"),
+        [ApplicationErrors.DeviceNotFound.Code] = ("", "error.device_not_found"),
+        [ApplicationErrors.DuplicatePhone.Code] = ("", "error.duplicate_phone"),
     };
 
     /// <summary>
@@ -128,7 +126,7 @@ public sealed class WorkOrdersController : Controller
             return NotFound();
         if (!previous.Value.CanReopenUnderWarranty)
         {
-            TempData["Error"] = WarrantyEnded;
+            TempData["Error"] = t["error.warranty_ended"].Value;
             return RedirectToAction(nameof(Details), new { id });
         }
         return View(new WarrantyPage(previous.Value, new WarrantyInput()));
@@ -151,7 +149,7 @@ public sealed class WorkOrdersController : Controller
         {
             if (result.Error == ApplicationErrors.WorkOrderNotFound)
                 return NotFound();
-            ModelState.AddModelError("", result.Error == WorkOrderErrors.NotUnderWarranty ? WarrantyEnded
+            ModelState.AddModelError("", result.Error == WorkOrderErrors.NotUnderWarranty ? t["error.warranty_ended"]
                 : StepMessage(result.Error!));
             return View(new WarrantyPage(previous.Value, input));
         }
@@ -159,9 +157,6 @@ public sealed class WorkOrdersController : Controller
         TempData["Created"] = true;
         return RedirectToAction(nameof(Details), new { id = result.Value.WorkOrderId });
     }
-
-    private const string WarrantyEnded =
-        "Bu iş emrinin garantisi bitmiş ya da cihaz henüz teslim edilmemiş. Yeni bir kabul olarak kaydet.";
 
     /// <summary>A5 kabul fişi: tarayıcının yazdırma özelliğiyle basılır (PDF kütüphanesi yok).</summary>
     [HttpGet("{id:guid}/receipt")]
@@ -232,7 +227,7 @@ public sealed class WorkOrdersController : Controller
             ? await promise.HandleAsync(id, input.Date, ct)
             : WorkOrderErrors.InvalidPromisedDate;
         return await AfterChangeAsync(id, result, pressed: false, get, ct,
-            success: result.IsSuccess ? (input.Date is null ? "Teslim günü kaldırıldı." : "Teslim günü kaydedildi; takip sayfasında görünür.") : null);
+            success: result.IsSuccess ? t[input.Date is null ? "workorder.promise_removed" : "workorder.promise_saved"].Value : null);
     }
 
     /// <summary>
@@ -263,7 +258,7 @@ public sealed class WorkOrdersController : Controller
     public async Task<IActionResult> Pay(Guid id, PaymentInput input, [FromServices] RecordPayment pay, [FromServices] GetWorkOrder get, CancellationToken ct)
     {
         Result result = await pay.HandleAsync(new PaymentCommand(id, input.Amount, input.Method, input.Note), ct);
-        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? $"{input.Amount:C} tahsilat kaydedildi." : null);
+        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? t["payment.recorded", input.Amount].Value : null);
     }
 
     /// <summary>Para iadesi: kasadan çıkış olduğu için sadece sahip (senaryo denetler).</summary>
@@ -271,7 +266,7 @@ public sealed class WorkOrdersController : Controller
     public async Task<IActionResult> Refund(Guid id, PaymentInput input, [FromServices] RecordRefund refund, [FromServices] GetWorkOrder get, CancellationToken ct)
     {
         Result result = await refund.HandleAsync(new PaymentCommand(id, input.Amount, input.Method, input.Note), ct);
-        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? $"{input.Amount:C} iade kaydedildi." : null);
+        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? t["payment.refunded", input.Amount].Value : null);
     }
 
     /// <summary>Teklif reddedildiyse cihaz onarılmadan iade edilir; varsa inceleme ücreti.</summary>
@@ -279,7 +274,7 @@ public sealed class WorkOrdersController : Controller
     public async Task<IActionResult> DiagnosisFee(Guid id, decimal fee, [FromServices] SetDiagnosisFee set, [FromServices] GetWorkOrder get, CancellationToken ct)
     {
         Result result = await set.HandleAsync(id, fee, ct);
-        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? "İnceleme ücreti kaydedildi." : null);
+        return await AfterChangeAsync(id, result, pressed: false, get, ct, result.IsSuccess ? t["payment.diagnosis_fee_saved"].Value : null);
     }
 
     private async Task<IActionResult> AfterChangeAsync(
@@ -304,45 +299,47 @@ public sealed class WorkOrdersController : Controller
         return RedirectToAction(nameof(Details), new { id });
     }
 
+    // Hata kodu → metnin anahtarı.
     private static readonly Dictionary<string, string> StepMessages = new()
     {
-        [WorkOrderErrors.InvalidTransition.Code] = "Bu işlem iş emrinin şu anki durumunda yapılamaz; sayfa güncellendi.",
-        [WorkOrderErrors.CancelReasonRequired.Code] = "İptalin nedenini yaz; müşteriye ve geçmişe bu yazılır.",
-        [WorkOrderErrors.NoteRequired.Code] = "Notu yaz.",
-        [WorkOrderErrors.TextTooLong.Code] = "Metin en fazla 1000 karakter olabilir.",
-        [WorkOrderErrors.InvalidPromisedDate.Code] = $"Teslim günü bugün ya da sonraki {WorkOrder.MaxPromiseDays} gün içinde olmalı.",
-        [WorkOrderErrors.Closed.Code] = "Kapanmış iş emri değiştirilemez.",
-        [QuoteErrors.Empty.Code] = "Teklifi göndermek için önce teklife kalem ekle.",
-        [QuoteErrors.DeciderNameRequired.Code] = "Kararı veren kişinin adını yaz.",
-        [InventoryErrors.InsufficientStock.Code] = "Teklifteki parçalardan stokta yeterince yok. Önce stok girişi yap, sonra tekrar dene.",
-        [InventoryErrors.WrongBranch.Code] = "Bu iş emri başka bir şubenin; o şubeye geçip tekrar dene.",
-        [PaymentErrors.BalanceDue.Code] = "Kalan borç var. Önce tahsilatı kaydet; borçlu teslimi sadece atölye sahibi onaylayabilir.",
-        [PaymentErrors.RefundDue.Code] = "Müşteriden fazla ödeme alınmış; teslimden önce iadeyi kaydet.",
-        [PaymentErrors.RefundRequired.Code] = "İptalden önce alınan ödemeyi iade et.",
-        [ApplicationErrors.OwnerOnly.Code] = "Bu işlem sadece atölye sahibinin: para iadesi ve borçlu teslim.",
-        [PaymentErrors.InvalidAmount.Code] = "Tutar sıfırdan büyük olmalı (en fazla iki ondalık).",
-        [PaymentErrors.Overpayment.Code] = "Kalan borçtan fazla tahsilat alınamaz.",
-        [PaymentErrors.RefundTooLarge.Code] = "Alınan paradan fazlası iade edilemez.",
-        [PaymentErrors.NotAllowed.Code] = "İptal edilen iş emrine tahsilat girilemez.",
-        [PaymentErrors.NoteTooLong.Code] = "Not en fazla 200 karakter olabilir.",
-        [PaymentErrors.InvalidDiagnosisFee.Code] = "İnceleme ücreti sıfır ya da daha büyük, en fazla iki ondalık olmalı.",
-        [QuoteErrors.InvalidDescription.Code] = "Kalemin açıklamasını yaz (en fazla 200 karakter).",
-        [QuoteErrors.InvalidQuantity.Code] = "Miktar sıfırdan büyük bir sayı olmalı (en fazla iki ondalık).",
-        [QuoteErrors.PartQuantityMustBeWhole.Code] = "Stoktan parça tam adet eklenir (1, 2, 3...).",
-        [QuoteErrors.InvalidUnitPrice.Code] = "Birim fiyatı yaz: sıfır ya da daha büyük, en fazla iki ondalık.",
-        [QuoteErrors.InvalidVatRate.Code] = "KDV oranı 0 ile 100 arasında olmalı.",
-        [QuoteErrors.InvalidDiscount.Code] = "İskonto 0 ile 100 arasında olmalı.",
-        [QuoteErrors.NotEditable.Code] = "Müşteri karar verdikten sonra teklif değiştirilemez.",
-        [QuoteErrors.LineNotFound.Code] = "Bu kalem bulunamadı; sayfa güncellendi.",
-        [ApplicationErrors.PartNotFound.Code] = "Seçilen parça bulunamadı ya da kullanımdan kalkmış.",
+        [WorkOrderErrors.InvalidTransition.Code] = "error.invalid_transition",
+        [WorkOrderErrors.CancelReasonRequired.Code] = "error.cancel_reason",
+        [WorkOrderErrors.NoteRequired.Code] = "error.note_required",
+        [WorkOrderErrors.TextTooLong.Code] = "error.text_too_long",
+        [WorkOrderErrors.InvalidPromisedDate.Code] = "error.promised_date",
+        [WorkOrderErrors.Closed.Code] = "error.closed",
+        [QuoteErrors.Empty.Code] = "error.quote_empty",
+        [QuoteErrors.DeciderNameRequired.Code] = "error.decider_name",
+        [InventoryErrors.InsufficientStock.Code] = "error.insufficient_stock",
+        [InventoryErrors.WrongBranch.Code] = "error.wrong_branch",
+        [PaymentErrors.BalanceDue.Code] = "error.balance_due",
+        [PaymentErrors.RefundDue.Code] = "error.refund_due",
+        [PaymentErrors.RefundRequired.Code] = "error.refund_required",
+        [ApplicationErrors.OwnerOnly.Code] = "error.owner_only",
+        [PaymentErrors.InvalidAmount.Code] = "error.invalid_amount",
+        [PaymentErrors.Overpayment.Code] = "error.overpayment",
+        [PaymentErrors.RefundTooLarge.Code] = "error.refund_too_large",
+        [PaymentErrors.NotAllowed.Code] = "error.payment_not_allowed",
+        [PaymentErrors.NoteTooLong.Code] = "error.payment_note_too_long",
+        [PaymentErrors.InvalidDiagnosisFee.Code] = "error.diagnosis_fee",
+        [QuoteErrors.InvalidDescription.Code] = "error.line_description",
+        [QuoteErrors.InvalidQuantity.Code] = "error.line_quantity",
+        [QuoteErrors.PartQuantityMustBeWhole.Code] = "error.part_quantity_whole",
+        [QuoteErrors.InvalidUnitPrice.Code] = "error.unit_price",
+        [QuoteErrors.InvalidVatRate.Code] = "error.vat_rate",
+        [QuoteErrors.InvalidDiscount.Code] = "error.discount",
+        [QuoteErrors.NotEditable.Code] = "error.quote_locked",
+        [QuoteErrors.LineNotFound.Code] = "error.line_not_found",
+        [ApplicationErrors.PartNotFound.Code] = "error.part_not_found",
     };
 
-    private static string StepMessage(Error error) =>
-        StepMessages.GetValueOrDefault(error.Code, "İşlem yapılamadı. Sayfayı yenileyip tekrar dene.");
+    // Yer tutuculu tek mesaj teslim günü sınırı ({0}); diğer metinlerde fazladan argüman string.Format'ta yok sayılır.
+    private string StepMessage(Error error) =>
+        t[StepMessages.GetValueOrDefault(error.Code, "error.step_failed"), WorkOrder.MaxPromiseDays];
 
     private void AddError(Error error)
     {
-        var (field, message) = Errors.GetValueOrDefault(error.Code, ("", "İş emri açılamadı. Bilgileri kontrol edip tekrar dene."));
-        ModelState.AddModelError(field.Length == 0 ? "" : Prefix + field, message);
+        var (field, key) = Errors.GetValueOrDefault(error.Code, ("", "error.intake_failed"));
+        ModelState.AddModelError(field.Length == 0 ? "" : Prefix + field, t[key, WorkOrder.MaxPromiseDays]);
     }
 }

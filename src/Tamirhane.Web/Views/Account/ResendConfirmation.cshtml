@@ -1,11 +1,11 @@
 @model EmailInput
 @{
-    ViewData["Title"] = "Yeni doğrulama linki";
+    ViewData["Title"] = T["account.resend.title"];
 }
 
 <div class="narrow">
-    <h1>Yeni doğrulama linki</h1>
-    <p class="muted">Kayıtta kullandığın e-postayı yaz; hesap henüz doğrulanmadıysa yeni link gönderelim.</p>
+    <h1>@T["account.resend.title"]</h1>
+    <p class="muted">@T["account.resend.text"]</p>
 
     <form asp-action="ResendConfirmation" method="post" novalidate>
         <div class="field">
@@ -13,6 +13,6 @@
             <input asp-for="Email" autocomplete="email" />
             <span asp-validation-for="Email"></span>
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Link gönder</button>
+        <button type="submit" class="btn btn-primary btn-block">@T["account.resend.submit"]</button>
     </form>
 </div>

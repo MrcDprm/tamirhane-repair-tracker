@@ -1,15 +1,15 @@
 ﻿@model ErrorViewModel
 @{
-    ViewData["Title"] = "Bir hata oluştu";
+    ViewData["Title"] = T["error.title"];
 }
 
 @* Yayında ayrıntı gösterilmez; istek numarası loglardaki kaydı bulmak için. *@
 <div class="narrow">
-    <h1>Bir hata oluştu</h1>
-    <p>İşlem tamamlanamadı. Sayfayı yenileyip tekrar dene; sorun sürerse biraz sonra yeniden dene.</p>
+    <h1>@T["error.title"]</h1>
+    <p>@T["error.text"]</p>
     @if (Model.ShowRequestId)
     {
-        <p class="muted">İstek numarası: <code>@Model.RequestId</code></p>
+        <p class="muted">@T["error.request_id"] <code>@Model.RequestId</code></p>
     }
-    <p><a asp-controller="Panel" asp-action="Index">Panele dön</a></p>
+    <p><a asp-controller="Panel" asp-action="Index">@T["common.back_to_panel"]</a></p>
 </div>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,11 +14,12 @@
     <div class="auth">
         <section class="auth-art pegboard">
             <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
-            <h2>Tezgâhtaki her cihaz, bir etikette.</h2>
-            <p>Cihazı kabul et, etiketini bas, onarımın her adımını kaşele. Müşterin durumu telefonundan görür.</p>
+            <h2>@T["auth.art.title"]</h2>
+            <p>@T["auth.art.text"]</p>
             <partial name="_WorkbenchScene" />
         </section>
         <main id="main" class="auth-form">
+            <div class="auth-lang"><partial name="_LanguageSwitch" model="@("btn")" /></div>
             @RenderBody()
         </main>
     </div>

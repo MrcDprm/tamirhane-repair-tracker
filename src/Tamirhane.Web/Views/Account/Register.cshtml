@@ -1,11 +1,11 @@
 @model RegisterInput
 @{
-    ViewData["Title"] = "Atölyeni kaydet";
+    ViewData["Title"] = T["account.register.title"];
 }
 
 <div class="narrow">
-    <h1>Atölyeni kaydet</h1>
-    <p class="muted">Atölyen ve sahip hesabın tek adımda açılır. Ardından e-postana bir doğrulama linki gelir.</p>
+    <h1>@T["account.register.title"]</h1>
+    <p class="muted">@T["account.register.text"]</p>
 
     <form asp-action="Register" method="post" novalidate>
         <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
@@ -30,7 +30,7 @@
         <div class="field">
             <label asp-for="Password"></label>
             <input asp-for="Password" autocomplete="new-password" aria-describedby="password-help" />
-            <div id="password-help" class="field-help">En az 10 karakter; içinde harf ve rakam olsun. Uzun bir cümle de olur.</div>
+            <div id="password-help" class="field-help">@T["account.password.help"]</div>
             <span asp-validation-for="Password"></span>
         </div>
         <div class="field">
@@ -42,8 +42,8 @@
             <span asp-validation-for="Locale"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Atölyeyi kaydet</button>
+        <button type="submit" class="btn btn-primary btn-block">@T["account.register.submit"]</button>
     </form>
 
-    <p>Hesabın var mı? <a asp-action="Login">Giriş yap</a></p>
+    <p>@T["account.register.has_account"] <a asp-action="Login">@T["account.login.title"]</a></p>
 </div>

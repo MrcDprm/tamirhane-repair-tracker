@@ -1,12 +1,12 @@
 @model SettingsPage
 @{
-    ViewData["Title"] = "Ayarlar";
+    ViewData["Title"] = T["nav.settings"];
 }
 
 <div class="page-head">
     <div>
-        <h1>Ayarlar</h1>
-        <p>Atölyenin adı, garanti süresi, varsayılan KDV ve şubeler.</p>
+        <h1>@T["nav.settings"]</h1>
+        <p>@T["settings.text"]</p>
     </div>
 </div>
 
@@ -21,7 +21,7 @@
 <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
 
 <section class="panel" aria-labelledby="shop-heading">
-    <div class="panel-head"><h2 id="shop-heading">Atölye</h2></div>
+    <div class="panel-head"><h2 id="shop-heading">@T["settings.shop"]</h2></div>
     <form asp-action="Update" method="post" novalidate class="panel-body">
         <div class="field-row">
             <div class="field">
@@ -42,7 +42,7 @@
             <div class="field">
                 <label asp-for="Shop.WarrantyDays"></label>
                 <input asp-for="Shop.WarrantyDays" type="number" min="0" max="3650" step="1" inputmode="numeric" aria-describedby="warranty-help" />
-                <div id="warranty-help" class="field-help">Teslimden itibaren. 0, garanti yok demek.</div>
+                <div id="warranty-help" class="field-help">@T["settings.warranty_help"]</div>
                 <span asp-validation-for="Shop.WarrantyDays"></span>
             </div>
             <div class="field">
@@ -51,18 +51,18 @@
                 <input name="Shop.DefaultVatRate" id="Shop_DefaultVatRate" type="number" min="0" max="100" step="0.01" inputmode="decimal"
                        value="@Model.Shop.DefaultVatRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
                        aria-describedby="vat-help" />
-                <div id="vat-help" class="field-help">Yeni teklif kalemlerinde önerilen oran; kalem başına değiştirilebilir.</div>
+                <div id="vat-help" class="field-help">@T["settings.vat_help"]</div>
                 <span asp-validation-for="Shop.DefaultVatRate"></span>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Ayarları kaydet</button>
+        <button type="submit" class="btn btn-primary">@T["settings.save"]</button>
     </form>
 </section>
 
 <section class="panel" aria-labelledby="branches-heading">
     <div class="panel-head">
-        <h2 id="branches-heading">Şubeler</h2>
-        <span class="muted">Tek şuben varsa şube seçimi hiçbir ekranda çıkmaz.</span>
+        <h2 id="branches-heading">@T["settings.branches"]</h2>
+        <span class="muted">@T["settings.branches_note"]</span>
     </div>
     <ul class="plain-list">
         @foreach (var branch in Model.Branches)
@@ -70,18 +70,18 @@
             <li>
                 <form asp-action="UpdateBranch" asp-route-id="@branch.Id" method="post" class="inline-form fill">
                     <div class="grow">
-                        <label class="visually-hidden" for="name-@branch.Id">Şube adı</label>
+                        <label class="visually-hidden" for="name-@branch.Id">@T["field.branch_name"]</label>
                         <input id="name-@branch.Id" name="Name" value="@branch.Name" maxlength="100" required />
                     </div>
                     <div class="wide">
-                        <label class="visually-hidden" for="address-@branch.Id">Adres</label>
-                        <input id="address-@branch.Id" name="Address" value="@branch.Address" maxlength="300" placeholder="Adres (isteğe bağlı)" />
+                        <label class="visually-hidden" for="address-@branch.Id">@T["field.address"]</label>
+                        <input id="address-@branch.Id" name="Address" value="@branch.Address" maxlength="300" placeholder="@T["settings.address_optional"]" />
                     </div>
                     <div class="grow">
-                        <label class="visually-hidden" for="phone-@branch.Id">Telefon</label>
-                        <input id="phone-@branch.Id" name="Phone" type="tel" inputmode="tel" value="@(branch.Phone is { } p ? Tamirhane.Web.Display.Labels.Phone(p) : null)" maxlength="30" placeholder="Telefon (isteğe bağlı)" />
+                        <label class="visually-hidden" for="phone-@branch.Id">@T["field.phone"]</label>
+                        <input id="phone-@branch.Id" name="Phone" type="tel" inputmode="tel" value="@(branch.Phone is { } p ? Tamirhane.Web.Display.Labels.Phone(p) : null)" maxlength="30" placeholder="@T["settings.phone_optional"]" />
                     </div>
-                    <button type="submit" class="btn">Kaydet</button>
+                    <button type="submit" class="btn">@T["common.save"]</button>
                 </form>
             </li>
         }
@@ -89,19 +89,19 @@
     <form asp-action="AddBranch" method="post" novalidate class="panel-body inline-form">
         <div class="grow">
             <label asp-for="NewBranch.Name" class="visually-hidden"></label>
-            <input asp-for="NewBranch.Name" placeholder="Yeni şubenin adı" />
+            <input asp-for="NewBranch.Name" placeholder="@T["settings.new_branch_name"]" />
             <span asp-validation-for="NewBranch.Name"></span>
         </div>
         <div class="wide">
             <label asp-for="NewBranch.Address" class="visually-hidden"></label>
-            <input asp-for="NewBranch.Address" placeholder="Adres (isteğe bağlı)" />
+            <input asp-for="NewBranch.Address" placeholder="@T["settings.address_optional"]" />
             <span asp-validation-for="NewBranch.Address"></span>
         </div>
         <div class="grow">
             <label asp-for="NewBranch.Phone" class="visually-hidden"></label>
-            <input asp-for="NewBranch.Phone" type="tel" inputmode="tel" placeholder="Telefon (isteğe bağlı)" />
+            <input asp-for="NewBranch.Phone" type="tel" inputmode="tel" placeholder="@T["settings.phone_optional"]" />
             <span asp-validation-for="NewBranch.Phone"></span>
         </div>
-        <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Şube ekle</button>
+        <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["settings.add_branch"]</button>
     </form>
 </section>

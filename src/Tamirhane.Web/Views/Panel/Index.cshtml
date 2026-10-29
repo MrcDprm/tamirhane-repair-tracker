@@ -4,34 +4,34 @@
 @using Tamirhane.Web.Display
 @model DashboardView
 @{
-    ViewData["Title"] = "Panel";
+    ViewData["Title"] = T["nav.panel"];
     var turkey = TimeSpan.FromHours(3);
     var today = Model.Now.ToOffset(turkey);
     var counts = Model.Counts;
     // Günün sayıları: panoya asılı etiketler. Her biri iş emri listesini o süzgeçle açar.
     var tags = new (string Label, int Count, WorkOrderFilter Filter, string Hint, bool Warn)[]
     {
-        ("Onay bekliyor", counts.AwaitingApproval, WorkOrderFilter.AwaitingApproval, "Müşterinin teklif kararını bekleyen işler", false),
-        ("Onarımda", counts.InRepair, WorkOrderFilter.InRepair, "Tezgâhta onarılan cihazlar", false),
-        ("Teslime hazır", counts.ReadyForPickup, WorkOrderFilter.Ready, "Müşterinin almaya gelmesi beklenen cihazlar", false),
-        ("30 günü geçen", counts.Overdue, WorkOrderFilter.Overdue, "Kabulünden bu yana 30 günden fazla geçmiş açık işler", counts.Overdue > 0),
+        (T["panel.awaiting"], counts.AwaitingApproval, WorkOrderFilter.AwaitingApproval, T["panel.awaiting_hint"], false),
+        (T["panel.in_repair"], counts.InRepair, WorkOrderFilter.InRepair, T["panel.in_repair_hint"], false),
+        (T["panel.ready"], counts.ReadyForPickup, WorkOrderFilter.Ready, T["panel.ready_hint"], false),
+        (T["panel.overdue"], counts.Overdue, WorkOrderFilter.Overdue, T["panel.overdue_hint"], counts.Overdue > 0),
     };
     string Waiting(WorkOrderRow row)
     {
         var days = (today.Date - row.CreatedAt.ToOffset(turkey).Date).Days;
-        return days == 0 ? "bugün" : $"{days} gün";
+        return days == 0 ? T["common.today"] : T["common.days", days];
     }
 }
 
 <div class="page-head">
     <div>
-        <h1>Bugün</h1>
+        <h1>@T["panel.title"]</h1>
         <p>@today.ToString("dddd, d MMMM")</p>
     </div>
-    <a class="btn btn-primary" asp-controller="WorkOrders" asp-action="New"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Cihaz kabul et</a>
+    <a class="btn btn-primary" asp-controller="WorkOrders" asp-action="New"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["layout.intake_button"]</a>
 </div>
 
-<ul class="count-tags" aria-label="Günün sayıları">
+<ul class="count-tags" aria-label="@T["panel.counts"]">
     @foreach (var tag in tags)
     {
         <li>
@@ -48,9 +48,9 @@
     <section class="panel empty">
         <partial name="_EmptyHook" />
         <div>
-            <h2>Tezgâhta açık iş yok</h2>
-            <p>Yeni bir cihaz geldiğinde <strong>Cihaz kabul et</strong>'e bas ya da klavyede <kbd>N</kbd> tuşuna bas. Kabul ettiğin cihazlar burada, en uzun bekleyen başta görünür.</p>
-            <p class="muted">Aramak için <kbd>/</kbd>: ad, telefon, IMEI ya da iş emri numarası.</p>
+            <h2>@T["panel.empty_title"]</h2>
+            <p>@H["panel.empty_text_html"]</p>
+            <p class="muted">@H["panel.empty_search_html"]</p>
         </div>
     </section>
 }
@@ -60,18 +60,18 @@
     {
         <section class="panel" aria-labelledby="oldest-heading">
             <div class="panel-head">
-                <h2 id="oldest-heading">En uzun bekleyenler</h2>
-                <a asp-controller="WorkOrders" asp-action="Index">Tüm açık işler (@counts.Open)</a>
+                <h2 id="oldest-heading">@T["panel.oldest"]</h2>
+                <a asp-controller="WorkOrders" asp-action="Index">@T["panel.all_open", counts.Open]</a>
             </div>
             <div class="table-wrap">
                 <table class="data-table work-list">
                     <thead>
                         <tr>
-                            <th scope="col">No</th>
-                            <th scope="col">Cihaz</th>
-                            <th scope="col">Müşteri</th>
-                            <th scope="col">Durum</th>
-                            <th scope="col" class="num">Bekleme</th>
+                            <th scope="col">@T["table.number"]</th>
+                            <th scope="col">@T["table.device"]</th>
+                            <th scope="col">@T["table.customer"]</th>
+                            <th scope="col">@T["table.status"]</th>
+                            <th scope="col" class="num">@T["table.waiting"]</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,7 +82,7 @@
                                 <td class="c-no"><a class="work-no" asp-controller="WorkOrders" asp-action="Details" asp-route-id="@row.Id">@row.Number</a></td>
                                 <td class="c-device">@row.Brand @row.Model</td>
                                 <td class="c-customer">@row.CustomerName</td>
-                                <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : row.Status == WorkOrderStatus.Ready ? " stamp-ok" : "")">@Labels.Of(row.Status)</span></td>
+                                <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : row.Status == WorkOrderStatus.Ready ? " stamp-ok" : "")">@T.Of(row.Status)</span></td>
                                 <td class="c-wait num@(late ? " warn-text" : "")">@Waiting(row)</td>
                             </tr>
                         }
@@ -97,25 +97,25 @@
         {
             @* Ciro sadece sahibe; teknisyen için hesaplanmaz bile. *@
             <section class="panel" aria-labelledby="revenue-heading">
-                <div class="panel-head"><h2 id="revenue-heading">Bu ay ciro</h2></div>
+                <div class="panel-head"><h2 id="revenue-heading">@T["panel.revenue"]</h2></div>
                 <div class="panel-body">
                     <p class="dash-money">@revenue.ThisMonth.ToString("C")</p>
-                    <p class="muted">Tahsilat eksi iade, @today.ToString("MMMM") başından bugüne. Geçen ay: @revenue.LastMonth.ToString("C")</p>
+                    <p class="muted">@T["panel.revenue_note", today.ToString("MMMM"), revenue.LastMonth.ToString("C")]</p>
                 </div>
             </section>
         }
 
         <section class="panel" aria-labelledby="stock-heading">
             <div class="panel-head">
-                <h2 id="stock-heading">Kritik stok</h2>
+                <h2 id="stock-heading">@T["panel.low_stock"]</h2>
                 @if (Model.LowStock.Count > 0)
                 {
-                    <a asp-controller="Inventory" asp-action="Index" asp-route-low="true">Tümü</a>
+                    <a asp-controller="Inventory" asp-action="Index" asp-route-low="true">@T["common.all"]</a>
                 }
             </div>
             @if (Model.LowStock.Count == 0)
             {
-                <p class="panel-body muted">Şubendeki parçaların hiçbiri kritik seviyede değil.</p>
+                <p class="panel-body muted">@T["panel.no_low_stock"]</p>
             }
             else
             {
@@ -124,7 +124,7 @@
                     {
                         <li>
                             <a asp-controller="Inventory" asp-action="Part" asp-route-id="@item.PartId">@item.Name</a>
-                            <span class="@(item.Quantity == 0 ? "warn-text" : "muted")">@item.Quantity adet <small>(kritik @item.CriticalLevel)</small></span>
+                            <span class="@(item.Quantity == 0 ? "warn-text" : "muted")">@T["panel.stock_quantity", item.Quantity] <small>@T["panel.stock_critical", item.CriticalLevel]</small></span>
                         </li>
                     }
                 </ul>

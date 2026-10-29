@@ -4,12 +4,14 @@ using System.Text.Unicode;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.Memory;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.WebEncoders;
 using Tamirhane.Application;
 using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Infrastructure.Notifications;
 using Tamirhane.Web.Authorization;
+using Tamirhane.Web.Localization;
 using Tamirhane.Web.ModelBinding;
 using Tamirhane.Web.RateLimiting;
 
@@ -40,13 +42,22 @@ var resendApiKey = builder.Configuration["RESEND_API_KEY"];
 if (string.IsNullOrWhiteSpace(resendApiKey) && !builder.Environment.IsDevelopment())
     throw new InvalidOperationException("RESEND_API_KEY ortam değişkeni yok; doğrulama e-postaları gönderilemez.");
 
+// Arayüz metinleri Resources/tr.json ve en.json'dan (#35). Kendi fabrikamız AddLocalization'dan önce kaydedilir;
+// AddLocalization sadece IStringLocalizer<T> sarmalayıcısını ekler.
+builder.Services.AddSingleton(TextCatalog.Embedded);
+builder.Services.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactory>();
+builder.Services.AddLocalization();
+
 builder.Services.AddControllersWithViews(options =>
 {
     // Her POST, PUT ve DELETE CSRF token'ı taşımak zorunda; bir action'da [ValidateAntiForgeryToken] unutulsa da açık kalmaz.
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
     // Ondalık alanlar sayfanın kültüründen bağımsız okunur (type="number" her dilde noktayla gönderir).
     options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider());
-});
+})
+    .AddViewLocalization()
+    // Doğrulama mesajları ve alan adları ([Required(ErrorMessage = "...")], [Display(Name = "...")]) aynı kaynaktan.
+    .AddDataAnnotationsLocalization(o => o.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
 // Türkçe harfler sayfaya "&#x15F;" gibi kodlanmadan yazılsın; <, >, &, " gibi HTML karakterleri yine kodlanır.
 builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
 builder.Services.AddAntiforgery(options =>
@@ -77,12 +88,15 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 // Tarih ve sayı biçimi sunucunun işletim sistemine bağlı kalmasın (yayındaki Linux konteyneri kültürsüz çalışır):
-// arayüz Türkçe. İngilizce arayüz #35'te eklenir.
+// arayüz Türkçe ya da İngilizce (#35), kültürler AppCultures'ta.
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
-    DefaultRequestCulture = new RequestCulture("tr-TR"),
-    SupportedCultures = [new CultureInfo("tr-TR")],
-    SupportedUICultures = [new CultureInfo("tr-TR")],
+    DefaultRequestCulture = new RequestCulture(AppCultures.Turkish),
+    SupportedCultures = [.. AppCultures.All],
+    SupportedUICultures = [.. AppCultures.All],
+    // Önce kişinin seçtiği dil (çerez), yoksa tarayıcının dili; ikisi de yoksa Türkçe.
+    RequestCultureProviders = [new CookieRequestCultureProvider { CookieName = AppCultures.CookieName }, new BrowserLanguageProvider()],
+    ApplyCurrentCultureToResponseHeaders = true, // Content-Language
 });
 app.UseRouting();
 app.UseRateLimiter();

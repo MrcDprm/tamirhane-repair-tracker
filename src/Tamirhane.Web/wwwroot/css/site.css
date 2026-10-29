@@ -321,6 +321,9 @@ kbd {
 .auth-form { display: flex; flex-direction: column; justify-content: center; padding: 48px clamp(24px, 6vw, 88px); background: var(--surface); }
 .auth-form > * { width: 100%; max-width: 26rem; }
 .auth-form h1 { font-size: 2.4rem; }
+/* Dil seçici (#35): giriş sayfalarında formun sağ üstünde; formun kendisi yerleşimi bozmaz. */
+.lang-switch { display: contents; }
+.auth-lang { display: flex; justify-content: flex-end; margin-bottom: 16px; }
 
 /* Geniş ekranda pano yerinde durur: form uzunsa sadece form kayar, çizim hep görünür. Çizimin doğal yüksekliği
    genişliğinden gelir (640×330); kısa ekranda görünür alanın %42'siyle sınırlanır ve ortada kalır. Çizim daralınca
@@ -630,9 +633,17 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
 .track-page { background: var(--bench); }
 .track-board { padding: 22px 16px 0; overflow-x: clip; } /* etiket panonun altına taşar; eğik köşesi yatay kaydırma açmasın */
 .track-shop {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
   max-width: 34rem; margin: 0 auto; color: #fff;
   font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; line-height: 1.2;
 }
+.track-shop p { margin: 0; }
+/* Müşterinin dil geçişi: panonun köşesinde küçük bir hap. */
+.track-lang {
+  flex: none; padding: 4px 12px; border: 1px solid var(--board-ink); border-radius: 999px;
+  color: #fff; font-family: var(--font-body); font-weight: 600; font-size: 0.85rem; text-decoration: none;
+}
+.track-lang:hover { background: rgb(255 255 255 / 0.12); }
 .track-shop span { display: block; font-family: var(--font-body); font-weight: 400; font-size: 0.95rem; color: var(--board-ink); }
 /* Etiket panodaki kancadan ipine asılı: ip etiketin üstündeki delikten çıkar. */
 .track-tag {

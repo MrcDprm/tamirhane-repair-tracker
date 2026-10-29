@@ -8,10 +8,13 @@ namespace Tamirhane.Application.Abstractions;
 // Depolar sadece mevcut atölyenin kayıtlarını görür (kiracı filtresi Infrastructure'da).
 // Başka atölyenin kaydı istenirse "yok" döner; varlığı bile sızmaz.
 
-/// <summary>Takip sayfasının ihtiyacı olan atölye, şube, müşteri adı ve cihaz bilgisi (iş emri takip koduyla bulunduktan sonra).</summary>
+/// <summary>
+/// Takip sayfasının ihtiyacı olan atölye, şube, müşteri adı ve cihaz bilgisi (iş emri takip koduyla bulunduktan sonra).
+/// ShopLocale: sayfanın açıldığı dil, atölyenin müşteri dili.
+/// </summary>
 public sealed record TrackingParties(
     string ShopName, string BranchName, string? BranchAddress, string? BranchPhone,
-    string CustomerName, DeviceKind DeviceKind, string Brand, string Model);
+    string CustomerName, DeviceKind DeviceKind, string Brand, string Model, string ShopLocale);
 
 /// <summary>
 /// Oturumsuz okuma: müşteri giriş yapmadığı için kiracı filtresi kullanılamaz. Bütün kimlikler aynı atölyeye ait

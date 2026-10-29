@@ -32,6 +32,9 @@ public sealed record TrackingView(
     public QuoteTotals QuoteTotals { get; init; } = QuoteTotals.Of([]);
     public TrackingDecision? Decision { get; init; }
     public bool CanDecide => Status == WorkOrderStatus.AwaitingApproval;
+
+    /// <summary>Atölyenin müşteri dili ("tr" ya da "en"): sayfa bu dilde açılır.</summary>
+    public string Locale { get; init; } = "tr";
 }
 
 public sealed class GetTracking(IWorkOrderRepository orders, ITrackingDirectory directory)
@@ -79,6 +82,7 @@ public sealed class GetTracking(IWorkOrderRepository orders, ITrackingDirectory 
                 : [],
             QuoteTotals = quoteSent ? order.QuoteTotals : QuoteTotals.Of([]),
             Decision = order.QuoteDecision is { } d ? new TrackingDecision(d.Kind, d.At) : null,
+            Locale = parties.ShopLocale,
         };
     }
 }

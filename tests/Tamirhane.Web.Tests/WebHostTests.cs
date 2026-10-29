@@ -25,7 +25,8 @@ public sealed class WebHostTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task Home_page_opens()
     {
-        var response = await app.CreateClient().GetAsync("/");
+        // Sayfada form (dil seçici) var; CSRF çerezi Secure olduğu için https tarayıcıyla açılır, yayında da her istek https.
+        var response = await app.NewBrowser().GetAsync("/");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

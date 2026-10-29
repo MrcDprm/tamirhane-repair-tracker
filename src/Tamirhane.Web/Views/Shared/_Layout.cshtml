@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="tr">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,7 +13,7 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <a class="skip-link" href="#main">İçeriğe geç</a>
+    <a class="skip-link" href="#main">@T["layout.skip"]</a>
     @{
         var signedIn = User.Identity?.IsAuthenticated == true;
         var isOwner = User.IsInRole("Owner");
@@ -29,23 +29,23 @@
     @if (signedIn)
     {
         <div class="shell">
-            <aside class="side pegboard" aria-label="Atölye menüsü">
+            <aside class="side pegboard" aria-label="@T["layout.side"]">
                 <div class="side-head">
                     <a class="brand" asp-controller="Panel" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
                     <button type="button" class="side-btn side-toggle" aria-expanded="false" aria-controls="side-nav">
-                        <svg class="icon"><use href="/img/icons.svg#i-menu" /></svg>Menü
+                        <svg class="icon"><use href="/img/icons.svg#i-menu" /></svg>@T["layout.menu"]
                     </button>
                 </div>
-                <nav id="side-nav" aria-label="Sayfalar">
+                <nav id="side-nav" aria-label="@T["layout.pages"]">
                     <ul class="nav">
-                        <li><a asp-controller="Panel" asp-action="Index" aria-current="@Current("Panel")"><svg class="icon"><use href="/img/icons.svg#i-home" /></svg>Panel</a></li>
-                        <li><a asp-controller="WorkOrders" asp-action="Index" aria-current="@(controller == "WorkOrders" && !onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-list" /></svg>İş emirleri</a></li>
-                        <li><a asp-controller="WorkOrders" asp-action="New" aria-current="@(onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>Cihaz kabul</a></li>
-                        <li><a asp-controller="Inventory" asp-action="Index" aria-current="@Current("Inventory")"><svg class="icon"><use href="/img/icons.svg#i-box" /></svg>Stok</a></li>
+                        <li><a asp-controller="Panel" asp-action="Index" aria-current="@Current("Panel")"><svg class="icon"><use href="/img/icons.svg#i-home" /></svg>@T["nav.panel"]</a></li>
+                        <li><a asp-controller="WorkOrders" asp-action="Index" aria-current="@(controller == "WorkOrders" && !onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-list" /></svg>@T["nav.work_orders"]</a></li>
+                        <li><a asp-controller="WorkOrders" asp-action="New" aria-current="@(onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>@T["nav.intake"]</a></li>
+                        <li><a asp-controller="Inventory" asp-action="Index" aria-current="@Current("Inventory")"><svg class="icon"><use href="/img/icons.svg#i-box" /></svg>@T["nav.inventory"]</a></li>
                         @if (isOwner)
                         {
-                            <li><a asp-controller="Staff" asp-action="Index" aria-current="@Current("Staff")"><svg class="icon"><use href="/img/icons.svg#i-users" /></svg>Personel</a></li>
-                            <li><a asp-controller="Settings" asp-action="Index" aria-current="@Current("Settings")"><svg class="icon"><use href="/img/icons.svg#i-gear" /></svg>Ayarlar</a></li>
+                            <li><a asp-controller="Staff" asp-action="Index" aria-current="@Current("Staff")"><svg class="icon"><use href="/img/icons.svg#i-users" /></svg>@T["nav.staff"]</a></li>
+                            <li><a asp-controller="Settings" asp-action="Index" aria-current="@Current("Settings")"><svg class="icon"><use href="/img/icons.svg#i-gear" /></svg>@T["nav.settings"]</a></li>
                         }
                     </ul>
                 </nav>
@@ -54,10 +54,12 @@
                     <div class="side-who">
                         <strong>@displayName</strong>@User.Identity?.Name
                         <div class="side-actions">
-                            <button type="button" id="theme-toggle" class="side-btn" aria-label="Koyu tema" title="Koyu tema"><svg class="icon"><use href="/img/icons.svg#i-moon" /></svg></button>
+                            <button type="button" id="theme-toggle" class="side-btn" aria-label="@T["layout.dark_theme"]" title="@T["layout.dark_theme"]"
+                                    data-dark="@T["layout.dark_theme"]" data-light="@T["layout.light_theme"]"><svg class="icon"><use href="/img/icons.svg#i-moon" /></svg></button>
+                            <partial name="_LanguageSwitch" model="@("side-btn")" />
                             @* Çıkış POST'tur: bir resim etiketi ya da link ile kullanıcının oturumu dışarıdan kapatılamaz. *@
                             <form asp-controller="Account" asp-action="Logout" method="post">
-                                <button type="submit" class="side-btn"><svg class="icon"><use href="/img/icons.svg#i-logout" /></svg>Çıkış yap</button>
+                                <button type="submit" class="side-btn"><svg class="icon"><use href="/img/icons.svg#i-logout" /></svg>@T["layout.sign_out"]</button>
                             </form>
                         </div>
                     </div>
@@ -69,8 +71,8 @@
                     @* Arama her ekranda; "/" aramaya, "N" kabule götürür (site.js). *@
                     <form class="search" role="search" method="get" action="/work-orders">
                         <svg class="icon"><use href="/img/icons.svg#i-search" /></svg>
-                        <label for="search" class="visually-hidden">Ad, telefon, IMEI ya da iş emri no ile ara</label>
-                        <input id="search" name="q" type="search" placeholder="Ad, telefon, IMEI ya da iş emri no ara" autocomplete="off"
+                        <label for="search" class="visually-hidden">@T["layout.search_label"]</label>
+                        <input id="search" name="q" type="search" placeholder="@T["layout.search_placeholder"]" autocomplete="off"
                                value="@(controller == "WorkOrders" && action == "Index" ? Context.Request.Query["q"].ToString() : "")"
                                aria-keyshortcuts="/" />
                         <kbd aria-hidden="true">/</kbd>
@@ -78,7 +80,7 @@
                     <div class="top-end">
                         @await Component.InvokeAsync("BranchSwitcher")
                         <a id="intake-link" class="btn btn-primary" asp-controller="WorkOrders" asp-action="New" aria-keyshortcuts="N">
-                            <svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Cihaz kabul et
+                            <svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["layout.intake_button"]
                         </a>
                     </div>
                 </header>
@@ -92,9 +94,10 @@
     {
         <header class="plain-top">
             <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
-            <nav class="top-end" aria-label="Hesap">
-                <a class="btn" asp-controller="Account" asp-action="Login">Giriş yap</a>
-                <a class="btn btn-primary" asp-controller="Account" asp-action="Register">Atölyeni kaydet</a>
+            <nav class="top-end" aria-label="@T["layout.account"]">
+                <partial name="_LanguageSwitch" model="@("btn")" />
+                <a class="btn" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>
+                <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@T["account.register.title"]</a>
             </nav>
         </header>
         <main id="main" class="content">

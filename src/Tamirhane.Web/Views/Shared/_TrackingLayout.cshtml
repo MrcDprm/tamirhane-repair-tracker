@@ -1,5 +1,12 @@
+@using System.Globalization
+@using Tamirhane.Web.Localization
+@{
+    // Düzen görünümden ayrı çizilir: görünümün seçtiği dil (atölyenin müşteri dili ya da ?lang) burada yeniden uygulanır.
+    if (ViewData["Culture"] is CultureInfo culture)
+        AppCultures.Use(culture);
+}
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="@CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,7 +22,7 @@
 <body class="track-page">
     @RenderBody()
     <footer class="track-foot">
-        <p>Bu sayfa sana özel. Linki sadece cihazı teslim alacak kişiyle paylaş.</p>
+        <p>@T["tracking.private"]</p>
     </footer>
     <script src="~/js/vendor/motion.min.js" asp-append-version="true"></script>
     <script src="~/js/motion.js" asp-append-version="true"></script>

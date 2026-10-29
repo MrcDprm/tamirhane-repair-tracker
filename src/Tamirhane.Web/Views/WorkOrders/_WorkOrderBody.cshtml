@@ -28,54 +28,54 @@
     }
     else if (created)
     {
-        <div class="notice notice-ok" role="status">İş emri @Model.Number açıldı. Fişi yazdırıp müşteriye ver, etiketi cihaza yapıştır; takip kodu fişte yazar.</div>
+        <div class="notice notice-ok" role="status">@T["workorder.created", Model.Number]</div>
     }
     else if (pressed)
     {
-        <div class="notice notice-ok" role="status">Durum güncellendi: @Labels.Of(Model.Status).</div>
+        <div class="notice notice-ok" role="status">@T["workorder.status_updated", T.Of(Model.Status)]</div>
     }
 
     @if (Model.WarrantyOf is { } previous)
     {
-        <p class="notice notice-ok">Garanti kapsamında geri geldi. Önceki iş emri: <a asp-action="Details" asp-route-id="@previous.Id">@previous.Number</a></p>
+        <p class="notice notice-ok">@H["workorder.warranty_of_html", Url.Action("Details", new { id = previous.Id })!, previous.Number]</p>
     }
 
     <div class="work-layout">
-        <article class="ticket" aria-label="İş emri etiketi">
+        <article class="ticket" aria-label="@T["workorder.ticket"]">
             <span class="work-no">@Model.Number</span>
             <dl>
-                <dt>Müşteri</dt><dd>@Model.CustomerName</dd>
-                <dt>Cihaz</dt><dd>@Model.Brand @Model.Model <span class="is-empty">(@Labels.Of(Model.DeviceKind))</span></dd>
+                <dt>@T["table.customer"]</dt><dd>@Model.CustomerName</dd>
+                <dt>@T["table.device"]</dt><dd>@Model.Brand @Model.Model <span class="is-empty">(@T.Of(Model.DeviceKind))</span></dd>
                 @if (Model.Imei is not null)
                 {
                     <dt>IMEI</dt><dd><code>@Model.Imei</code></dd>
                 }
                 @if (Model.Serial is not null)
                 {
-                    <dt>Seri no</dt><dd><code>@Model.Serial</code></dd>
+                    <dt>@T["workorder.serial"]</dt><dd><code>@Model.Serial</code></dd>
                 }
-                <dt>Şikâyet</dt><dd>@Model.Complaint</dd>
+                <dt>@T["intake.preview_complaint_label"]</dt><dd>@Model.Complaint</dd>
                 @if (Model.Condition is not null)
                 {
-                    <dt>Durum</dt><dd>@Model.Condition</dd>
+                    <dt>@T["workorder.condition"]</dt><dd>@Model.Condition</dd>
                 }
                 @if (Model.Accessories is not null)
                 {
-                    <dt>Aksesuar</dt><dd>@Model.Accessories</dd>
+                    <dt>@T["intake.preview_accessories_label"]</dt><dd>@Model.Accessories</dd>
                 }
                 @if (Model.PromisedDate is { } promised)
                 {
-                    <dt>Teslim günü</dt><dd>@promised.ToString("d MMMM dddd")</dd>
+                    <dt>@T["workorder.promised"]</dt><dd>@promised.ToString(T["format.day"])</dd>
                 }
             </dl>
             @* Geçilen her durum etikete bir kaşe; sonuncusu az önce basıldıysa hareketle gelir. *@
-            <p class="ticket-stamps" aria-label="Durum kaşeleri">
+            <p class="ticket-stamps" aria-label="@T["workorder.stamps"]">
                 @for (var i = 0; i < stamps.Count; i++)
                 {
                     var last = i == stamps.Count - 1;
                     var tone = stamps[i] is WorkOrderStatus.Cancelled or WorkOrderStatus.Declined ? " stamp-warn"
                         : stamps[i] is WorkOrderStatus.Ready or WorkOrderStatus.Delivered ? " stamp-ok" : "";
-                    <span class="stamp@(tone)@(last ? " is-current" : "")@(last && pressed ? " is-pressed" : "")">@Labels.Of(stamps[i])</span>
+                    <span class="stamp@(tone)@(last ? " is-current" : "")@(last && pressed ? " is-pressed" : "")">@T.Of(stamps[i])</span>
                 }
             </p>
         </article>
@@ -84,19 +84,19 @@
             @if (Model.Actions.Count > 0)
             {
                 <section class="panel" aria-labelledby="next-heading">
-                    <div class="panel-head"><h2 id="next-heading">Sıradaki adım</h2></div>
+                    <div class="panel-head"><h2 id="next-heading">@T["workorder.next_step"]</h2></div>
                     <div class="panel-body">
                         @if (next is WorkOrderAction.RecordApproval)
                         {
                             @* Müşteri kararını telefonla bildirdi; personel onun adına kaydeder. *@
                             <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML">
                                 <div class="field">
-                                    <label for="decided-by">Kararı veren</label>
+                                    <label for="decided-by">@T["workorder.decided_by"]</label>
                                     <input id="decided-by" name="DecidedBy" value="@Model.CustomerName" maxlength="100" autocomplete="off" />
                                 </div>
                                 <div class="inline-form">
-                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordApproval" class="btn btn-primary">@Labels.Of(WorkOrderAction.RecordApproval)</button>
-                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordDecline" class="btn">@Labels.Of(WorkOrderAction.RecordDecline)</button>
+                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordApproval" class="btn btn-primary">@T.Of(WorkOrderAction.RecordApproval)</button>
+                                    <button type="submit" name="Step" value="@WorkOrderAction.RecordDecline" class="btn">@T.Of(WorkOrderAction.RecordDecline)</button>
                                 </div>
                             </form>
                         }
@@ -105,21 +105,21 @@
                             <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML">
                                 @if (step == WorkOrderAction.Deliver && Model.Balance > 0)
                                 {
-                                    <p class="warn-text">Kalan borç @Model.Balance.ToString("C")</p>
+                                    <p class="warn-text">@T["workorder.balance_due", Model.Balance]</p>
                                     @if (User.IsInRole("Owner"))
                                     {
                                         <div class="check">
                                             <input type="checkbox" id="allow-balance" name="AllowBalanceDue" value="true" />
-                                            <label for="allow-balance">Borçlu teslim et (sahip onayı)</label>
+                                            <label for="allow-balance">@T["workorder.allow_balance"]</label>
                                         </div>
                                     }
                                 }
-                                <button type="submit" name="Step" value="@step" class="btn btn-primary btn-block">@Labels.Of(step)</button>
+                                <button type="submit" name="Step" value="@step" class="btn btn-primary btn-block">@T.Of(step)</button>
                             </form>
                             @foreach (var other in others)
                             {
                                 <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML" class="other-step">
-                                    <button type="submit" name="Step" value="@other" class="btn btn-block">@Labels.Of(other)</button>
+                                    <button type="submit" name="Step" value="@other" class="btn btn-block">@T.Of(other)</button>
                                 </form>
                             }
                         }
@@ -127,13 +127,13 @@
                         @if (Model.Actions.Contains(WorkOrderAction.Cancel))
                         {
                             <details class="cancel">
-                                <summary>@Labels.Of(WorkOrderAction.Cancel)</summary>
+                                <summary>@T.Of(WorkOrderAction.Cancel)</summary>
                                 <form method="post" asp-action="Step" asp-route-id="@Model.Id" hx-post="@Hx("steps")" hx-target="#work-order" hx-swap="outerHTML">
                                     <div class="field">
-                                        <label for="cancel-reason">Neden?</label>
-                                        <textarea id="cancel-reason" name="Reason" rows="2" maxlength="1000" placeholder="ör. Müşteri onarımdan vazgeçti"></textarea>
+                                        <label for="cancel-reason">@T["workorder.cancel_reason"]</label>
+                                        <textarea id="cancel-reason" name="Reason" rows="2" maxlength="1000" placeholder="@T["workorder.cancel_example"]"></textarea>
                                     </div>
-                                    <button type="submit" name="Step" value="@WorkOrderAction.Cancel" class="btn btn-danger">İptal et</button>
+                                    <button type="submit" name="Step" value="@WorkOrderAction.Cancel" class="btn btn-danger">@T["workorder.cancel_submit"]</button>
                                 </form>
                             </details>
                         }
@@ -143,20 +143,20 @@
             else if (Model.Status == WorkOrderStatus.Delivered)
             {
                 <section class="panel panel-body">
-                    <p>Cihaz teslim edildi.
+                    <p>@T["workorder.delivered"]
                         @if (Model.WarrantyUntil is { } until)
                         {
-                            @:Garanti @until.ToOffset(turkey).ToString("d MMMM yyyy") tarihine kadar.
+                            @T["workorder.warranty_until", until.ToOffset(turkey).ToString("d MMMM yyyy")]
                         }
                     </p>
                     @foreach (var back in Model.WarrantyReturns)
                     {
-                        <p>Garanti kapsamında geri geldi: <a asp-action="Details" asp-route-id="@back.Id">@back.Number</a></p>
+                        <p>@H["workorder.warranty_return_html", Url.Action("Details", new { id = back.Id })!, back.Number]</p>
                     }
                     @if (Model.CanReopenUnderWarranty)
                     {
                         @* Aynı müşteri ve cihazla yeni iş emri; ikisi birbirine bağlı görünür, işçilik ücretsiz önerilir. *@
-                        <a class="btn" asp-action="Warranty" asp-route-id="@Model.Id">Garanti kapsamında yeni kayıt</a>
+                        <a class="btn" asp-action="Warranty" asp-route-id="@Model.Id">@T["warranty.title"]</a>
                     }
                 </section>
             }
@@ -166,20 +166,20 @@
                 // Takip sayfasında "tahmini teslim" olarak görünür; parça gecikince buradan değiştirilir.
                 var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(turkey).DateTime);
                 <section class="panel" aria-labelledby="promise-heading">
-                    <div class="panel-head"><h2 id="promise-heading">Teslim günü</h2></div>
+                    <div class="panel-head"><h2 id="promise-heading">@T["workorder.promised"]</h2></div>
                     <form method="post" asp-action="Promise" asp-route-id="@Model.Id" hx-post="@Hx("promise")" hx-target="#work-order" hx-swap="outerHTML" class="panel-body inline-form">
                         <div class="grow">
-                            <label for="promise-date" class="visually-hidden">Müşteriye söz verilen teslim günü</label>
+                            <label for="promise-date" class="visually-hidden">@T["workorder.promise_label"]</label>
                             <input id="promise-date" name="Date" type="date" value="@Model.PromisedDate?.ToString("yyyy-MM-dd")"
                                    min="@today.ToString("yyyy-MM-dd")" max="@today.AddDays(WorkOrder.MaxPromiseDays).ToString("yyyy-MM-dd")" />
                         </div>
-                        <button type="submit" class="btn">Kaydet</button>
+                        <button type="submit" class="btn">@T["common.save"]</button>
                     </form>
                     @if (Model.PromisedDate is not null)
                     {
                         @* Boş tarih gönderen ayrı form: aynı formda iki "Date" alanı olursa ilki kazanırdı. *@
                         <form method="post" asp-action="Promise" asp-route-id="@Model.Id" hx-post="@Hx("promise")" hx-target="#work-order" hx-swap="outerHTML" class="panel-foot">
-                            <button type="submit" class="btn">Sözü kaldır</button>
+                            <button type="submit" class="btn">@T["workorder.promise_remove"]</button>
                         </form>
                     }
                 </section>
@@ -188,7 +188,7 @@
             <partial name="_PaymentsPanel" model="Model" />
 
             <section class="panel" aria-labelledby="customer-heading">
-                <div class="panel-head"><h2 id="customer-heading">Müşteri</h2></div>
+                <div class="panel-head"><h2 id="customer-heading">@T["table.customer"]</h2></div>
                 <div class="panel-body">
                     <p>
                         <strong>@Model.CustomerName</strong><br />
@@ -203,15 +203,15 @@
                         @* Mesajı Tamirhane göndermez: teknisyenin WhatsApp'ı o anki durumun hazır mesajıyla açılır, kendisi gönderir.
                            Bu bölüm her adımda yenilenir; mesaj hep güncel durumu söyler. *@
                         <a class="btn" href="@whatsApp" target="_blank" rel="noopener noreferrer" aria-describedby="whatsapp-help">
-                            <svg class="icon"><use href="/img/icons.svg#i-chat" /></svg>WhatsApp'tan bildir
+                            <svg class="icon"><use href="/img/icons.svg#i-chat" /></svg>@T["workorder.whatsapp"]
                         </a>
-                        <p id="whatsapp-help" class="field-help">Durumu ve takip linkini içeren mesaj hazır gelir; göndermeden önce düzenleyebilirsin.</p>
+                        <p id="whatsapp-help" class="field-help">@T["workorder.whatsapp_help"]</p>
                     }
                     <p class="muted">
-                        Takip kodu <code>@Model.TrackingCode</code>
+                        @T["workorder.tracking_code"] <code>@Model.TrackingCode</code>
                         @if (Model.HasPasscode)
                         {
-                            <br />@:Cihaz şifresi kayıtlı; iş emri kapanınca silinir.
+                            <br />@T["workorder.passcode_kept"]
                         }
                     </p>
                 </div>
@@ -223,13 +223,13 @@
 
     <div class="work-columns">
         <section class="panel" aria-labelledby="history-heading">
-            <div class="panel-head"><h2 id="history-heading">Geçmiş</h2></div>
+            <div class="panel-head"><h2 id="history-heading">@T["workorder.history"]</h2></div>
             <ol class="timeline">
                 @foreach (var h in Model.History.Reverse())
                 {
                     <li>
-                        <strong>@Labels.Of(h.Status)</strong>
-                        <span class="muted">@h.At.ToOffset(turkey).ToString("d MMMM HH:mm"), @(h.By ?? "müşteri (takip sayfasından)")</span>
+                        <strong>@T.Of(h.Status)</strong>
+                        <span class="muted">@h.At.ToOffset(turkey).ToString("d MMMM HH:mm"), @(h.By ?? T["workorder.by_customer"])</span>
                         @if (h.Note is not null)
                         {
                             <span>@h.Note</span>
@@ -240,16 +240,16 @@
         </section>
 
         <section class="panel" aria-labelledby="notes-heading">
-            <div class="panel-head"><h2 id="notes-heading">Notlar</h2></div>
+            <div class="panel-head"><h2 id="notes-heading">@T["workorder.notes"]</h2></div>
             <div class="panel-body notes">
-                <h3>Atölye notları <span class="muted">(sadece personel görür)</span></h3>
+                <h3>@T["workorder.workshop_notes"] <span class="muted">@T["workorder.staff_only"]</span></h3>
                 <form method="post" asp-action="Note" asp-route-id="@Model.Id" hx-post="@Hx("notes")" hx-target="#work-order" hx-swap="outerHTML" class="inline-form">
                     <input type="hidden" name="VisibleToCustomer" value="false" />
                     <div class="grow">
-                        <label for="note-workshop" class="visually-hidden">Atölye notu</label>
-                        <input id="note-workshop" name="Text" maxlength="1000" placeholder="ör. Anakart nemli, kurutmaya alındı" autocomplete="off" />
+                        <label for="note-workshop" class="visually-hidden">@T["workorder.workshop_note"]</label>
+                        <input id="note-workshop" name="Text" maxlength="1000" placeholder="@T["workorder.workshop_note_example"]" autocomplete="off" />
                     </div>
-                    <button type="submit" class="btn">Ekle</button>
+                    <button type="submit" class="btn">@T["common.add"]</button>
                 </form>
                 <ul class="note-list">
                     @foreach (var n in workshopNotes)
@@ -258,14 +258,14 @@
                     }
                 </ul>
 
-                <h3>Müşteriye görünen notlar <span class="muted">(takip sayfasında çıkar)</span></h3>
+                <h3>@T["workorder.customer_notes"] <span class="muted">@T["workorder.on_tracking"]</span></h3>
                 <form method="post" asp-action="Note" asp-route-id="@Model.Id" hx-post="@Hx("notes")" hx-target="#work-order" hx-swap="outerHTML" class="inline-form">
                     <input type="hidden" name="VisibleToCustomer" value="true" />
                     <div class="grow">
-                        <label for="note-customer" class="visually-hidden">Müşteriye görünen not</label>
-                        <input id="note-customer" name="Text" maxlength="1000" placeholder="ör. Parça siparişi verildi, Perşembe gelecek" autocomplete="off" />
+                        <label for="note-customer" class="visually-hidden">@T["workorder.customer_note"]</label>
+                        <input id="note-customer" name="Text" maxlength="1000" placeholder="@T["workorder.customer_note_example"]" autocomplete="off" />
                     </div>
-                    <button type="submit" class="btn">Ekle</button>
+                    <button type="submit" class="btn">@T["common.add"]</button>
                 </form>
                 <ul class="note-list is-customer">
                     @foreach (var n in customerNotes)

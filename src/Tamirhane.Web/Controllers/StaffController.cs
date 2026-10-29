@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.RateLimiting;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Shops;
 using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Shops;
 using Tamirhane.Web.Authorization;
+using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.Staff;
 using Tamirhane.Web.RateLimiting;
 
@@ -14,16 +16,16 @@ namespace Tamirhane.Web.Controllers;
 /// <summary>Personel sayfası: çalışanlar, bekleyen davetler, davet gönderme, daveti geri alma, personel çıkarma. Sadece sahip.</summary>
 [Authorize(Policy = Policies.OwnerOnly)]
 [Route("staff")]
-public sealed class StaffController : Controller
+public sealed class StaffController(IStringLocalizer<SharedResource> t) : Controller
 {
+    // Hata kodu → metnin anahtarı.
     private static readonly Dictionary<string, string> Messages = new()
     {
-        [ShopErrors.InvalidEmail.Code] = "Geçerli bir e-posta adresi yaz.",
-        [ShopErrors.CannotRemoveOwner.Code] = "Atölyenin sahibi kendini çıkaramaz.",
-        [ShopErrors.StaffNotFound.Code] = "Bu kişi atölyede çalışmıyor.",
-        [ApplicationErrors.InvitationNotFound.Code] = "Bu davet bulunamadı.",
-        [ApplicationErrors.TooManyInvitations.Code] =
-            $"En fazla {InviteStaff.MaxPendingInvitations} bekleyen davet olabilir. Kullanılmayan davetleri geri al.",
+        [ShopErrors.InvalidEmail.Code] = "error.email",
+        [ShopErrors.CannotRemoveOwner.Code] = "error.remove_owner",
+        [ShopErrors.StaffNotFound.Code] = "error.staff_not_found",
+        [ApplicationErrors.InvitationNotFound.Code] = "error.invitation_not_found",
+        [ApplicationErrors.TooManyInvitations.Code] = "error.too_many_invitations",
     };
 
     [HttpGet("")]
@@ -48,17 +50,17 @@ public sealed class StaffController : Controller
             return await PageAsync(list, input, ct);
         }
 
-        TempData["Status"] = $"{input.Email.Trim()} adresine davet gönderildi. Link 7 gün geçerli ve bir kez kullanılabilir.";
+        TempData["Status"] = t["staff.invited", input.Email.Trim()].Value;
         return RedirectToAction(nameof(Index));
     }
 
     [HttpPost("invitations/{id:guid}/revoke")]
     public async Task<IActionResult> Revoke(Guid id, [FromServices] RevokeInvitation revoke, CancellationToken ct) =>
-        Done(await revoke.HandleAsync(id, ct), "Davet geri alındı; link artık çalışmıyor.");
+        Done(await revoke.HandleAsync(id, ct), t["staff.revoked"]);
 
     [HttpPost("{id:guid}/remove")]
     public async Task<IActionResult> Remove(Guid id, [FromServices] RemoveStaff remove, CancellationToken ct) =>
-        Done(await remove.HandleAsync(id, ct), "Personel çıkarıldı; hesabı silindi ve açık oturumu kapandı.");
+        Done(await remove.HandleAsync(id, ct), t["staff.removed"]);
 
     private async Task<IActionResult> PageAsync(ListStaff list, InviteInput invite, CancellationToken ct)
     {
@@ -74,6 +76,7 @@ public sealed class StaffController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private static string MessageFor(Error error) =>
-        Messages.GetValueOrDefault(error.Code, "İşlem tamamlanamadı. Sayfayı yenileyip tekrar dene.");
+    // Yer tutuculu tek metin bekleyen davet sınırı; diğerlerinde fazladan argüman yok sayılır.
+    private string MessageFor(Error error) =>
+        t[Messages.GetValueOrDefault(error.Code, "error.step_failed"), InviteStaff.MaxPendingInvitations];
 }

@@ -35,7 +35,7 @@ document.querySelectorAll("form[data-once]").forEach(function (form) {
   function show(subscribed) {
     on.hidden = subscribed;
     off.hidden = !subscribed;
-    text.textContent = subscribed ? "Bu tarayıcıya haber veriyoruz. Durum değişince bildirim gelecek." : idleText;
+    text.textContent = subscribed ? box.dataset.msgActive : idleText;
     box.hidden = false;
   }
 
@@ -98,12 +98,12 @@ document.querySelectorAll("form[data-once]").forEach(function (form) {
       .then(function (response) {
         if (!response.ok) throw new Error("server");
         show(true);
-        say("Tamam, durum değişince haber vereceğiz.");
+        say(box.dataset.msgOn);
       })
       .catch(function (error) {
         say(error.message === "permission"
-          ? "Bildirim izni verilmedi. İzni tarayıcının site ayarlarından açabilirsin."
-          : "Şu an açılamadı, birazdan tekrar dener misin?");
+          ? box.dataset.msgDenied
+          : box.dataset.msgOnFailed);
       })
       .finally(function () { on.disabled = false; });
   });
@@ -119,9 +119,9 @@ document.querySelectorAll("form[data-once]").forEach(function (form) {
       .then(function (response) {
         if (!response.ok) throw new Error("server");
         show(false);
-        say("Bu iş emri için bildirim gönderilmeyecek.");
+        say(box.dataset.msgOff);
       })
-      .catch(function () { say("Şu an kapatılamadı, birazdan tekrar dener misin?"); })
+      .catch(function () { say(box.dataset.msgOffFailed); })
       .finally(function () { off.disabled = false; });
   });
 })();

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.WorkOrders;
 using Tamirhane.Domain.WorkOrders;
+using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.Tracking;
 using Tamirhane.Web.RateLimiting;
 
@@ -13,6 +14,8 @@ namespace Tamirhane.Web.Controllers;
 /// Müşterinin takip sayfası: fişteki QR ve bildirimlerdeki link buraya gelir (/t/7K3M9QX2HFDA). Giriş yok;
 /// kod geçersiz de olsa kayıt yok da olsa aynı 404 sayfası döner. Teklif bu sayfadan onaylanır ya da reddedilir
 /// (form CSRF token'lı; sayfa ve form aynı IP sınırına tabi).
+/// Dil (#35): sayfa atölyenin müşteri dilinde açılır; müşteri ?lang=tr|en ile değiştirir (çerez yok, personelin panel
+/// dili müşterinin gördüğünü değiştirmez). Bu yüzden mesajlar burada metin değil anahtar olarak taşınır, görünüm çevirir.
 /// </summary>
 [AllowAnonymous]
 [Route("t")]
@@ -30,7 +33,7 @@ public sealed class TrackingController : Controller
 
     [HttpPost("{code}/decision")]
     public async Task<IActionResult> Decide(
-        string code, DecisionInput input, [FromServices] DecideQuoteByCustomer decide, [FromServices] GetTracking get, CancellationToken ct)
+        string code, string? lang, DecisionInput input, [FromServices] DecideQuoteByCustomer decide, [FromServices] GetTracking get, CancellationToken ct)
     {
         KeepPrivate();
         var result = await decide.HandleAsync(code, input.Approved, input.DecidedBy ?? "", ct);
@@ -43,7 +46,7 @@ public sealed class TrackingController : Controller
             var view = await get.HandleAsync(code, ct);
             if (view is null)
                 return Missing();
-            ViewData["DecisionError"] = "Kararı kimin verdiğini yazmak için adını ve soyadını gir (en fazla 100 karakter).";
+            ViewData["DecisionError"] = "tracking.decision.name_required";
             ViewData["DecidedBy"] = input.DecidedBy;
             Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
             return View(nameof(Show), view);
@@ -51,11 +54,11 @@ public sealed class TrackingController : Controller
 
         TempData[result.IsSuccess ? "Decision" : "DecisionError"] = result.IsSuccess
             ? input.Approved
-                ? "Onayın atölyeye iletildi. Onarım başlayınca bu sayfada görünür."
-                : "Kararın atölyeye iletildi. Cihazını teslim almak için atölyeyi arayabilirsin."
+                ? "tracking.decision.approved"
+                : "tracking.decision.declined"
             // Karar zaten verilmiş (başka sekmeden ya da atölye telefonla kaydetmiş) ya da teklif artık beklemiyor.
-            : "Bu teklif için karar zaten verilmiş; sayfadaki son durum geçerli.";
-        return RedirectToAction(nameof(Show), new { code });
+            : "tracking.decision.already";
+        return RedirectToAction(nameof(Show), new { code, lang = AppCultures.From(lang)?.TwoLetterISOLanguageName });
     }
 
     // --- Tarayıcı bildirimi (#31): tracking.js JSON gönderir, CSRF token'ı RequestVerificationToken başlığında. ---

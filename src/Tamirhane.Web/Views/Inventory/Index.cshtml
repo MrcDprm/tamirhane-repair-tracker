@@ -1,14 +1,14 @@
 @model InventoryPage
 @{
-    ViewData["Title"] = "Stok";
+    ViewData["Title"] = T["nav.inventory"];
     var list = Model.List;
     var isOwner = User.IsInRole("Owner");
 }
 
 <div class="page-head">
     <div>
-        <h1>Stok</h1>
-        <p>Bu şubedeki parçalar. Onarım bitince kullanılan parça stoktan kendiliğinden düşer; iptalde geri gelir.</p>
+        <h1>@T["nav.inventory"]</h1>
+        <p>@T["inventory.text"]</p>
     </div>
 </div>
 
@@ -17,30 +17,29 @@
 
 @* Panoya asılı iki etiket: parça çeşidi ve kritik stoktakiler (tıklayınca liste süzülür). *@
 <div class="hang-tags hang-tags-2">
-    <a class="hang-tag" asp-action="Index"><strong>@list.ActiveCount</strong>parça çeşidi</a>
-    <a class="hang-tag@(list.LowCount > 0 ? " is-warn" : "")" asp-action="Index" asp-route-low="true"><strong>@list.LowCount</strong>kritik stokta</a>
+    <a class="hang-tag" asp-action="Index"><strong>@list.ActiveCount</strong>@T["inventory.kinds"]</a>
+    <a class="hang-tag@(list.LowCount > 0 ? " is-warn" : "")" asp-action="Index" asp-route-low="true"><strong>@list.LowCount</strong>@T["inventory.low_count"]</a>
 </div>
 
 <section class="panel" aria-labelledby="parts-heading">
     <div class="panel-head">
-        <h2 id="parts-heading">@(Model.LowOnly ? "Kritik stoktaki parçalar" : "Parçalar")</h2>
+        <h2 id="parts-heading">@T[Model.LowOnly ? "inventory.low_parts" : "inventory.parts"]</h2>
         <form method="get" asp-action="Index" class="inline-form" role="search">
-            <label for="part-search" class="visually-hidden">Parça kodu ya da adı</label>
-            <input id="part-search" name="q" type="search" value="@Model.Query" placeholder="Kod ya da ad ara" autocomplete="off" />
+            <label for="part-search" class="visually-hidden">@T["inventory.search_label"]</label>
+            <input id="part-search" name="q" type="search" value="@Model.Query" placeholder="@T["inventory.search_placeholder"]" autocomplete="off" />
             @if (Model.LowOnly)
             {
                 <input type="hidden" name="low" value="true" />
             }
-            <button type="submit" class="btn"><svg class="icon"><use href="/img/icons.svg#i-search" /></svg>Ara</button>
+            <button type="submit" class="btn"><svg class="icon"><use href="/img/icons.svg#i-search" /></svg>@T["list.search"]</button>
         </form>
     </div>
 
     @if (list.Parts.Count == 0)
     {
         <p class="panel-body muted">
-            @(Model.Query is { Length: > 0 } ? $"\"{Model.Query}\" ile eşleşen parça yok."
-                : Model.LowOnly ? "Kritik seviyeye inmiş parça yok."
-                : "Henüz parça yok. Aşağıdan ilk parçayı ekle.")
+            @(Model.Query is { Length: > 0 } ? T["inventory.no_match", Model.Query]
+                : T[Model.LowOnly ? "inventory.no_low" : "inventory.empty"])
         </p>
     }
     else
@@ -49,14 +48,14 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th scope="col">Kod</th>
-                        <th scope="col">Parça</th>
-                        <th scope="col" class="num">Stok</th>
-                        <th scope="col" class="num">Kritik seviye</th>
-                        <th scope="col" class="num">Satış fiyatı</th>
+                        <th scope="col">@T["field.sku"]</th>
+                        <th scope="col">@T["quote.part"]</th>
+                        <th scope="col" class="num">@T["nav.inventory"]</th>
+                        <th scope="col" class="num">@T["field.critical_level"]</th>
+                        <th scope="col" class="num">@T["field.sale_price"]</th>
                         @if (isOwner)
                         {
-                            <th scope="col" class="num">Alış fiyatı</th>
+                            <th scope="col" class="num">@T["field.cost_price"]</th>
                         }
                     </tr>
                 </thead>
@@ -69,13 +68,13 @@
                                 <a asp-action="Part" asp-route-id="@part.Id">@part.Name</a>
                                 @if (!part.IsActive)
                                 {
-                                    <span class="muted">(kullanımdan kalktı)</span>
+                                    <span class="muted">@T["inventory.retired_note"]</span>
                                 }
                             </td>
                             <td class="num">
                                 @if (part.IsLow)
                                 {
-                                    <span class="stamp stamp-sm stamp-warn">Kritik</span>
+                                    <span class="stamp stamp-sm stamp-warn">@T["inventory.critical"]</span>
                                 }
                                 <strong class="@(part.IsLow ? "warn-text" : "")">@part.Quantity</strong>
                             </td>
@@ -94,11 +93,11 @@
     <p class="panel-foot">
         @if (Model.IncludeInactive)
         {
-            <a asp-action="Index">Kullanımdan kalkanları gizle</a>
+            <a asp-action="Index">@T["inventory.hide_retired"]</a>
         }
         else
         {
-            <a asp-action="Index" asp-route-inactive="true">Kullanımdan kalkan parçaları da göster</a>
+            <a asp-action="Index" asp-route-inactive="true">@T["inventory.show_retired"]</a>
         }
     </p>
 </section>
@@ -106,17 +105,17 @@
 @if (isOwner)
 {
     <section class="panel" aria-labelledby="new-part-heading">
-        <div class="panel-head"><h2 id="new-part-heading">Yeni parça</h2></div>
+        <div class="panel-head"><h2 id="new-part-heading">@T["inventory.new_part"]</h2></div>
         <form method="post" asp-action="Add" novalidate class="panel-body">
             <div class="field-row">
                 <div class="field">
                     <label asp-for="NewPart.Sku"></label>
-                    <input asp-for="NewPart.Sku" class="code" placeholder="ör. IP13-SCR" autocomplete="off" />
+                    <input asp-for="NewPart.Sku" class="code" placeholder="@T["inventory.sku_example"]" autocomplete="off" />
                     <span asp-validation-for="NewPart.Sku"></span>
                 </div>
                 <div class="field">
                     <label asp-for="NewPart.Name"></label>
-                    <input asp-for="NewPart.Name" placeholder="ör. iPhone 13 ekran paneli" autocomplete="off" />
+                    <input asp-for="NewPart.Name" placeholder="@T["inventory.name_example"]" autocomplete="off" />
                     <span asp-validation-for="NewPart.Name"></span>
                 </div>
             </div>
@@ -135,7 +134,7 @@
                 <div class="field">
                     <label asp-for="NewPart.CriticalLevel"></label>
                     <input asp-for="NewPart.CriticalLevel" type="number" min="0" step="1" inputmode="numeric" aria-describedby="critical-help" />
-                    <div id="critical-help" class="field-help">Bu adede inince kritik stokta görünür. 0: uyarma.</div>
+                    <div id="critical-help" class="field-help">@T["inventory.critical_help"]</div>
                     <span asp-validation-for="NewPart.CriticalLevel"></span>
                 </div>
                 <div class="field">
@@ -144,7 +143,7 @@
                     <span asp-validation-for="NewPart.OpeningQuantity"></span>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>Parçayı ekle</button>
+            <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["quote.add_part_submit"]</button>
         </form>
     </section>
 }

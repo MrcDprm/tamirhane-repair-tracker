@@ -14,8 +14,8 @@
         <p>@Model.Brand @Model.Model, @Model.CustomerName</p>
     </div>
     <div class="inline-form">
-        <a class="btn" asp-action="Receipt" asp-route-id="@Model.Id"><svg class="icon"><use href="/img/icons.svg#i-printer" /></svg>Fişi yazdır</a>
-        <a class="btn" asp-action="Label" asp-route-id="@Model.Id"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>Etiketi yazdır</a>
+        <a class="btn" asp-action="Receipt" asp-route-id="@Model.Id"><svg class="icon"><use href="/img/icons.svg#i-printer" /></svg>@T["workorder.print_receipt"]</a>
+        <a class="btn" asp-action="Label" asp-route-id="@Model.Id"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>@T["workorder.print_label"]</a>
     </div>
 </div>
 

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Localization;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Shops;
+using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.Account;
 using Tamirhane.Web.RateLimiting;
 
@@ -14,26 +16,25 @@ namespace Tamirhane.Web.Controllers;
 /// kayıt ve yeni link isteği her durumda aynı sayfaya gider, giriş hatası tek bir mesajdır.
 /// </summary>
 [Route("account")]
-public sealed class AccountController(IAccountService accounts) : Controller
+public sealed class AccountController(IAccountService accounts, IStringLocalizer<SharedResource> t) : Controller
 {
-    private const string InvalidLogin =
-        "E-posta ya da şifre hatalı. Art arda 5 hatalı denemeden sonra giriş 15 dakika kapanır.";
+    private const string InvalidLogin = "account.error.invalid_login";
 
-    // Kullanım senaryosunun hata kodu → formdaki alan ve metin.
+    // Kullanım senaryosunun hata kodu → formdaki alan ve metnin anahtarı (Resources/*.json).
     private static readonly Dictionary<string, (string Field, string Message)> Errors = new()
     {
-        [ShopErrors.InvalidName.Code] = (nameof(RegisterInput.ShopName), "Atölye adı 2 ile 100 karakter arasında olmalı."),
-        [ShopErrors.InvalidLocale.Code] = (nameof(RegisterInput.Locale), "Listeden bir dil seçin."),
-        [ShopErrors.InvalidDisplayName.Code] = (nameof(RegisterInput.OwnerName), "Ad 2 ile 100 karakter arasında olmalı."),
-        [AccountErrors.InvalidEmail.Code] = (nameof(RegisterInput.Email), "Geçerli bir e-posta adresi yazın."),
-        [AccountErrors.PasswordTooShort.Code] = (nameof(RegisterInput.Password), "Şifre en az 10 karakter olmalı."),
-        [AccountErrors.PasswordRequiresDigit.Code] = (nameof(RegisterInput.Password), "Şifrede en az bir rakam olmalı."),
-        [AccountErrors.PasswordRequiresLetter.Code] = (nameof(RegisterInput.Password), "Şifrede en az bir harf olmalı."),
-        [AccountErrors.PasswordRepetitive.Code] = (nameof(RegisterInput.Password), "Şifrede en az 4 farklı karakter olmalı."),
+        [ShopErrors.InvalidName.Code] = (nameof(RegisterInput.ShopName), "account.error.shop_name"),
+        [ShopErrors.InvalidLocale.Code] = (nameof(RegisterInput.Locale), "validation.language.required"),
+        [ShopErrors.InvalidDisplayName.Code] = (nameof(RegisterInput.OwnerName), "account.error.name"),
+        [AccountErrors.InvalidEmail.Code] = (nameof(RegisterInput.Email), "validation.email.invalid"),
+        [AccountErrors.PasswordTooShort.Code] = (nameof(RegisterInput.Password), "account.error.password_short"),
+        [AccountErrors.PasswordRequiresDigit.Code] = (nameof(RegisterInput.Password), "account.error.password_digit"),
+        [AccountErrors.PasswordRequiresLetter.Code] = (nameof(RegisterInput.Password), "account.error.password_letter"),
+        [AccountErrors.PasswordRepetitive.Code] = (nameof(RegisterInput.Password), "account.error.password_repetitive"),
         [AccountErrors.PasswordTooCommon.Code] = (nameof(RegisterInput.Password),
-            "Bu şifre sızıntı listelerinde çok sık geçiyor, kolay tahmin edilir. Başka bir şifre seçin."),
+            "account.error.password_common"),
         [AccountErrors.InvalidResetLink.Code] = ("",
-            "Bu sıfırlama linki geçersiz: süresi dolmuş, daha önce kullanılmış ya da eksik kopyalanmış. Yeni bir link iste."),
+            "account.error.reset_link"),
     };
 
     [HttpGet("register")]
@@ -102,7 +103,7 @@ public sealed class AccountController(IAccountService accounts) : Controller
                 ViewData["EmailNotConfirmed"] = true;
                 return View(input);
             default:
-                ModelState.AddModelError("", InvalidLogin);
+                ModelState.AddModelError("", t[InvalidLogin]);
                 return View(input);
         }
     }
@@ -161,14 +162,14 @@ public sealed class AccountController(IAccountService accounts) : Controller
     private void AddError(Error error)
     {
         var (field, message) = MessageFor(error);
-        ModelState.AddModelError(field, message);
+        ModelState.AddModelError(field, t[message]);
     }
 
-    /// <summary>Hesap hatasının formdaki alanı ve metni; davet kabul formu da şifre hataları için kullanır.</summary>
+    /// <summary>Hesap hatasının formdaki alanı ve metninin anahtarı; davet kabul formu da şifre hataları için kullanır.</summary>
     internal static (string Field, string Message) MessageFor(Error error) =>
         Errors.TryGetValue(error.Code, out var known)
             ? known
-            : ("", "İşlem tamamlanamadı. Bilgileri kontrol edip tekrar deneyin.");
+            : ("", "account.error.generic");
 
     private bool SignedIn => User.Identity?.IsAuthenticated == true;
 

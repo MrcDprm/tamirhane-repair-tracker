@@ -1,15 +1,15 @@
 @using Tamirhane.Web.Models.WorkOrders
 @model WarrantyPage
 @{
-    ViewData["Title"] = $"Garanti kapsamında yeni kayıt: {Model.Previous.Number}";
+    ViewData["Title"] = $"{T["warranty.title"]}: {Model.Previous.Number}";
     var previous = Model.Previous;
     var turkey = TimeSpan.FromHours(3);
 }
 
 <div class="page-head">
     <div>
-        <h1>Garanti kapsamında yeni kayıt</h1>
-        <p>@previous.Brand @previous.Model, @previous.CustomerName · önceki iş emri <a asp-action="Details" asp-route-id="@previous.Id">@previous.Number</a></p>
+        <h1>@T["warranty.title"]</h1>
+        <p>@previous.Brand @previous.Model, @previous.CustomerName · @T["warranty.previous"] <a asp-action="Details" asp-route-id="@previous.Id">@previous.Number</a></p>
     </div>
 </div>
 
@@ -17,16 +17,16 @@
     <form method="post" asp-action="Warranty" asp-route-id="@previous.Id" class="panel-body" novalidate>
         <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
         <p class="muted">
-            Müşteri ve cihaz önceki iş emrinden gelir.
+            @T["warranty.from_previous"]
             @if (previous.WarrantyUntil is { } until)
             {
-                @:Garanti @until.ToOffset(turkey).ToString("d MMMM yyyy") tarihine kadar.
+                @T["workorder.warranty_until", until.ToOffset(turkey).ToString("d MMMM yyyy")]
             }
-            Yeni iş emri öncekine bağlanır; teklifte işçilik ücretsiz önerilir.
+            @T["warranty.linked"]
         </p>
         <div class="field">
             <label asp-for="Input.Complaint"></label>
-            <textarea asp-for="Input.Complaint" rows="3" placeholder="ör. Değişen ekranda dokunmatik yine çalışmıyor"></textarea>
+            <textarea asp-for="Input.Complaint" rows="3" placeholder="@T["warranty.complaint_example"]"></textarea>
             <span asp-validation-for="Input.Complaint"></span>
         </div>
         <div class="field">
@@ -45,8 +45,8 @@
             <span asp-validation-for="Input.Passcode"></span>
         </div>
         <div class="inline-form">
-            <button type="submit" class="btn btn-primary">Yeni iş emrini aç</button>
-            <a class="btn" asp-action="Details" asp-route-id="@previous.Id">Vazgeç</a>
+            <button type="submit" class="btn btn-primary">@T["warranty.submit"]</button>
+            <a class="btn" asp-action="Details" asp-route-id="@previous.Id">@T["common.cancel"]</a>
         </div>
     </form>
 </section>
