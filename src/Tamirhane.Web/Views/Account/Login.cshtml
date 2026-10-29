@@ -38,4 +38,10 @@
     <p>@T["account.login.no_account"] <a asp-action="Register">@T["account.register.title"]</a></p>
     <p><a asp-action="ForgotPassword">@T["account.forgot.title"]</a></p>
     <p><a asp-action="ResendConfirmation">@T["account.login.no_email"]</a></p>
+
+    @* Hesabı olmayan ziyaretçi örnek verili kendi atölyesinde dener (#36). *@
+    <form asp-controller="Demo" asp-action="Start" method="post" class="demo-offer">
+        <p>@T["demo.login_text"]</p>
+        <button type="submit" class="btn btn-block">@T["demo.try"]</button>
+    </form>
 </div>
