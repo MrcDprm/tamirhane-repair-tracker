@@ -68,6 +68,14 @@ public sealed class FakeAccounts : IAccountService
 
     public Task SignOutAsync() => throw new NotSupportedException();
 
+    public List<Guid> DemoSignIns { get; } = [];
+
+    public Task SignInDemoAsync(Guid userId, CancellationToken ct)
+    {
+        DemoSignIns.Add(userId);
+        return Task.CompletedTask;
+    }
+
     public Task<bool> ConfirmEmailAsync(Guid userId, string token, CancellationToken ct) =>
         throw new NotSupportedException();
 

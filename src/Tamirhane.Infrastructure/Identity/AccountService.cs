@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Accounts;
+using Tamirhane.Application.Demo;
 using Tamirhane.Domain.Common;
 using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
@@ -115,6 +116,15 @@ internal sealed class AccountService(
     }
 
     public Task SignOutAsync() => signIn.SignOutAsync();
+
+    public async Task SignInDemoAsync(Guid userId, CancellationToken ct)
+    {
+        var user = await users.FindByIdAsync(userId.ToString());
+        if (user?.Email is null || !user.Email.EndsWith("@" + DemoData.EmailDomain, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Şifresiz oturum sadece demo hesabında açılır.");
+        // Kalıcı değil: tarayıcı kapanınca demo oturumu da biter.
+        await signIn.SignInAsync(user, isPersistent: false);
+    }
 
     public async Task<bool> ConfirmEmailAsync(Guid userId, string token, CancellationToken ct)
     {

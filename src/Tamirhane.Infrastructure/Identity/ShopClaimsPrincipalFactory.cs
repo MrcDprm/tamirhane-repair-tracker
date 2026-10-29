@@ -13,6 +13,7 @@ internal static class ShopClaims
     public const string StaffId = "tamirhane:staff";
     public const string BranchId = "tamirhane:branch";
     public const string DisplayName = "tamirhane:name";
+    public const string Demo = "tamirhane:demo";
 }
 
 /// <summary>
@@ -37,6 +38,8 @@ internal sealed class ShopClaimsPrincipalFactory(
             identity.AddClaim(new Claim(ShopClaims.BranchId, staff.BranchId.ToString()));
             identity.AddClaim(new Claim(ShopClaims.DisplayName, staff.DisplayName));
             identity.AddClaim(new Claim(Options.ClaimsIdentity.RoleClaimType, staff.Role.ToString()));
+            if (await db.Shops.IgnoreQueryFilters().AnyAsync(s => s.Id == staff.ShopId && s.IsDemo))
+                identity.AddClaim(new Claim(ShopClaims.Demo, "true"));
         }
         return identity;
     }

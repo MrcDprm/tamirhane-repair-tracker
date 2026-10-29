@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Tamirhane.Application.Abstractions;
+using Tamirhane.Application.Demo;
 using Tamirhane.Infrastructure.Background;
 using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Identity;
@@ -30,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<IInvitationRepository, InvitationRepository>();
         services.AddScoped<IWorkOrderRepository, WorkOrderRepository>();
         services.AddScoped<ITrackingDirectory, TrackingDirectory>();
+        services.AddScoped<IDemoShops, DemoShops>();
         services.AddScoped<IDashboardQueries, DashboardQueries>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();

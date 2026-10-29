@@ -90,6 +90,7 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
     /// ShopId'yi kendisi taşıyan kayıtlar başka atölyeye aitse kayıt hiç yapılmaz.
     /// Atölye kaydı oturum açılmadan yapılır: aynı kayıtta eklenen yeni atölyenin kendisine, ilk şubesine ve sahibine izin verilir.
     /// Davet kabulü de oturumsuzdur: aynı kayıtta kabul edilen davetin atölyesine sadece personel eklenebilir.
+    /// Demo atölye de oturumsuz açılır: stok kayıtlarına atölyesi önceden yazılmışsa ve bu kayıtta eklenen yeni atölyeyse korunur.
     /// </summary>
     private void StampShop()
     {
@@ -106,7 +107,10 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
         {
             if (entry.Entity is StockLevel or StockMovement)
             {
-                entry.Property(ShopIdColumn).CurrentValue = CurrentShopId;
+                var stamped = entry.Property(ShopIdColumn);
+                if (stamped.CurrentValue is Guid own && newShops.Contains(own))
+                    continue;
+                stamped.CurrentValue = CurrentShopId;
                 continue;
             }
 
