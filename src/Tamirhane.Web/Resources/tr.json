@@ -571,5 +571,13 @@
   "tracking.decision.approved": "Onayın atölyeye iletildi. Onarım başlayınca bu sayfada görünür.",
   "tracking.decision.declined": "Kararın atölyeye iletildi. Cihazını teslim almak için atölyeyi arayabilirsin.",
   "tracking.decision.already": "Bu teklif için karar zaten verilmiş; sayfadaki son durum geçerli.",
-  "layout.light_theme": "Açık tema"
+  "layout.light_theme": "Açık tema",
+  "error.demo_no_invite": "Demo atölye e-posta göndermez; davet de gönderilemez. Gerçek atölyende teknisyenlerini e-postayla davet edersin.",
+  "demo.try": "Demoyu dene",
+  "demo.try_help": "Demo, örnek iş emirleri ve stokla dolu, sana özel bir atölye açar. Kayıt gerekmez; 24 saat sonra silinir.",
+  "demo.login_text": "Hesabın yok mu? Örnek verili kendi demo atölyende her ekranı dene.",
+  "demo.account": "Demo hesabı",
+  "demo.strip": "Bu bir demo atölye: örnek verilerle istediğin gibi dene. E-posta gönderilmez ve atölye {0} saat sonra silinir.",
+  "demo.own_shop": "Kendi atölyeni aç",
+  "demo.full": "Şu an çok sayıda demo açık; biraz sonra tekrar dene ya da hemen kendi atölyeni aç."
 }

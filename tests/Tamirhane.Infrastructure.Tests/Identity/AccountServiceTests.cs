@@ -38,6 +38,22 @@ public sealed class AccountServiceTests(PostgresFixture db)
     }
 
     [DockerFact]
+    public async Task Passwordless_demo_sign_in_never_works_for_a_real_account()
+    {
+        using var scope = db.AsShop(Guid.Empty);
+        var real = (await scope.Accounts.CreateConfirmedAsync("gercek-hesap@example.com", Password, default)).Value;
+        // Adı demo gibi görünen ama demo alanında olmayan adres de geçmez.
+        var lookalike = (await scope.Accounts.CreateConfirmedAsync("demo-owner@demo.tamirhane.invalid.example.com", Password, default)).Value;
+
+        // Hata demo kuralından gelmeli (testte HttpContext yok; kural atlanırsa oturum açma başka bir hatayla düşerdi).
+        foreach (var userId in new[] { real, lookalike, Guid.NewGuid() })
+        {
+            var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => scope.Accounts.SignInDemoAsync(userId, default));
+            Assert.Contains("sadece demo hesabında", refused.Message);
+        }
+    }
+
+    [DockerFact]
     public async Task Same_email_in_other_case_is_taken()
     {
         using var scope = db.AsShop(Guid.Empty);

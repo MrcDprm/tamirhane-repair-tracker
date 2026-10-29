@@ -40,7 +40,7 @@ Teknik servis ve tamir atölyeleri için iş emri takip sistemi. ASP.NET Core MV
 - Açık işler, onay bekleyenler, teslime hazırlar, 30 günü geçen bekleyenler, aylık ciro (sadece sahip), kritik stok.
 - Hızlı arama: ad, telefon, IMEI, iş emri numarası.
 - Türkçe ve İngilizce, açık ve koyu tema.
-- Herkese açık demo atölye (örnek veriyle, salt okunur değil; gece sıfırlanır).
+- Herkese açık demo atölye (#36): "Demoyu dene" diyen her ziyaretçiye örnek verili ayrı bir atölye açılır, sahibi olarak girer (salt okunur değil, kimse başkasının demosunu görmez). Demo 24 saat yaşar, sonra bütün verisi ve hesaplarıyla silinir. Demo dışarıya e-posta göndermez (müşteri bildirimi, atölye bildirimi, davet); demo hesaplarının adresi `.invalid` uzantılı. IP başına açma sınırı ve aynı anda açık demo sayısına üst sınır var.
 - Tanıtım sayfası, gizlilik/KVKK aydınlatma metni, kullanım koşulları.
 
 ## Mimari

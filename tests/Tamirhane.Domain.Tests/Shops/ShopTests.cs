@@ -7,6 +7,16 @@ public class ShopTests
     private static readonly DateTimeOffset Now = new(2026, 10, 25, 9, 0, 0, TimeSpan.FromHours(3));
 
     [Fact]
+    public void Only_a_demo_shop_is_marked_as_demo()
+    {
+        Assert.False(Shop.Create("Kaya Telefon", "tr", Now).Value.IsDemo);
+
+        var demo = Shop.CreateDemo("Demo Telefon", "en", Now).Value;
+        Assert.True(demo.IsDemo);
+        Assert.Equal(("Demo Telefon", "en", 90), (demo.Name, demo.Locale, demo.WarrantyDays));
+    }
+
+    [Fact]
     public void New_shop_gets_default_warranty_and_vat()
     {
         var shop = Shop.Create("  Kaya   Telefon  ", "tr", Now).Value;

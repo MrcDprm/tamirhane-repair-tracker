@@ -90,6 +90,18 @@ public sealed class CustomerStatusEmailDeliveryTests(PostgresFixture db)
     }
 
     [DockerFact]
+    public async Task Demo_shop_never_emails_its_customers()
+    {
+        var (shopId, order) = await SeedAsync("durum-demo@example.com", demo: true);
+        var before = db.Emails.Count;
+
+        Notify(shopId, order, WorkOrderStatus.Received);
+
+        Assert.Empty(db.Emails.SentTo("durum-demo@example.com"));
+        Assert.Equal(before, db.Emails.Count);
+    }
+
+    [DockerFact]
     public async Task An_outdated_status_is_not_sent()
     {
         var (shopId, order) = await SeedAsync("durum3@example.com");
@@ -118,9 +130,9 @@ public sealed class CustomerStatusEmailDeliveryTests(PostgresFixture db)
         scope.Get<INotificationQueue>().Enqueue(new WorkOrderNotification(shopId, order.Id, status));
     }
 
-    private async Task<(Guid ShopId, WorkOrder Order)> SeedAsync(string? email)
+    private async Task<(Guid ShopId, WorkOrder Order)> SeedAsync(string? email, bool demo = false)
     {
-        var shop = Shop.Create("Kaya Telefon", "tr", Now).Value;
+        var shop = (demo ? Shop.CreateDemo("Kaya Telefon", "tr", Now) : Shop.Create("Kaya Telefon", "tr", Now)).Value;
         var branch = Branch.Create(shop.Id, "Merkez", "Moda Cd. 5", Now, "0216 345 67 89").Value;
         var phone = $"0532 {Random.Shared.Next(100, 999)} {Random.Shared.Next(10, 99)} {Random.Shared.Next(10, 99)}";
         var customer = Customer.Create(shop.Id, "Ayşe Kaya", phone, email, true, Now).Value;

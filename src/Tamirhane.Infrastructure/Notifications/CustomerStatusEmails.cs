@@ -13,6 +13,7 @@ namespace Tamirhane.Infrastructure.Notifications;
 /// Bu iş sadece e-postayı hazırlayıp kuyruğa koyar; gönderim ve tekrar deneme ayrı bir iştir. Gönderim başarısız
 /// olsa da iş emri işlemi etkilenmez: işlem kaydedildikten sonra kuyruğa girmiştir.
 /// Arka planda oturum olmadan çalışır: kiracı filtresi kapalıdır, her sorgu atölye kimliğiyle süzülür.
+/// Demo atölyede gönderilmez: ziyaretçi müşteri olarak başkasının adresini yazabilir.
 /// </summary>
 internal sealed class CustomerStatusEmails(TamirhaneDbContext db, EmailOutbox outbox, ITrackingLinks links)
     : IWorkOrderNotificationHandler
@@ -32,6 +33,8 @@ internal sealed class CustomerStatusEmails(TamirhaneDbContext db, EmailOutbox ou
             return;
 
         var shop = await db.Shops.IgnoreQueryFilters().AsNoTracking().SingleAsync(s => s.Id == order.ShopId, ct);
+        if (shop.IsDemo)
+            return;
         var branch = await db.Branches.IgnoreQueryFilters().AsNoTracking()
             .Where(b => b.Id == order.BranchId && b.ShopId == order.ShopId)
             .Select(b => new { b.Address, b.Phone }).SingleOrDefaultAsync(ct);

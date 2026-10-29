@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Tamirhane.Application.Accounts;
 using Tamirhane.Application.Customers;
 using Tamirhane.Application.Dashboard;
+using Tamirhane.Application.Demo;
 using Tamirhane.Application.Inventory;
 using Tamirhane.Application.Shops;
 using Tamirhane.Application.WorkOrders;
@@ -34,6 +35,8 @@ public static class DependencyInjection
         services.AddScoped<UpdateIntakeDetails>();
         services.AddScoped<PromiseDelivery>();
         services.AddScoped<GetTracking>();
+        services.AddScoped<StartDemo>();
+        services.AddScoped<DeleteExpiredDemos>();
         services.AddScoped<AddNote>();
         services.AddScoped<StartDiagnosis>();
         services.AddScoped<StartRepair>();

@@ -44,6 +44,12 @@ public interface IAccountService
 
     Task SignOutAsync();
 
+    /// <summary>
+    /// Demo atölyenin sahibi olarak şifresiz oturum açar ("Demoyu dene"). Sadece demo adresli hesaplarda çalışır;
+    /// başka bir hesapla çağrılırsa hata fırlatır (bir hata yüzünden gerçek bir hesaba şifresiz girilemesin).
+    /// </summary>
+    Task SignInDemoAsync(Guid userId, CancellationToken ct);
+
     /// <summary>E-posta linkindeki token'la hesabı doğrular; link bozuksa ya da süresi geçmişse false.</summary>
     Task<bool> ConfirmEmailAsync(Guid userId, string token, CancellationToken ct);
 

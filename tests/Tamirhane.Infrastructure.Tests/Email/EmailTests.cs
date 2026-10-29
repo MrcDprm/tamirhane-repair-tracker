@@ -14,6 +14,17 @@ public sealed class EmailTests
     private static readonly EmailFrom From = EmailFrom.Parse("Tamirhane <tamirhane@miracdeprem.com>");
 
     [Theory]
+    [InlineData("demo-1a2b@demo.tamirhane.invalid", true)]
+    [InlineData("X@Y.INVALID ", true)]
+    [InlineData("ayse@example.com", false)]
+    [InlineData("invalid@example.com", false)]
+    [InlineData("ayse@invalid.com", false)]
+    public void Reserved_invalid_addresses_are_never_sent(string address, bool undeliverable)
+    {
+        Assert.Equal(undeliverable, Tamirhane.Infrastructure.Background.EmailOutbox.IsUndeliverable(address));
+    }
+
+    [Theory]
     [InlineData("tr", "lang=\"tr\"", "Düğme çalışmazsa")]
     [InlineData("en", "lang=\"en\"", "If the button does not work")]
     public void Layout_is_written_in_the_shop_language(string locale, string lang, string help)

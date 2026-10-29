@@ -19,6 +19,8 @@
         var isOwner = User.IsInRole("Owner");
         // Oturumdaki görünen ad (personel kaydından); yoksa e-posta.
         var displayName = User.FindFirst("tamirhane:name")?.Value ?? User.Identity?.Name;
+        // Demo atölye (#36): şerit görünür; demo hesabının .invalid adresi gösterilmez.
+        var demo = User.HasClaim("tamirhane:demo", "true");
         var controller = ViewContext.RouteData.Values["controller"] as string;
         var action = ViewContext.RouteData.Values["action"] as string;
         string? Current(string name) => controller == name ? "page" : null;
@@ -52,7 +54,7 @@
                 <div class="side-foot">
                     <partial name="_SideTools" />
                     <div class="side-who">
-                        <strong>@displayName</strong>@User.Identity?.Name
+                        <strong>@displayName</strong>@(demo ? T["demo.account"] : User.Identity?.Name)
                         <div class="side-actions">
                             <button type="button" id="theme-toggle" class="side-btn" aria-label="@T["layout.dark_theme"]" title="@T["layout.dark_theme"]"
                                     data-dark="@T["layout.dark_theme"]" data-light="@T["layout.light_theme"]"><svg class="icon"><use href="/img/icons.svg#i-moon" /></svg></button>
@@ -85,6 +87,15 @@
                     </div>
                 </header>
                 <main id="main" class="content">
+                    @if (demo)
+                    {
+                        <div class="demo-strip" role="note">
+                            <p>@T["demo.strip", (int)Tamirhane.Domain.Shops.Shop.DemoLifetime.TotalHours]</p>
+                            <form asp-controller="Demo" asp-action="Leave" method="post">
+                                <button type="submit" class="btn btn-primary">@T["demo.own_shop"]</button>
+                            </form>
+                        </div>
+                    }
                     @RenderBody()
                 </main>
             </div>

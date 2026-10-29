@@ -24,6 +24,10 @@ public sealed class InviteStaff(
     {
         if (!user.IsOwner)
             return ApplicationErrors.OwnerOnly;
+        var shop = await shops.GetAsync(user.ShopId, ct) ?? throw new InvalidOperationException("Oturumun atölyesi yok.");
+        // Demo herkese açık: davet, ziyaretçinin yazdığı herhangi bir adrese e-posta göndermenin yolu olmasın.
+        if (shop.IsDemo)
+            return ShopErrors.DemoSendsNoEmail;
 
         var now = TurkeyTime.Now(clock);
         var created = Invitation.Create(user.ShopId, email, user.StaffId, now);
@@ -41,7 +45,6 @@ public sealed class InviteStaff(
         invitations.Add(invitation);
         await unitOfWork.SaveChangesAsync(ct);
 
-        var shop = await shops.GetAsync(user.ShopId, ct) ?? throw new InvalidOperationException("Oturumun atölyesi yok.");
         var inviter = await staff.GetAsync(user.StaffId, ct) ?? throw new InvalidOperationException("Oturumun personeli yok.");
         await accounts.SendInvitationAsync(
             new StaffInvitationEmail(invitation.Email, token, shop.Name, inviter.DisplayName, shop.Locale, invitation.ExpiresAt), ct);

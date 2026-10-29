@@ -36,6 +36,8 @@ internal sealed class WorkshopEmails(TamirhaneDbContext db, EmailOutbox outbox, 
         if (order?.QuoteDecision is not { } decision)
             return;
         var shop = await db.Shops.IgnoreQueryFilters().AsNoTracking().SingleAsync(s => s.Id == shopId, ct);
+        if (shop.IsDemo)
+            return; // demo hesaplarının adresi gerçek değil
         var device = await db.Devices.IgnoreQueryFilters().AsNoTracking()
             .Where(d => d.Id == order.DeviceId && d.ShopId == shopId)
             .Select(d => d.Brand + " " + d.Model).SingleAsync(ct);

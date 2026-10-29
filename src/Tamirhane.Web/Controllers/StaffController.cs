@@ -24,6 +24,7 @@ public sealed class StaffController(IStringLocalizer<SharedResource> t) : Contro
         [ShopErrors.InvalidEmail.Code] = "error.email",
         [ShopErrors.CannotRemoveOwner.Code] = "error.remove_owner",
         [ShopErrors.StaffNotFound.Code] = "error.staff_not_found",
+        [ShopErrors.DemoSendsNoEmail.Code] = "error.demo_no_invite",
         [ApplicationErrors.InvitationNotFound.Code] = "error.invitation_not_found",
         [ApplicationErrors.TooManyInvitations.Code] = "error.too_many_invitations",
     };

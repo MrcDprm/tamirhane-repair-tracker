@@ -73,6 +73,7 @@ builder.Services.AddWebPush(WebPushOptions.From(builder.Configuration["VAPID_PUB
     builder.Configuration["VAPID_PRIVATE_KEY"], builder.Configuration["VAPID_SUBJECT"]));
 builder.Services.AddAccountRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddTrackingRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
+builder.Services.AddDemoRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddShopPolicies();
 
 // Kullanım senaryoları (her istek kendi örneğini alır) ve saat.
