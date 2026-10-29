@@ -1,9 +1,15 @@
 @{
     Layout = "_TrackingLayout";
-    ViewData["Title"] = "Takip kodu bulunamadı";
+    // Atölye bilinmiyor: dil ?lang'dan, yoksa tarayıcının dilinden.
+    if (Tamirhane.Web.Localization.AppCultures.From(Context.Request.Query["lang"]) is { } culture)
+    {
+        ViewData["Culture"] = culture;
+        Tamirhane.Web.Localization.AppCultures.Use(culture);
+    }
+    ViewData["Title"] = T["tracking.missing_title"];
 }
 
 <main id="main" class="track-body track-missing">
-    <h1>Bu takip kodu bulunamadı</h1>
-    <p>Linki fişteki QR kodu okutarak ya da sana gelen mesajdan yeniden aç. Kod 12 karakterdir ve fişin altında yazar; sorun sürerse cihazı bıraktığın atölyeyi ara.</p>
+    <h1>@T["tracking.missing_heading"]</h1>
+    <p>@T["tracking.missing_text"]</p>
 </main>
