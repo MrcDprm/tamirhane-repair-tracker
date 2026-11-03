@@ -128,6 +128,12 @@ public sealed class FakeDevices(ICurrentUser user) : IDeviceRepository
     public Task<IReadOnlyList<Device>> ListByCustomerAsync(Guid customerId, CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<Device>>(Items.Where(d => d.CustomerId == customerId && d.ShopId == user.ShopId).ToList());
 
+    public Task<IReadOnlyList<string>> KnownModelsAsync(DeviceKind kind, string brand, int take, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<string>>(Items
+            .Where(d => d.ShopId == user.ShopId && d.Kind == kind && string.Equals(d.Brand, brand, StringComparison.OrdinalIgnoreCase))
+            .GroupBy(d => d.Model).OrderByDescending(g => g.Count()).ThenBy(g => g.Key, StringComparer.Ordinal)
+            .Select(g => g.Key).Take(take).ToList());
+
     public void Add(Device device) => Items.Add(device);
 }
 

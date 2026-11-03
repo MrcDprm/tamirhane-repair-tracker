@@ -29,3 +29,17 @@ public sealed class FindCustomerByPhone(ICustomerRepository customers, IDeviceRe
             owned.Select(d => new DeviceSummary(d.Id, d.Kind, d.Brand, d.Model, d.Serial, d.Imei)).ToList());
     }
 }
+
+/// <summary>
+/// Kabul formundaki model önerileri: hazır listeye (Web katmanındaki katalog) ek olarak atölyenin aynı tür ve markada daha
+/// önce kaydettiği modeller. Marka boşsa öneri yok.
+/// </summary>
+public sealed class ListKnownModels(IDeviceRepository devices)
+{
+    public const int MaxModels = 50;
+
+    public async Task<IReadOnlyList<string>> HandleAsync(DeviceKind kind, string? brand, CancellationToken ct) =>
+        string.IsNullOrWhiteSpace(brand) || brand.Length > Device.MaxBrandLength || !Enum.IsDefined(kind)
+            ? []
+            : await devices.KnownModelsAsync(kind, brand.Trim(), MaxModels, ct);
+}

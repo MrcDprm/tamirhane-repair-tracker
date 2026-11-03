@@ -2,6 +2,10 @@ using Tamirhane.Domain.Common;
 
 namespace Tamirhane.Domain.Customers;
 
+/// <summary>
+/// Cihazın türü; veritabanında adıyla (metin) saklanır, sıra değişse de eski kayıtlar bozulmaz.
+/// Computer dizüstü, Appliance küçük ev aleti demektir (ilk sürümdeki adlar korunarak anlamı daraltıldı).
+/// </summary>
 public enum DeviceKind
 {
     Phone,
@@ -11,6 +15,11 @@ public enum DeviceKind
     Watch,
     Appliance,
     Other,
+    Desktop,
+    Tv,
+    Audio,
+    Camera,
+    LargeAppliance,
 }
 
 /// <summary>Müşterinin cihazı. Aynı cihaz tekrar geldiğinde (ör. garanti) yeni kayıt açılmaz, bu kullanılır.</summary>
