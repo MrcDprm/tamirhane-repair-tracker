@@ -1,0 +1,39 @@
+@using System.Text.Json
+@* Arama motoru ve paylaşım kartı (#42): açıklama, canonical, iki dilin adresi (hreflang), Open Graph ve Twitter kartı.
+   Adresler isteğin kendi şema ve alan adından (yayında Caddy'nin ilettiği https ve AllowedHosts ile sınırlı Host). *@
+@{
+    var origin = $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var path = Context.Request.Path.Value is "/" or null ? "/" : Context.Request.Path.Value;
+    var turkish = origin + path;
+    var english = origin + LanguagePrefix.English + (path == "/" ? "/" : path);
+    var isEnglish = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en";
+    var canonical = isEnglish ? english : turkish;
+    var title = ViewData["SeoTitle"] as string ?? $"{ViewData["Title"]} · Tamirhane";
+    var description = ViewData["Description"] as string ?? T["seo.home.description"];
+    var image = origin + (isEnglish ? "/img/og-en.png" : "/img/og-tr.png");
+}
+<meta name="description" content="@description" />
+<link rel="canonical" href="@canonical" />
+<link rel="alternate" hreflang="tr" href="@turkish" />
+<link rel="alternate" hreflang="en" href="@english" />
+<link rel="alternate" hreflang="x-default" href="@turkish" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Tamirhane" />
+<meta property="og:title" content="@title" />
+<meta property="og:description" content="@description" />
+<meta property="og:url" content="@canonical" />
+<meta property="og:image" content="@image" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:locale" content="@(isEnglish ? "en_GB" : "tr_TR")" />
+<meta property="og:locale:alternate" content="@(isEnglish ? "tr_TR" : "en_GB")" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="@title" />
+<meta name="twitter:description" content="@description" />
+<meta name="twitter:image" content="@image" />
+@if (ViewData["StructuredData"] is object data)
+{
+    @* Yapılandırılmış veri: çalıştırılmayan bir veri bloğu (CSP'nin betik kuralına girmez). JsonSerializer < ve >
+       karakterlerini kaçışlar; metin </script> ile bloğu kapatamaz. *@
+    <script type="application/ld+json">@Html.Raw(JsonSerializer.Serialize(data))</script>
+}

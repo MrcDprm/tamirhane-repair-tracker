@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · Tamirhane</title>
+    <title>@(ViewData["SeoTitle"] as string ?? $"{ViewData["Title"]} · Tamirhane")</title>
+    <partial name="_SeoHead" />
     <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
     <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
