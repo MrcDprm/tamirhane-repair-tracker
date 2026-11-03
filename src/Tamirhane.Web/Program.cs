@@ -85,10 +85,10 @@ builder.Services.AddShopPolicies();
 // Kullanım senaryoları (her istek kendi örneğini alır) ve saat.
 builder.Services.AddApplication();
 
-// Render TLS'i kendi vekil sunucusunda bitirir, uygulamaya http ile gelir: istemcinin IP'si ve asıl şema (https)
-// X-Forwarded-For / X-Forwarded-Proto'dan okunur. Uygulamaya Render'ın dışından ulaşılamadığı için vekil listesi boş
-// bırakılır; ForwardLimit 1: sadece Render'ın en sona eklediği adres kullanılır, istemcinin uydurduğu öncekiler değil.
-// Rate limit bu sayede başlık ayarı (CLIENT_IP_HEADER) olmadan gerçek IP'yle sayar.
+// Render TLS'i kendi vekil sunucusunda bitirir, uygulamaya http ile gelir: asıl şema (https) X-Forwarded-Proto'dan
+// okunur. Uygulamaya Render'ın dışından ulaşılamadığı için vekil listesi boş bırakılır. X-Forwarded-For'un son adresi
+// Render'ın kendi vekilidir (herkes için aynı); bu yüzden rate limit istemciyi Cloudflare'in yazdığı CF-Connecting-IP
+// başlığından tanır (CLIENT_IP_HEADER, render.yaml).
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
