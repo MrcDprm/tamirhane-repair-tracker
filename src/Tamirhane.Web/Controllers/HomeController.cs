@@ -19,9 +19,12 @@ public class HomeController : Controller
     [HttpGet("/terms")]
     public IActionResult Terms() => View();
 
+    /// <summary>
+    /// Yakalanmayan hata (yayında, UseExceptionHandler) ve gövdesiz hata kodları (UseStatusCodePagesWithReExecute).
+    /// Asıl isteğin yöntemiyle yeniden çalışır (POST da gelebilir), bu yüzden HttpGet değil. Durum kodu korunur.
+    /// </summary>
+    [Route("/error/{code:int?}")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-    }
+    public IActionResult Error(int? code) =>
+        View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier, StatusCode = code });
 }

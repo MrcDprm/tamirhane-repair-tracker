@@ -4,5 +4,10 @@ public class ErrorViewModel
 {
     public string? RequestId { get; set; }
 
-    public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    /// <summary>Gövdesiz hata kodu (404, 400...); yakalanmayan hatada null.</summary>
+    public int? StatusCode { get; set; }
+
+    public bool NotFound => StatusCode == 404;
+
+    public bool ShowRequestId => !string.IsNullOrEmpty(RequestId) && !NotFound;
 }

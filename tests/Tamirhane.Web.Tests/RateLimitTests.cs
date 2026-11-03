@@ -20,7 +20,7 @@ public sealed class RateLimitTests(TamirhaneWebFactory app)
 
         Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
         Assert.NotNull(refused.Headers.RetryAfter);
-        Assert.Contains("Bir dakika sonra tekrar deneyin", await refused.Content.ReadAsStringAsync());
+        Assert.Contains("Biraz sonra tekrar deneyin", await refused.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, neighbour.StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await attacker.GetAsync("/account/login")).StatusCode); // sayfayı açmak sayılmaz
     }
