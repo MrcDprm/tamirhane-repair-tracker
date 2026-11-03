@@ -11,12 +11,6 @@ namespace Tamirhane.Web.Display;
 /// </summary>
 public static class Labels
 {
-    public static readonly IReadOnlyList<DeviceKind> DeviceKinds =
-    [
-        DeviceKind.Phone, DeviceKind.Tablet, DeviceKind.Computer, DeviceKind.Console,
-        DeviceKind.Watch, DeviceKind.Appliance, DeviceKind.Other,
-    ];
-
     public static string Of(this IStringLocalizer t, DeviceKind kind) => t[kind switch
     {
         DeviceKind.Phone => "kind.phone",
@@ -25,6 +19,11 @@ public static class Labels
         DeviceKind.Console => "kind.console",
         DeviceKind.Watch => "kind.watch",
         DeviceKind.Appliance => "kind.appliance",
+        DeviceKind.Desktop => "kind.desktop",
+        DeviceKind.Tv => "kind.tv",
+        DeviceKind.Audio => "kind.audio",
+        DeviceKind.Camera => "kind.camera",
+        DeviceKind.LargeAppliance => "kind.large_appliance",
         _ => "kind.other",
     }];
 

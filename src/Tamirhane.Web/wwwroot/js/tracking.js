@@ -13,7 +13,15 @@ document.querySelectorAll("form[data-once]").forEach(function (form) {
 // aboneliğini silmez, sadece bu iş emrinden çıkarır. Asıl kurallar (hangi adresler kabul edilir) sunucuda.
 (function () {
   var box = document.querySelector("[data-push]");
-  if (!box || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+  if (!box) return;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    // iPhone/iPad (iPadOS kendini Mac gibi tanıtır): bildirim ancak ana ekrana eklenince açılır; nasıl yapılacağını göster.
+    // Zaten ana ekrandan açılmışsa (standalone) ve yine destek yoksa iOS eski: açıklama işe yaramaz, gösterilmez.
+    var ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    var hint = document.querySelector("[data-push-ios]");
+    if (ios && hint && navigator.standalone !== true) hint.hidden = false;
+    return;
+  }
 
   var scope = "/t/";
   var token = box.querySelector("input[name='__RequestVerificationToken']").value;

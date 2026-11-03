@@ -14,6 +14,7 @@
     var lang = chosen?.TwoLetterISOLanguageName; // form ve yönlendirme seçimi korusun
     var other = culture == AppCultures.English ? AppCultures.Turkish : AppCultures.English;
     ViewData["Title"] = $"{Model.Brand} {Model.Model}: {T.Of(Model.Status)}";
+    ViewData["Manifest"] = Url.Action("Manifest", new { code = ViewContext.RouteData.Values["code"] });
     var turkey = TimeSpan.FromHours(3);
     var lead = Model.Status switch
     {
@@ -97,6 +98,16 @@
                 <button type="button" class="btn" data-push-off hidden>@T["tracking.push.unsubscribe"]</button>
             </div>
             <p class="field-help" data-push-message role="status" aria-live="polite"></p>
+        </section>
+        @* iPhone/iPad'de tarayıcı sekmesinde bildirim yok (Apple'ın kuralı); sayfa ana ekrana eklenince açılır. tracking.js gösterir. *@
+        <section class="track-push" data-push-ios hidden aria-labelledby="push-ios-heading">
+            <h2 id="push-ios-heading">@T["tracking.push.title"]</h2>
+            <p>@T["tracking.push.ios_text"]</p>
+            <ol class="track-ios-steps">
+                <li>@T["tracking.push.ios_step1"]</li>
+                <li>@T["tracking.push.ios_step2"]</li>
+                <li>@T["tracking.push.ios_step3"]</li>
+            </ol>
         </section>
     }
 

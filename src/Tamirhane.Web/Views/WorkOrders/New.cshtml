@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = T["intake.title"];
     var customer = Model.Customer;
+    // Formun ilk çiziminde görünen tür: kayıtlı cihaz seçiliyse onun türü, değilse formdaki seçim.
+    var current = customer?.Devices.FirstOrDefault(d => d.Id == Model.Input.DeviceId)?.Kind ?? Model.Input.DeviceKind;
+    var profileNow = DeviceCatalog.For(current);
 }
 
 <div class="page-head">
@@ -89,7 +92,7 @@ else
                         {
                             <div class="check">
                                 <input type="radio" id="device-@device.Id" name="Input.DeviceId" value="@device.Id" checked="@(Model.Input.DeviceId == device.Id)"
-                                       data-device="@device.Brand @device.Model" />
+                                       data-device="@device.Brand @device.Model" data-kind="@device.Kind" />
                                 <label for="device-@device.Id">
                                     @device.Brand @device.Model <span class="muted">(@T.Of(device.Kind))</span>
                                     @if (device.Imei is not null)
@@ -104,30 +107,45 @@ else
                             <label for="device-new">@T["intake.new_device"]</label>
                         </div>
                     }
+                    @* Tür seçilince marka listesi, IMEI ve ekran kilidi alanı, aksesuar ve durum seçenekleri o türe göre değişir
+                       (intake.js). Sunucu da yalnızca seçilen türün seçeneklerini kaydeder. *@
                     <div class="field-row">
                         <div class="field">
                             <label asp-for="Input.DeviceKind"></label>
-                            <select asp-for="Input.DeviceKind">
-                                @foreach (var kind in Labels.DeviceKinds)
+                            <select asp-for="Input.DeviceKind" data-kind-select>
+                                @foreach (var kind in DeviceCatalog.Kinds)
                                 {
-                                    <option value="@kind" selected="@(Model.Input.DeviceKind == kind)">@T.Of(kind)</option>
+                                    <option value="@kind" selected="@(current == kind)">@T.Of(kind)</option>
                                 }
                             </select>
                             <span asp-validation-for="Input.DeviceKind"></span>
                         </div>
                         <div class="field">
-                            <label asp-for="Input.Brand"></label>
-                            <input asp-for="Input.Brand" autocomplete="off" placeholder="@T["intake.brand_example"]" data-preview="brand" />
+                            <label asp-for="Input.Brand" data-brand-label></label>
+                            @* Liste JavaScript'le gelir; JavaScript yoksa marka elle yazılır. *@
+                            <select id="brand-pick" hidden data-brand-pick data-other="@T["intake.brand_other"]" data-choose="@T["intake.brand_choose"]"></select>
+                            <input asp-for="Input.Brand" autocomplete="off" placeholder="@T["intake.brand_other_placeholder"]" data-preview="brand" data-brand-input />
                             <span asp-validation-for="Input.Brand"></span>
                         </div>
                         <div class="field">
                             <label asp-for="Input.Model"></label>
-                            <input asp-for="Input.Model" autocomplete="off" placeholder="@T["intake.model_example"]" data-preview="model" />
+                            <input asp-for="Input.Model" autocomplete="off" list="model-options" placeholder="@T["intake.model_placeholder"]" data-preview="model"
+                                   data-models="@Url.Action("DeviceModels")" />
+                            <datalist id="model-options"></datalist>
                             <span asp-validation-for="Input.Model"></span>
                         </div>
                     </div>
+                    @foreach (var profile in DeviceCatalog.Profiles)
+                    {
+                        <template id="brands-@profile.Kind">
+                            @foreach (var brand in profile.Brands)
+                            {
+                                <option value="@brand">@brand</option>
+                            }
+                        </template>
+                    }
                     <div class="field-row">
-                        <div class="field">
+                        <div class="field" data-kinds="@DeviceCatalog.KindsWhere(p => p.AsksImei)" hidden="@(!profileNow.AsksImei)">
                             <label asp-for="Input.Imei"></label>
                             <input asp-for="Input.Imei" inputmode="numeric" autocomplete="off" class="code" aria-describedby="imei-help" data-preview="imei" />
                             <div id="imei-help" class="field-help">@T["intake.imei_help"]</div>
@@ -151,29 +169,63 @@ else
                         <textarea asp-for="Input.Complaint" rows="3" placeholder="@T["intake.complaint_example"]" data-preview="complaint"></textarea>
                         <span asp-validation-for="Input.Complaint"></span>
                     </div>
-                    <div class="field">
-                        <label asp-for="Input.Condition"></label>
-                        <textarea asp-for="Input.Condition" rows="2" placeholder="@T["intake.condition_example"]"></textarea>
+
+                    <fieldset class="field">
+                        <legend class="label">@T["intake.condition_title"]</legend>
+                        <div class="check-grid">
+                            @foreach (var key in DeviceCatalog.AllConditions)
+                            {
+                                <div class="check" data-kinds="@DeviceCatalog.KindsWithCondition(key)" hidden="@(!profileNow.Conditions.Contains(key))">
+                                    <input type="checkbox" id="cond-@key" name="Input.ConditionItems" value="@key" checked="@Model.Input.ConditionItems.Contains(key)" />
+                                    <label for="cond-@key">@T["intake.cond." + key]</label>
+                                </div>
+                            }
+                        </div>
+                        <label asp-for="Input.Condition" class="visually-hidden"></label>
+                        <input asp-for="Input.Condition" autocomplete="off" placeholder="@T["intake.condition_other"]" />
                         <span asp-validation-for="Input.Condition"></span>
-                    </div>
-                    <div class="field-row">
-                        <div class="field">
-                            <label asp-for="Input.Accessories"></label>
-                            <input asp-for="Input.Accessories" autocomplete="off" placeholder="@T["intake.accessories_example"]" data-preview="accessories" />
-                            <span asp-validation-for="Input.Accessories"></span>
+                    </fieldset>
+
+                    <fieldset class="field">
+                        <legend class="label">@T["intake.accessories_title"]</legend>
+                        <div class="check-grid" data-accessories>
+                            @foreach (var key in DeviceCatalog.AllAccessories)
+                            {
+                                <div class="check" data-kinds="@DeviceCatalog.KindsWithAccessory(key)" hidden="@(!profileNow.Accessories.Contains(key))">
+                                    <input type="checkbox" id="acc-@key" name="Input.AccessoryItems" value="@key" checked="@Model.Input.AccessoryItems.Contains(key)" />
+                                    <label for="acc-@key">@T["intake.acc." + key]</label>
+                                </div>
+                            }
                         </div>
-                        <div class="field">
-                            <label asp-for="Input.Passcode"></label>
-                            <input asp-for="Input.Passcode" autocomplete="off" spellcheck="false" aria-describedby="passcode-help" />
-                            <div id="passcode-help" class="field-help">@T["intake.passcode_help"]</div>
-                            <span asp-validation-for="Input.Passcode"></span>
+                        <label asp-for="Input.Accessories" class="visually-hidden"></label>
+                        <input asp-for="Input.Accessories" autocomplete="off" placeholder="@T["intake.accessories_other"]" data-preview="accessories" />
+                        <span asp-validation-for="Input.Accessories"></span>
+                    </fieldset>
+
+                    <fieldset class="field" data-kinds="@DeviceCatalog.KindsWhere(p => p.AsksLock)" hidden="@(!profileNow.AsksLock)">
+                        <legend class="label">@T["intake.lock_title"]</legend>
+                        <div class="choices choices-4" data-lock>
+                            @foreach (var type in DeviceCatalog.LockTypes)
+                            {
+                                <label class="choice">
+                                    <input type="radio" name="Input.LockType" value="@type" checked="@((Model.Input.LockType ?? "none") == type)" />
+                                    <span>@T["intake.lock." + type]</span>
+                                </label>
+                            }
                         </div>
-                        <div class="field">
-                            <label asp-for="Input.PromisedDate"></label>
-                            <input asp-for="Input.PromisedDate" type="date" aria-describedby="promise-help" />
-                            <div id="promise-help" class="field-help">@T["intake.promise_help"]</div>
-                            <span asp-validation-for="Input.PromisedDate"></span>
+                        <div data-lock-value hidden="@((Model.Input.LockType ?? "none") == "none")">
+                            <label asp-for="Input.Passcode" class="visually-hidden"></label>
+                            <input asp-for="Input.Passcode" autocomplete="off" spellcheck="false" aria-describedby="passcode-help" placeholder="@T["intake.passcode_placeholder"]" />
                         </div>
+                        <div id="passcode-help" class="field-help">@T["intake.passcode_help"]</div>
+                        <span asp-validation-for="Input.Passcode"></span>
+                    </fieldset>
+
+                    <div class="field">
+                        <label asp-for="Input.PromisedDate"></label>
+                        <input asp-for="Input.PromisedDate" type="date" aria-describedby="promise-help" />
+                        <div id="promise-help" class="field-help">@T["intake.promise_help"]</div>
+                        <span asp-validation-for="Input.PromisedDate"></span>
                     </div>
                 </div>
             </fieldset>

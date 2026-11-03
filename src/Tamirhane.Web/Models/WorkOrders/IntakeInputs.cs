@@ -56,16 +56,27 @@ public sealed class IntakeInput
     [StringLength(1000, ErrorMessage = "validation.max_chars")]
     public string Complaint { get; set; } = "";
 
+    /// <summary>İşaretlenen görünür durum seçenekleri (DeviceCatalog anahtarları); sadece seçilen türünkiler kaydedilir.</summary>
+    public List<string> ConditionItems { get; set; } = [];
+
+    /// <summary>Seçeneklerde olmayan görünür durum notu.</summary>
     [Display(Name = "field.condition")]
-    [StringLength(1000, ErrorMessage = "validation.max_chars")]
+    [StringLength(500, ErrorMessage = "validation.max_chars")]
     public string? Condition { get; set; }
 
+    /// <summary>İşaretlenen aksesuarlar (DeviceCatalog anahtarları).</summary>
+    public List<string> AccessoryItems { get; set; } = [];
+
+    /// <summary>Seçeneklerde olmayan aksesuar notu.</summary>
     [Display(Name = "field.accessories")]
-    [StringLength(1000, ErrorMessage = "validation.max_chars")]
+    [StringLength(500, ErrorMessage = "validation.max_chars")]
     public string? Accessories { get; set; }
 
+    /// <summary>Ekran kilidi türü: none, pin, pattern, password. Boşsa (eski form) şifre olduğu gibi kaydedilir.</summary>
+    public string? LockType { get; set; }
+
     [Display(Name = "field.passcode")]
-    [StringLength(100, ErrorMessage = "validation.max_chars")]
+    [StringLength(80, ErrorMessage = "validation.max_chars")]
     public string? Passcode { get; set; }
 
     [Display(Name = "field.promised_date")]
