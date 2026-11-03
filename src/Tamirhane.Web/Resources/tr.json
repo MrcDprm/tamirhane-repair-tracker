@@ -622,5 +622,9 @@
   "settings.delete.confirm": "Atölye ve bütün verisi kalıcı olarak silinsin mi? Bu işlem geri alınamaz.",
   "settings.delete.wrong_password": "Şifre yanlış; atölye silinmedi.",
   "settings.delete.demo": "Demo atölye silinemez; 24 saat sonra kendiliğinden silinir.",
-  "settings.delete.done": "Atölyen ve bütün verisi silindi. Tamirhane'yi kullandığın için teşekkürler."
+  "settings.delete.done": "Atölyen ve bütün verisi silindi. Tamirhane'yi kullandığın için teşekkürler.",
+  "error.not_found.title": "Sayfa bulunamadı",
+  "error.not_found.text": "Adres yanlış yazılmış ya da sayfa artık yok.",
+  "error.back_home": "Ana sayfaya dön",
+  "error.too_many_requests": "Çok fazla deneme yapıldı. Biraz sonra tekrar deneyin."
 }

@@ -622,5 +622,9 @@
   "settings.delete.confirm": "Permanently delete the shop and all its data? This cannot be undone.",
   "settings.delete.wrong_password": "Wrong password; the shop was not deleted.",
   "settings.delete.demo": "A demo shop cannot be deleted; it is removed automatically after 24 hours.",
-  "settings.delete.done": "Your shop and all its data have been deleted. Thanks for using Tamirhane."
+  "settings.delete.done": "Your shop and all its data have been deleted. Thanks for using Tamirhane.",
+  "error.not_found.title": "Page not found",
+  "error.not_found.text": "The address is mistyped or the page no longer exists.",
+  "error.back_home": "Back to the home page",
+  "error.too_many_requests": "Too many attempts. Please try again in a little while."
 }

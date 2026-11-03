@@ -14,6 +14,7 @@ using Tamirhane.Web.Authorization;
 using Tamirhane.Web.Localization;
 using Tamirhane.Web.ModelBinding;
 using Tamirhane.Web.RateLimiting;
+using Tamirhane.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +72,7 @@ builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
 // Tarayıcı bildirimi: üç değişken de boşsa kapalı; yarım ya da bozuk ayarda uygulama açılmaz.
 builder.Services.AddWebPush(WebPushOptions.From(builder.Configuration["VAPID_PUBLIC_KEY"],
     builder.Configuration["VAPID_PRIVATE_KEY"], builder.Configuration["VAPID_SUBJECT"]));
+builder.Services.AddGlobalRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddAccountRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddTrackingRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddDemoRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
@@ -79,13 +81,22 @@ builder.Services.AddShopPolicies();
 // Kullanım senaryoları (her istek kendi örneğini alır) ve saat.
 builder.Services.AddApplication();
 
+// HSTS bir yıl: tarayıcı siteye bir kez https ile girdikten sonra http'yi hiç denemez.
+builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
+// Cevaplarda "Server: Kestrel" yazmasın: sunucu yazılımı dışarıya söylenmez.
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+
 var app = builder.Build();
 
+app.UseSecurityHeaders();
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    // Yayında ayrıntı (stack trace) gösterilmez: genel hata sayfası ve istek numarası.
+    app.UseExceptionHandler("/error");
     app.UseHsts();
 }
+// Gövdesiz hata kodları (bulunamayan adres, bozuk form) çıplak tarayıcı sayfası yerine sitenin hata sayfasıyla.
+app.UseStatusCodePagesWithReExecute("/error/{0}");
 
 app.UseHttpsRedirection();
 // Tarih ve sayı biçimi sunucunun işletim sistemine bağlı kalmasın (yayındaki Linux konteyneri kültürsüz çalışır):

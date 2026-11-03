@@ -1,15 +1,23 @@
-﻿@model ErrorViewModel
+@model ErrorViewModel
 @{
-    ViewData["Title"] = T["error.title"];
+    ViewData["Title"] = Model.NotFound ? T["error.not_found.title"] : T["error.title"];
+    var signedIn = User.Identity?.IsAuthenticated == true;
 }
 
 @* Yayında ayrıntı gösterilmez; istek numarası loglardaki kaydı bulmak için. *@
 <div class="narrow">
-    <h1>@T["error.title"]</h1>
-    <p>@T["error.text"]</p>
+    <h1>@ViewData["Title"]</h1>
+    <p>@(Model.NotFound ? T["error.not_found.text"] : T["error.text"])</p>
     @if (Model.ShowRequestId)
     {
         <p class="muted">@T["error.request_id"] <code>@Model.RequestId</code></p>
     }
-    <p><a asp-controller="Panel" asp-action="Index">@T["common.back_to_panel"]</a></p>
+    @if (signedIn)
+    {
+        <p><a asp-controller="Panel" asp-action="Index">@T["common.back_to_panel"]</a></p>
+    }
+    else
+    {
+        <p><a asp-controller="Home" asp-action="Index">@T["error.back_home"]</a></p>
+    }
 </div>

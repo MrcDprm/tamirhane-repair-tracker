@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.RateLimiting;
@@ -30,16 +29,7 @@ public static class AccountRateLimit
                     Window = TimeSpan.FromMinutes(1),
                     QueueLimit = 0,
                 }));
-
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.OnRejected = async (rejected, ct) =>
-            {
-                var response = rejected.HttpContext.Response;
-                if (rejected.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-                    response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
-                response.ContentType = "text/plain; charset=utf-8";
-                await response.WriteAsync("Çok fazla deneme yapıldı. Bir dakika sonra tekrar deneyin.", ct);
-            };
+            // 429 cevabı (metin, Retry-After) bütün sınırlar için GlobalRateLimit'te.
         });
         return services;
     }
