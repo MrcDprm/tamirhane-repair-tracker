@@ -44,6 +44,9 @@ public interface IAccountService
 
     Task SignOutAsync();
 
+    /// <summary>Hesabın şifresi bu mu (geri alınamaz işlemlerden önce yeniden sorulur). Hesap yoksa false.</summary>
+    Task<bool> CheckPasswordAsync(Guid userId, string password, CancellationToken ct);
+
     /// <summary>
     /// Demo atölyenin sahibi olarak şifresiz oturum açar ("Demoyu dene"). Sadece demo adresli hesaplarda çalışır;
     /// başka bir hesapla çağrılırsa hata fırlatır (bir hata yüzünden gerçek bir hesaba şifresiz girilemesin).

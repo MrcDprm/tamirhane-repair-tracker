@@ -614,5 +614,13 @@
   "legal.terms.title": "Terms of use",
   "legal.updated": "Last updated: 3 November 2026",
   "account.register.legal_html": "By signing up you accept the <a href=\"/terms\">terms of use</a>. How your data is handled is in the <a href=\"/privacy\">privacy notice</a>.",
-  "tracking.privacy": "Privacy"
+  "tracking.privacy": "Privacy",
+  "settings.delete.title": "Delete shop",
+  "settings.delete.text": "All work orders, customers, devices, stock, payment records, branches and staff accounts are permanently deleted. Customers' tracking links stop working. This cannot be undone; print or save any records you need first.",
+  "settings.delete.password": "Your password, to confirm",
+  "settings.delete.submit": "Delete the shop and all its data",
+  "settings.delete.confirm": "Permanently delete the shop and all its data? This cannot be undone.",
+  "settings.delete.wrong_password": "Wrong password; the shop was not deleted.",
+  "settings.delete.demo": "A demo shop cannot be deleted; it is removed automatically after 24 hours.",
+  "settings.delete.done": "Your shop and all its data have been deleted. Thanks for using Tamirhane."
 }

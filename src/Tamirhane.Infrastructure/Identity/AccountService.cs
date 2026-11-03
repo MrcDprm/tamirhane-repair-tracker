@@ -117,6 +117,12 @@ internal sealed class AccountService(
 
     public Task SignOutAsync() => signIn.SignOutAsync();
 
+    public async Task<bool> CheckPasswordAsync(Guid userId, string password, CancellationToken ct)
+    {
+        var user = await users.FindByIdAsync(userId.ToString());
+        return user is not null && await users.CheckPasswordAsync(user, password);
+    }
+
     public async Task SignInDemoAsync(Guid userId, CancellationToken ct)
     {
         var user = await users.FindByIdAsync(userId.ToString());

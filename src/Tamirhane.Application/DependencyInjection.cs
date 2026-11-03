@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<UpdateBranch>();
         services.AddScoped<SwitchBranch>();
         services.AddScoped<GetShopSettings>();
+        services.AddScoped<DeleteShop>();
         services.AddScoped<UpdateShopSettings>();
         services.AddScoped<ReceiveDevice>();
         services.AddScoped<GetWorkOrder>();

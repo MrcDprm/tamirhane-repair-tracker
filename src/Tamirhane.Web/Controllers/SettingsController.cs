@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Localization;
 using Tamirhane.Application.Abstractions;
 using Tamirhane.Application.Shops;
@@ -8,6 +9,7 @@ using Tamirhane.Domain.Shops;
 using Tamirhane.Web.Authorization;
 using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.Settings;
+using Tamirhane.Web.RateLimiting;
 
 namespace Tamirhane.Web.Controllers;
 
@@ -89,6 +91,29 @@ public sealed class SettingsController(ListBranches listBranches, IStringLocaliz
             ? t["settings.branch_saved"].Value
             : Message(Errors.GetValueOrDefault(result.Error!.Code, (Field: "", Key: "error.branch_update"))).Value;
         return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>
+    /// Atölyeyi bütün verisiyle siler; sahibin şifresi yeniden sorulur. Şifre denemesi giriş formuyla aynı sınıra tabi.
+    /// Başarılıysa oturum kapanır, tanıtım sayfasına dönülür.
+    /// </summary>
+    [HttpPost("delete")]
+    [EnableRateLimiting(AccountRateLimit.Policy)]
+    public async Task<IActionResult> Delete(string? password, [FromServices] DeleteShop delete, [FromServices] IAccountService accounts,
+        CancellationToken ct)
+    {
+        var result = await delete.HandleAsync(password ?? "", ct);
+        if (result.Error?.Kind == ErrorKind.Forbidden)
+            return Forbid();
+        if (result.IsFailure)
+        {
+            TempData["Error"] = t[result.Error == DeleteShopErrors.Demo ? "settings.delete.demo" : "settings.delete.wrong_password"].Value;
+            return RedirectToAction(nameof(Index));
+        }
+
+        await accounts.SignOutAsync();
+        TempData["Status"] = t["settings.delete.done"].Value;
+        return LocalRedirect("/");
     }
 
     private async Task<IActionResult> PageAsync(ShopSettingsInput shop, BranchInput newBranch, CancellationToken ct) =>

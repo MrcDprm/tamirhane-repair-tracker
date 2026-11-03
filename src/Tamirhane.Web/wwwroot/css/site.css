@@ -434,6 +434,8 @@ legend { padding: 0; }
 .btn-primary:hover { border-color: var(--stamp); filter: brightness(1.1); }
 .btn-primary:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--stamp-deep); }
 .btn-danger { color: var(--warn-text); border-color: var(--warn); }
+.panel-danger { border-color: var(--warn); }
+.panel-danger .btn-danger { margin-top: 16px; }
 .btn-block { width: 100%; }
 .link-button { background: none; border: 0; padding: 0; font: inherit; color: var(--stamp); text-decoration: underline; cursor: pointer; min-height: var(--touch); }
 
