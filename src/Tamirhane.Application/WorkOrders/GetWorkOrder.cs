@@ -45,6 +45,8 @@ public sealed record QuotePartOption(Guid Id, string Sku, string Name, decimal S
 public sealed record WorkOrderView(
     Guid Id, string Number, string TrackingCode, WorkOrderStatus Status, DateTimeOffset CreatedAt,
     string Complaint, string? Condition, string? Accessories, bool HasPasscode,
+    // Çözülmüş cihaz şifresi: sadece atölye personeli görür (fiş ve takip sayfasında yok). Çözülemezse null.
+    string? Passcode,
     string CustomerName, string CustomerPhone, string? CustomerEmail,
     DeviceKind DeviceKind, string Brand, string Model, string? Serial, string? Imei)
 {
@@ -93,7 +95,8 @@ public sealed record WorkOrderView(
 
 public sealed class GetWorkOrder(
     IWorkOrderRepository orders, ICustomerRepository customers, IDeviceRepository devices, IStaffRepository staff,
-    IPartRepository parts, IShopSettings settings, ICurrentUser user, ITrackingLinks links, TimeProvider clock)
+    IPartRepository parts, IShopSettings settings, ICurrentUser user, ITrackingLinks links, TimeProvider clock,
+    IPasscodeProtector passcodes)
 {
     public async Task<Result<WorkOrderView>> HandleAsync(Guid id, CancellationToken ct)
     {
@@ -124,6 +127,7 @@ public sealed class GetWorkOrder(
         return new WorkOrderView(
             order.Id, order.Number, order.TrackingCode, order.Status, order.CreatedAt,
             order.Complaint, order.Condition, order.Accessories, order.Passcode is not null,
+            order.Passcode is { } stored ? passcodes.Unprotect(stored) : null,
             customer.Name, customer.Phone.Value, customer.Email,
             device.Kind, device.Brand, device.Model, device.Serial, device.Imei)
         {

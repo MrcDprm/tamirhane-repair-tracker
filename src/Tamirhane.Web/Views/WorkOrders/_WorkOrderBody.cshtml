@@ -209,11 +209,16 @@
                     }
                     <p class="muted">
                         @T["workorder.tracking_code"] <code>@Model.TrackingCode</code>
-                        @if (Model.HasPasscode)
-                        {
-                            <br />@T["workorder.passcode_kept"]
-                        }
                     </p>
+                    @if (Model.HasPasscode)
+                    {
+                        @* Teknisyen onarımda şifreyi görmeli; tıklayınca açılır, ekranda sürekli durmaz. *@
+                        <details class="passcode">
+                            <summary>@T["workorder.passcode_show"]</summary>
+                            <p><code>@(Model.Passcode ?? T["workorder.passcode_unreadable"])</code></p>
+                            <p class="field-help">@T["workorder.passcode_kept"]</p>
+                        </details>
+                    }
                 </div>
             </section>
         </div>

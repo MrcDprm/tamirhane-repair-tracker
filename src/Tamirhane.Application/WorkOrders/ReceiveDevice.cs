@@ -18,7 +18,7 @@ public sealed record ReceivedWorkOrder(Guid WorkOrderId, string Number, string T
 
 public sealed class ReceiveDevice(
     ICustomerRepository customers, IDeviceRepository devices, IWorkOrderRepository orders,
-    IUnitOfWork unitOfWork, INotificationQueue notifications, ICurrentUser user, TimeProvider clock)
+    IUnitOfWork unitOfWork, INotificationQueue notifications, ICurrentUser user, TimeProvider clock, IPasscodeProtector passcodes)
 {
     public async Task<Result<ReceivedWorkOrder>> HandleAsync(ReceiveDeviceCommand c, CancellationToken ct)
     {
@@ -34,7 +34,7 @@ public sealed class ReceiveDevice(
 
         var number = WorkOrderNumber.Format(now.Year, await orders.NextSequenceAsync(user.ShopId, now.Year, ct));
         var order = WorkOrder.Receive(user.ShopId, user.BranchId, number, TrackingCode.Generate(),
-            customer.Value.Id, device.Value.Id, c.Complaint, c.Condition, c.Accessories, c.Passcode, user.StaffId, now);
+            customer.Value.Id, device.Value.Id, c.Complaint, c.Condition, c.Accessories, passcodes.ProtectOrNull(c.Passcode), user.StaffId, now);
         if (order.IsFailure)
             return order.Error!;
         var promised = order.Value.Promise(c.PromisedDate, DateOnly.FromDateTime(now.DateTime));

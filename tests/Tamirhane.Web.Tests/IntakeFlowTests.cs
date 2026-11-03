@@ -30,7 +30,8 @@ public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
         Assert.Contains("Teslim alındı", page);
         Assert.Contains("Fişi yazdır", page);
         Assert.Contains("Cihaz şifresi kayıtlı", page);
-        Assert.DoesNotContain("4826", page); // cihaz şifresinin kendisi sayfada yok
+        // Şifre personel için kapalı bir bölümde, tıklayınca açılır (ekranda sürekli durmaz).
+        Assert.Matches(@"<details class=""passcode"">\s*<summary>Cihaz şifresini göster</summary>\s*<p><code>4826</code>", page);
     }
 
     [DockerFact]

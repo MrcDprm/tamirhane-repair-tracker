@@ -40,9 +40,11 @@ public sealed class TestShop
     public FakeQueue Queue { get; } = new();
     public FakeWorkshop Workshop { get; } = new();
 
-    public ReceiveDevice ReceiveDevice() => new(Customers, Devices, Orders, UnitOfWork, Queue, User, Clock);
+    public FakePasscodes Passcodes { get; } = new();
+
+    public ReceiveDevice ReceiveDevice() => new(Customers, Devices, Orders, UnitOfWork, Queue, User, Clock, Passcodes);
     public FindCustomerByPhone FindCustomerByPhone() => new(Customers, Devices);
-    public GetWorkOrder GetWorkOrder() => new(Orders, Customers, Devices, Staff, Parts, new FakeSettings(Settings), User, new FakeTrackingLinks(), Clock);
+    public GetWorkOrder GetWorkOrder() => new(Orders, Customers, Devices, Staff, Parts, new FakeSettings(Settings), User, new FakeTrackingLinks(), Clock, Passcodes);
     public StartDiagnosis StartDiagnosis() => new(Orders, UnitOfWork, Queue, User, Clock);
     public StartRepair StartRepair() => new(Orders, UnitOfWork, Queue, User, Clock);
     public AddQuoteLine AddQuoteLine() => new(Orders, Parts, new FakeSettings(Settings), UnitOfWork, Queue, User, Clock);
@@ -54,11 +56,11 @@ public sealed class TestShop
     public DeliverWorkOrder Deliver() => new(Orders, new FakeSettings(Settings), UnitOfWork, Queue, User, Clock);
     public CancelWorkOrder Cancel() => new(Orders, Stock, UnitOfWork, Queue, User, Clock);
     public AddNote AddNote() => new(Orders, UnitOfWork, Queue, User, Clock);
-    public UpdateIntakeDetails UpdateIntake() => new(Orders, UnitOfWork, Queue, User, Clock);
+    public UpdateIntakeDetails UpdateIntake() => new(Orders, UnitOfWork, Queue, User, Clock, Passcodes);
     public RecordPayment RecordPayment() => new(Orders, UnitOfWork, Queue, User, Clock);
     public RecordRefund RecordRefund() => new(Orders, UnitOfWork, Queue, User, Clock);
     public SetDiagnosisFee SetDiagnosisFee() => new(Orders, UnitOfWork, Queue, User, Clock);
-    public ReopenUnderWarranty ReopenUnderWarranty() => new(Orders, UnitOfWork, Queue, User, Clock);
+    public ReopenUnderWarranty ReopenUnderWarranty() => new(Orders, UnitOfWork, Queue, User, Clock, Passcodes);
     public AddPart AddPart() => new(Parts, Stock, UnitOfWork, User, Clock);
     public UpdatePart UpdatePart() => new(Parts, UnitOfWork, User);
     public ListParts ListParts() => new(Parts, User);

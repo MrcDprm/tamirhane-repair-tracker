@@ -70,7 +70,8 @@ builder.Services.AddAntiforgery(options =>
     options.Cookie.Name = "__Host-tamirhane-csrf";
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
-builder.Services.AddInfrastructure(connectionString);
+// systemd StateDirectory= verince STATE_DIRECTORY ortam değişkeni gelir (yayın); yoksa anahtarlar veritabanında.
+builder.Services.AddInfrastructure(connectionString, builder.Configuration["STATE_DIRECTORY"]);
 builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
     builder.Configuration["EMAIL_FROM"] ?? AccountOptions.DefaultFrom));
 // Tarayıcı bildirimi: üç değişken de boşsa kapalı; yarım ya da bozuk ayarda uygulama açılmaz.
@@ -103,6 +104,9 @@ builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 var app = builder.Build();
+
+// Yayın paketi .NET çalışma ortamını içinde taşır: hangi yamanın çalıştığı günlükte görünsün (deploy/README.md).
+app.Logger.LogInformation("Tamirhane açılıyor: .NET {Runtime}", Environment.Version);
 
 // Yayında şema açılışta güncellenir (yeni migration'lar uygulanır); geliştirmede "dotnet ef database update".
 if (app.Environment.IsProduction())

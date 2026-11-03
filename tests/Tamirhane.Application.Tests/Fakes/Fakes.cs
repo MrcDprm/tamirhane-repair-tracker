@@ -183,3 +183,12 @@ public sealed class FakeStock : IStockRepository
 
     public void AddMovements(IEnumerable<StockMovement> movements) => Movements.AddRange(movements);
 }
+
+/// <summary>Şifrelemeyi taklit eder: kayıtta düz şifre görünmesin diye ters çevirip ön ek koyar.</summary>
+public sealed class FakePasscodes : IPasscodeProtector
+{
+    public string Protect(string passcode) => "enc:" + new string(passcode.Reverse().ToArray());
+
+    public string? Unprotect(string stored) =>
+        stored.StartsWith("enc:", StringComparison.Ordinal) ? new string(stored[4..].Reverse().ToArray()) : stored;
+}

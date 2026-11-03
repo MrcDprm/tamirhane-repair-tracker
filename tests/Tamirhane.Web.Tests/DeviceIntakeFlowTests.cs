@@ -61,11 +61,14 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
             new("Input.LockType", "none"), new("Input.Passcode", "unutulmuş değer"),
         ]);
 
-        // Aksesuarlar katalog sırasıyla (şarj aleti kılıftan önce), şifre türüyle birlikte.
-        Assert.Contains("Şarj aleti, Kılıf", await BodyAsync(owner, Browser.RedirectOf(pin)));
-        Assert.DoesNotContain("Cihaz şifresi kayıtlı", await BodyAsync(owner, Browser.RedirectOf(none)));
-        var passcodes = await PasscodesAsync("tur-telefon@example.com");
-        Assert.Equal(["Desen: 1-4-7-8-9"], passcodes);
+        // Aksesuarlar katalog sırasıyla (şarj aleti kılıftan önce), şifre türüyle birlikte; sayfada çözülmüş, kayıtta şifreli.
+        var pinPage = await BodyAsync(owner, Browser.RedirectOf(pin));
+        Assert.Contains("Şarj aleti, Kılıf", pinPage);
+        Assert.Contains("<code>Desen: 1-4-7-8-9</code>", pinPage);
+        Assert.DoesNotContain("Cihaz şifresini göster", await BodyAsync(owner, Browser.RedirectOf(none)));
+        var stored = Assert.Single(await PasscodesAsync("tur-telefon@example.com"));
+        Assert.StartsWith("dp1:", stored);
+        Assert.DoesNotContain("1-4-7-8-9", stored);
     }
 
     [DockerFact]
