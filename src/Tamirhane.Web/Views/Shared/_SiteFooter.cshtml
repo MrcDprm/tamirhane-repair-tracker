@@ -1,0 +1,8 @@
+@* Alt bilgi: yıl sunucuda yazılır, site.js tarayıcının yılıyla günceller; yanında yasal sayfalar. *@
+<footer class="site-foot">
+    <p>© <span data-year>@DateTime.UtcNow.Year</span> Miraç Deprem</p>
+    <nav aria-label="@T["footer.legal"]">
+        <a asp-controller="Home" asp-action="Privacy">@T["legal.privacy.title"]</a>
+        <a asp-controller="Home" asp-action="Terms">@T["legal.terms.title"]</a>
+    </nav>
+</footer>

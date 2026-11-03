@@ -105,10 +105,11 @@ public sealed partial class DemoFlowTests(TamirhaneWebFactory app)
     public async Task Too_many_demos_from_one_address_are_refused()
     {
         var visitor = app.NewBrowser();
+        // İlk demodan sonra ziyaretçinin oturumu açık; tanıtım sayfası panele yönlendirir, CSRF token'ı gizlilik sayfasından alınır.
         for (var i = 0; i < DemoRateLimit.PermitsPerHour; i++)
-            Assert.Equal("/panel", Browser.RedirectOf(await visitor.SubmitAsync("/", "/demo", new())));
+            Assert.Equal("/panel", Browser.RedirectOf(await visitor.SubmitAsync("/privacy", "/demo", new())));
 
-        var refused = await visitor.SubmitAsync("/", "/demo", new());
+        var refused = await visitor.SubmitAsync("/privacy", "/demo", new());
 
         Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
         Assert.Equal("/panel", Browser.RedirectOf(await app.NewBrowser().SubmitAsync("/", "/demo", new()))); // başka adres etkilenmez

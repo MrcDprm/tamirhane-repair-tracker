@@ -1,0 +1,56 @@
+@* Gizlilik politikası ve KVKK aydınlatma metni (Türkçe). İngilizcesi _Privacy.en.cshtml; ikisi aynı içeriği taşır. *@
+<p>Bu metin, Tamirhane'yi kullanan atölyelere, atölye personeline ve cihazını tamire bırakan müşterilere kişisel verilerinin nasıl işlendiğini 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında anlatır.</p>
+
+<h2>Kim sorumlu?</h2>
+<p>Tamirhane'yi Miraç Deprem (gerçek kişi) işletir. İletişim: <a href="mailto:mrcdprmm@hotmail.com">mrcdprmm@hotmail.com</a>.</p>
+<ul>
+    <li><strong>Atölye hesapları için</strong> (sahip ve personelin adı, e-postası, şifresi) Tamirhane veri sorumlusudur.</li>
+    <li><strong>Atölyenin müşterileri için</strong> (ad, telefon, cihaz bilgileri) veri sorumlusu, o müşteriyi kaydeden atölyedir. Tamirhane bu verileri yalnızca atölye adına, atölyenin talimatıyla saklar ve işler (veri işleyen). Müşteriler bu verilerle ilgili taleplerini önce cihazı bıraktıkları atölyeye iletmelidir; bize yazarlarsa ilgili atölyeye yönlendiririz.</li>
+</ul>
+
+<h2>Hangi verileri işliyoruz?</h2>
+<ul>
+    <li><strong>Atölye hesabı:</strong> atölye adı, adres ve telefonu; sahip ve personelin adı, e-posta adresi, şifrenin geri çevrilemez özeti (şifrenin kendisi saklanmaz), dil tercihi, şube bilgisi.</li>
+    <li><strong>Atölyenin müşterisi:</strong> ad, telefon, isteğe bağlı e-posta, aydınlatma metninin okunduğu zaman; cihazın türü, markası, modeli, seri numarası/IMEI'si, aksesuarları, görünür durumu ve arıza açıklaması; teklif kalemleri, onay ya da ret kararı (onaylayanın adı ve zamanı), tahsilat kayıtları, müşteriye görünen notlar.</li>
+    <li><strong>Cihaz şifresi:</strong> yalnızca onarım için gerekirse ve atölye girerse saklanır; iş emri kapanınca silinir. Fişte ve takip sayfasında görünmez.</li>
+    <li><strong>Tarayıcı bildirimi:</strong> müşteri takip sayfasında bildirimi açarsa tarayıcının verdiği bildirim adresi ve anahtarları; bildirim kapatılınca ya da iş emrinin son bildirimiyle silinir.</li>
+    <li><strong>Teknik kayıtlar:</strong> güvenlik ve kötüye kullanımı önlemek için istek sınırlamasında IP adresi geçici olarak bellekte tutulur, veritabanına yazılmaz. Sunucu hata kayıtları kısa süre saklanır.</li>
+</ul>
+
+<h2>Neden işliyoruz, hukuki sebep ne?</h2>
+<ul>
+    <li>Atölyeye iş emri takip hizmetini sunmak: hesap açmak, giriş yapmak, iş emri, teklif, stok ve tahsilat kaydı tutmak (KVKK m. 5/2-c, sözleşmenin kurulması ve ifası).</li>
+    <li>Müşteriye cihazının durumunu bildirmek: takip sayfası, e-posta ve tarayıcı bildirimi (atölye adına; atölyenin dayanağı müşteriyle arasındaki onarım sözleşmesi ve kabulde alınan aydınlatma onayıdır).</li>
+    <li>Hizmetin güvenliği: şifre sıfırlama, giriş denemesi sınırı, kötüye kullanımın önlenmesi (KVKK m. 5/2-f, meşru menfaat).</li>
+</ul>
+<p>Veriler reklam, profil çıkarma ya da satış için kullanılmaz; üçüncü kişilere satılmaz. Sitede reklam, analitik ya da takip betiği yoktur.</p>
+
+<h2>Kimlere aktarılıyor?</h2>
+<p>Hizmet şu altyapı sağlayıcılarıyla çalışır; veriler onların Avrupa Birliği'ndeki sunucularında saklanır ve iletilir:</p>
+<ul>
+    <li><strong>Render</strong> (uygulama sunucusu), <strong>Neon</strong> (PostgreSQL veritabanı), <strong>Resend</strong> (e-posta gönderimi: doğrulama, şifre sıfırlama, davet ve müşteriye durum e-postaları).</li>
+    <li>Tarayıcı bildirimleri, müşterinin tarayıcısının bildirim hizmetine (Google, Mozilla, Apple vb.) şifreli olarak iletilir; içeriği bu hizmetler okuyamaz.</li>
+</ul>
+<p>Bu nedenle kişisel veriler yurt dışına aktarılmış olur (KVKK m. 9). Bunun dışında veriler, yasal bir zorunluluk olmadıkça kimseyle paylaşılmaz.</p>
+
+<h2>Ne kadar saklıyoruz?</h2>
+<ul>
+    <li>Atölye verileri, atölye hesabı açık kaldığı sürece saklanır. Atölye sahibi Ayarlar'dan atölyeyi sildiğinde atölyenin bütün verileri (iş emirleri, müşteriler, stok, personel hesapları) kalıcı olarak silinir.</li>
+    <li>Demo atölyeler ve içindeki örnek veriler 24 saat sonra kendiliğinden silinir.</li>
+    <li>Cihaz şifresi iş emri kapanınca, kullanılmayan davet bağlantıları 7 gün sonra geçersiz olur.</li>
+</ul>
+
+<h2>Çerezler</h2>
+<p>Yalnızca hizmetin çalışması için gereken çerezler kullanılır, izin istenmez:</p>
+<ul>
+    <li><code>__Host-tamirhane</code>: oturum (giriş yaptığında, en fazla 14 gün).</li>
+    <li><code>__Host-tamirhane-csrf</code>: formların başka sitelerden gönderilmesini engeller.</li>
+    <li><code>__Host-tamirhane-lang</code>: dil seçimin (1 yıl).</li>
+</ul>
+<p>Açık/koyu tema seçimi yalnızca kendi tarayıcında (<code>localStorage</code>) tutulur, sunucuya gönderilmez.</p>
+
+<h2>Hakların</h2>
+<p>KVKK m. 11 uyarınca verilerinin işlenip işlenmediğini öğrenme, bilgi isteme, düzeltilmesini ya da silinmesini isteme, aktarıldığı kişileri öğrenme, itiraz etme ve zararın giderilmesini isteme hakların vardır. Taleplerini <a href="mailto:mrcdprmm@hotmail.com">mrcdprmm@hotmail.com</a> adresine yazabilirsin; en geç 30 gün içinde ücretsiz yanıtlanır. Atölyenin müşterisiysen talebini önce cihazını bıraktığın atölyeye ilet.</p>
+
+<h2>Değişiklikler</h2>
+<p>Bu metin değişirse güncel hâli bu sayfada yayımlanır ve üstteki tarih güncellenir.</p>

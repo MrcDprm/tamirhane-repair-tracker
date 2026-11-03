@@ -1,0 +1,56 @@
+@* Privacy policy and KVKK notice (English). The Turkish text is _Privacy.tr.cshtml; both carry the same content. *@
+<p>This notice explains how Tamirhane processes the personal data of repair shops, their staff and the customers who leave a device for repair, under the Turkish Personal Data Protection Law No. 6698 (KVKK).</p>
+
+<h2>Who is responsible?</h2>
+<p>Tamirhane is run by Miraç Deprem (an individual). Contact: <a href="mailto:mrcdprmm@hotmail.com">mrcdprmm@hotmail.com</a>.</p>
+<ul>
+    <li><strong>For shop accounts</strong> (the owner's and staff members' name, email and password) Tamirhane is the data controller.</li>
+    <li><strong>For a shop's customers</strong> (name, phone, device details) the data controller is the shop that recorded the customer. Tamirhane only stores and processes this data on the shop's behalf and on its instructions (data processor). Customers should send requests about this data to the shop where they left their device first; if they write to us, we forward them to that shop.</li>
+</ul>
+
+<h2>What data do we process?</h2>
+<ul>
+    <li><strong>Shop account:</strong> shop name, address and phone; the owner's and staff members' name, email address, a one-way hash of the password (the password itself is never stored), language preference and branch.</li>
+    <li><strong>A shop's customer:</strong> name, phone, optional email, the time the privacy notice was read to them; the device type, brand, model, serial number/IMEI, accessories, visible condition and the reported fault; quote lines, the approval or refusal (with the approver's name and time), payment records and notes shared with the customer.</li>
+    <li><strong>Device passcode:</strong> stored only if the repair needs it and the shop enters it; deleted when the work order is closed. It never appears on the receipt or the tracking page.</li>
+    <li><strong>Browser notifications:</strong> if a customer turns them on from the tracking page, the push address and keys their browser provides; deleted when notifications are turned off or with the last notification of the work order.</li>
+    <li><strong>Technical records:</strong> for security and abuse prevention, rate limiting keeps IP addresses briefly in memory; they are not written to the database. Server error logs are kept for a short time.</li>
+</ul>
+
+<h2>Why, and on what legal basis?</h2>
+<ul>
+    <li>To provide the work order tracking service to the shop: creating the account, signing in, keeping work order, quote, stock and payment records (KVKK art. 5/2-c, performance of a contract).</li>
+    <li>To tell the customer about their device: the tracking page, emails and browser notifications (on the shop's behalf; the shop relies on its repair contract with the customer and the notice acknowledged at intake).</li>
+    <li>To keep the service secure: password resets, sign-in attempt limits, abuse prevention (KVKK art. 5/2-f, legitimate interest).</li>
+</ul>
+<p>Data is never used for advertising or profiling and is never sold. The site runs no ads, analytics or tracking scripts.</p>
+
+<h2>Who receives it?</h2>
+<p>The service runs on these infrastructure providers; data is stored and transmitted on their servers in the European Union:</p>
+<ul>
+    <li><strong>Render</strong> (application server), <strong>Neon</strong> (PostgreSQL database), <strong>Resend</strong> (email: verification, password reset, invitations and status emails to customers).</li>
+    <li>Browser notifications are passed, encrypted, to the push service of the customer's browser (Google, Mozilla, Apple and so on); these services cannot read their content.</li>
+</ul>
+<p>Personal data is therefore transferred abroad (KVKK art. 9). Apart from this, data is not shared with anyone unless the law requires it.</p>
+
+<h2>How long do we keep it?</h2>
+<ul>
+    <li>Shop data is kept while the shop account is open. When the owner deletes the shop from Settings, all of its data (work orders, customers, stock, staff accounts) is permanently deleted.</li>
+    <li>Demo shops and their sample data are deleted automatically after 24 hours.</li>
+    <li>Device passcodes are deleted when the work order is closed; unused invitation links expire after 7 days.</li>
+</ul>
+
+<h2>Cookies</h2>
+<p>Only cookies the service needs to work are used, so no consent banner is shown:</p>
+<ul>
+    <li><code>__Host-tamirhane</code>: your session (after you sign in, up to 14 days).</li>
+    <li><code>__Host-tamirhane-csrf</code>: stops other sites from submitting forms on your behalf.</li>
+    <li><code>__Host-tamirhane-lang</code>: your language choice (1 year).</li>
+</ul>
+<p>The light/dark theme choice stays in your own browser (<code>localStorage</code>) and is never sent to the server.</p>
+
+<h2>Your rights</h2>
+<p>Under KVKK art. 11 you can ask whether your data is processed, request information about it, ask for it to be corrected or deleted, learn who it was transferred to, object, and claim compensation for damage. Write to <a href="mailto:mrcdprmm@hotmail.com">mrcdprmm@hotmail.com</a>; you will get a free answer within 30 days. If you are a shop's customer, send your request to the shop where you left your device first.</p>
+
+<h2>Changes</h2>
+<p>If this notice changes, the current version is published on this page and the date above is updated.</p>

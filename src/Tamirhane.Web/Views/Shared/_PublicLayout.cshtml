@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Tamirhane</title>
+    <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+</head>
+<body class="public">
+    @* Tanıtım ve yasal sayfalar: üstte pano şeridi, altta alt bilgi. Uygulamanın kabuğu (yan menü) burada yok. *@
+    <a class="skip-link" href="#main">@T["layout.skip"]</a>
+    <header class="public-top pegboard">
+        <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
+        <nav class="top-end" aria-label="@T["layout.account"]">
+            <partial name="_LanguageSwitch" model="@("side-btn")" />
+            <a class="side-btn public-login" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>
+            <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@T["account.register.title"]</a>
+        </nav>
+    </header>
+    <main id="main">
+        @RenderBody()
+    </main>
+    <partial name="_SiteFooter" />
+    <script src="~/js/vendor/motion.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/motion.js" asp-append-version="true"></script>
+</body>
+</html>
