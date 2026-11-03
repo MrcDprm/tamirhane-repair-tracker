@@ -68,6 +68,11 @@ public sealed class FakeAccounts : IAccountService
 
     public Task SignOutAsync() => throw new NotSupportedException();
 
+    public Dictionary<Guid, string> Passwords { get; } = [];
+
+    public Task<bool> CheckPasswordAsync(Guid userId, string password, CancellationToken ct) =>
+        Task.FromResult(Passwords.TryGetValue(userId, out var actual) && actual == password);
+
     public List<Guid> DemoSignIns { get; } = [];
 
     public Task SignInDemoAsync(Guid userId, CancellationToken ct)
