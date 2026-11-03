@@ -1,7 +1,7 @@
 namespace Tamirhane.Infrastructure;
 
 /// <summary>
-/// Geliştirmede repodaki .env dosyası (yayında değerler Render'ın ortam değişkenlerinden gelir). Dosya, verilen
+/// Geliştirmede repodaki .env dosyası (yayında değerler sunucudaki ortam dosyasından gelir). Dosya, verilen
 /// klasörden yukarı doğru, çözüm dosyasının (Tamirhane.slnx) bulunduğu repo köküne kadar aranır; repo dışındaki
 /// bir .env'e karışılmaz.
 /// Satırlar düz karakter karşılaştırmasıyla ayrıştırılır: büyük-küçük harf dönüşümü ve kültüre bağlı düzenli ifade

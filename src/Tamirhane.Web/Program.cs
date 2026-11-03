@@ -31,7 +31,7 @@ if (builder.Environment.IsDevelopment() && builder.Configuration["DOTENV"] != "o
     builder.Configuration.Sources.Insert(0, new MemoryConfigurationSource { InitialData = dotEnv! });
 }
 
-// Yayında bağlantı DATABASE_URL ortam değişkeninden gelir (Neon/Render); geliştirmede appsettings.Development.json'dan.
+// Yayında bağlantı DATABASE_URL ortam değişkeninden gelir (Neon); geliştirmede appsettings.Development.json'dan.
 var connectionString = builder.Configuration["DATABASE_URL"]
     ?? builder.Configuration.GetConnectionString("Tamirhane")
     ?? throw new InvalidOperationException(
@@ -85,16 +85,12 @@ builder.Services.AddShopPolicies();
 // Kullanım senaryoları (her istek kendi örneğini alır) ve saat.
 builder.Services.AddApplication();
 
-// Render TLS'i kendi vekil sunucusunda bitirir, uygulamaya http ile gelir: asıl şema (https) X-Forwarded-Proto'dan
-// okunur. Uygulamaya Render'ın dışından ulaşılamadığı için vekil listesi boş bırakılır. X-Forwarded-For'un son adresi
-// Render'ın kendi vekilidir (herkes için aynı); bu yüzden rate limit istemciyi Cloudflare'in yazdığı CF-Connecting-IP
-// başlığından tanır (CLIENT_IP_HEADER, render.yaml).
+// Yayında uygulamanın önünde Caddy var (Oracle sunucusu): TLS'i Caddy bitirir, uygulamaya aynı makineden http ile
+// iletir. İstemcinin IP'si ve asıl şema (https) Caddy'nin yazdığı X-Forwarded-For / X-Forwarded-Proto'dan okunur.
+// Bu başlıklara sadece makinenin kendisinden (127.0.0.1, ForwardedHeaders'ın varsayılan güvenilen vekili) gelen
+// istekte inanılır; Caddy dışarıdan gelen X-Forwarded-For'u yok sayıp kendi gördüğü adresi yazar, uydurulamaz.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
-});
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto);
 builder.Services.AddHttpsRedirection(options => options.HttpsPort = 443);
 
 // Yayında Host başlığı sadece sitenin kendi adresleri olabilir (AllowedHosts ortam değişkeni); "*" ile açılmaz.
@@ -126,7 +122,7 @@ if (!app.Environment.IsDevelopment())
 // Gövdesiz hata kodları (bulunamayan adres, bozuk form) çıplak tarayıcı sayfası yerine sitenin hata sayfasıyla.
 app.UseStatusCodePagesWithReExecute("/error/{0}");
 
-// Render'ın sağlık kontrolü uygulamaya içeriden http ile gelir; yönlendirilirse servis "sağlıksız" sayılırdı.
+// Sağlık kontrolü sunucunun içinden, Caddy'siz http ile de sorulabilir; https'e yönlendirilmez.
 app.UseWhen(context => !context.Request.Path.StartsWithSegments("/healthz"), branch => branch.UseHttpsRedirection());
 // Tarih ve sayı biçimi sunucunun işletim sistemine bağlı kalmasın (yayındaki Linux konteyneri kültürsüz çalışır):
 // arayüz Türkçe ya da İngilizce (#35), kültürler AppCultures'ta.
@@ -146,7 +142,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
-// /healthz: uygulama ayakta mı (Render bunu sık sorar; veritabanına dokunmaz, Neon'u boşuna uyandırmaz).
+// /healthz: uygulama ayakta mı (izleme bunu sık sorar; veritabanına dokunmaz, Neon'u boşuna uyandırmaz).
 // /health: veritabanına da ulaşılıyor mu (elle ya da izleme için).
 app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health");

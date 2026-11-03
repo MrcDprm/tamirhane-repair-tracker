@@ -1,0 +1,7 @@
+# /etc/caddy/Caddyfile'a eklenen site bloğu (aynı Caddy Zarf, Nabız ve quiz sunucusunu da taşır).
+# Caddy HTTPS sertifikasını kendisi alır; dışarıdan gelen X-Forwarded-For'u yok sayıp ziyaretçinin
+# adresini yazar, uygulama rate limit için bunu okur. Erişim log'u kapalı (Caddy varsayılanı).
+tamirhane.miracdeprem.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8090
+}

@@ -3,7 +3,7 @@ using Npgsql;
 namespace Tamirhane.Infrastructure.Persistence;
 
 /// <summary>
-/// Neon ve Render bağlantıyı URL olarak verir (postgresql://kullanıcı:şifre@sunucu/veritabanı?sslmode=require);
+/// Neon bağlantıyı URL olarak verir (postgresql://kullanıcı:şifre@sunucu/veritabanı?sslmode=require);
 /// Npgsql ise "Host=...;Username=..." biçimini ister. İkisi de kabul edilir.
 /// </summary>
 public static class ConnectionStrings

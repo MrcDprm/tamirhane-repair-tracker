@@ -25,7 +25,7 @@ public sealed class WebHostTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task Liveness_endpoint_answers_over_plain_http_without_the_database()
     {
-        // Render'ın sağlık kontrolü uygulamaya içeriden http ile gelir: https'e yönlendirilmemeli.
+        // Sunucunun içinden http ile sorulan sağlık kontrolü https'e yönlendirilmemeli.
         var response = await app.CreateClient(new() { BaseAddress = new Uri("http://localhost"), AllowAutoRedirect = false })
             .GetAsync("/healthz");
 
