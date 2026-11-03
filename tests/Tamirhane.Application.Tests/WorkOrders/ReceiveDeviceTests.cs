@@ -151,7 +151,7 @@ public class ReceiveDeviceTests
     }
 
     [Fact]
-    public async Task Work_order_page_shows_customer_and_device_but_not_the_passcode()
+    public async Task Work_order_page_shows_customer_device_and_the_decrypted_passcode_which_is_stored_encrypted()
     {
         var shop = new TestShop();
         var id = await shop.ReceiveAsync();
@@ -162,7 +162,8 @@ public class ReceiveDeviceTests
         Assert.Equal(("Ayşe Kaya", "+905321234567"), (view.CustomerName, view.CustomerPhone));
         Assert.Equal((DeviceKind.Phone, "Apple", "iPhone 13", "490154203237518"), (view.DeviceKind, view.Brand, view.Model, view.Imei));
         Assert.True(view.HasPasscode);
-        Assert.DoesNotContain(typeof(WorkOrderView).GetProperties(), p => p.Name == "Passcode"); // şifrenin kendisi sayfaya gitmez
+        Assert.Equal("1234", view.Passcode);                           // personel onarımda görür
+        Assert.Equal("enc:4321", shop.Orders.Items.Single().Passcode); // kayıtta şifreli, düz değil
     }
 
     [Fact]

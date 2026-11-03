@@ -5,11 +5,12 @@ namespace Tamirhane.Application.WorkOrders;
 
 public sealed record UpdateIntakeCommand(Guid WorkOrderId, string Complaint, string? Condition, string? Accessories, string? Passcode);
 
-public sealed class UpdateIntakeDetails(IWorkOrderRepository orders, IUnitOfWork uow, INotificationQueue queue, ICurrentUser user, TimeProvider clock)
+public sealed class UpdateIntakeDetails(
+    IWorkOrderRepository orders, IUnitOfWork uow, INotificationQueue queue, ICurrentUser user, TimeProvider clock, IPasscodeProtector passcodes)
     : WorkOrderHandler(orders, uow, queue, user, clock)
 {
     public Task<Result<bool>> HandleAsync(UpdateIntakeCommand c, CancellationToken ct) =>
-        RunAsync(c.WorkOrderId, order => order.UpdateIntake(c.Complaint, c.Condition, c.Accessories, c.Passcode), ct);
+        RunAsync(c.WorkOrderId, order => order.UpdateIntake(c.Complaint, c.Condition, c.Accessories, passcodes.ProtectOrNull(c.Passcode)), ct);
 }
 
 /// <summary>Teslim gününü söz verir, değiştirir ya da kaldırır (takip sayfasında "tahmini teslim").</summary>

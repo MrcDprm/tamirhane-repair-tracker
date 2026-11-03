@@ -19,8 +19,13 @@ Environment=ASPNETCORE_URLS=http://127.0.0.1:8090
 Environment=DOTNET_gcServer=0
 Environment=DOTNET_NOLOGO=1
 
-# Sıkılaştırma: her açılışta geçici bir kullanıcı; dosya sistemi salt okunur, ev klasörleri ve diğer süreçler görünmez.
-# Uygulama diske hiçbir şey yazmaz (veri Neon'da, şifreleme anahtarları veritabanında).
+# Data Protection anahtarları (oturum çerezi, cihaz şifresi): /var/lib/tamirhane, sadece servisin kullanıcısı okur.
+# systemd klasörü kendisi açar ve yolunu STATE_DIRECTORY ortam değişkeniyle verir; yeniden başlatmada silinmez.
+StateDirectory=tamirhane
+StateDirectoryMode=0700
+
+# Sıkılaştırma: her açılışta geçici bir kullanıcı; dosya sistemi salt okunur (anahtar klasörü hariç), ev klasörleri ve
+# diğer süreçler görünmez. Veri Neon'da.
 DynamicUser=yes
 ProtectSystem=strict
 ProtectHome=yes

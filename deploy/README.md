@@ -28,6 +28,15 @@ VAPID_SUBJECT=mailto:mrcdprmm@hotmail.com
 
 ## Yeni sürüm
 
+**Önce SDK'yı güncelle.** Paket .NET çalışma ortamını içinde taşır; sürümü bilgisayardaki SDK belirler. SDK eskiyse
+sunucu güvenlik yaması almamış bir çalışma ortamıyla açılır (2026-11-03 taramasında 10.0.9 bulundu). Açılışta
+`journalctl -u tamirhane | grep "Tamirhane açılıyor"` sürümü gösterir.
+
+```powershell
+winget install Microsoft.DotNet.SDK.10
+dotnet --list-runtimes
+```
+
 Bilgisayarda (repo kökünde) Linux ARM için tek klasörlük, .NET kurulumu gerektirmeyen bir yayın üretilir. ReadyToRun:
 kod önceden derlenir, küçük işlemcide ilk açılışlar hızlanır.
 

@@ -14,7 +14,7 @@ public sealed record ReopenUnderWarrantyCommand(
 /// </summary>
 public sealed class ReopenUnderWarranty(
     IWorkOrderRepository orders, IUnitOfWork unitOfWork, INotificationQueue notifications,
-    ICurrentUser user, TimeProvider clock)
+    ICurrentUser user, TimeProvider clock, IPasscodeProtector passcodes)
 {
     public async Task<Result<ReceivedWorkOrder>> HandleAsync(ReopenUnderWarrantyCommand c, CancellationToken ct)
     {
@@ -25,7 +25,7 @@ public sealed class ReopenUnderWarranty(
         var now = TurkeyTime.Now(clock);
         var number = WorkOrderNumber.Format(now.Year, await orders.NextSequenceAsync(user.ShopId, now.Year, ct));
         var order = WorkOrder.ReceiveUnderWarranty(previous, user.BranchId, number, TrackingCode.Generate(),
-            c.Complaint, c.Condition, c.Accessories, c.Passcode, user.StaffId, now);
+            c.Complaint, c.Condition, c.Accessories, passcodes.ProtectOrNull(c.Passcode), user.StaffId, now);
         if (order.IsFailure)
             return order.Error!;
 

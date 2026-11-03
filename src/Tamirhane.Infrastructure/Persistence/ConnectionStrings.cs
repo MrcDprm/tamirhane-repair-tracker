@@ -29,8 +29,11 @@ public static class ConnectionStrings
         {
             var kv = pair.Split('=', 2);
             if (kv.Length == 2 && kv[0].Equals("sslmode", StringComparison.OrdinalIgnoreCase)
-                && Enum.TryParse<SslMode>(kv[1], ignoreCase: true, out var mode))
-                builder.SslMode = mode;
+                // PostgreSQL adreslerinde "verify-full" tireli yazılır, Npgsql'de VerifyFull.
+                && Enum.TryParse<SslMode>(kv[1].Replace("-", ""), ignoreCase: true, out var mode))
+                // "require" Npgsql'de bağlantıyı şifreler ama sunucunun sertifikasını doğrulamaz (araya giren biri
+                // fark edilmez). Neon'un sertifikası herkese açık bir kökten imzalı: tam doğrulama ek ayar istemez.
+                builder.SslMode = mode == SslMode.Require ? SslMode.VerifyFull : mode;
         }
         return builder.ConnectionString;
     }

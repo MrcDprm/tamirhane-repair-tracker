@@ -680,5 +680,7 @@
   "tracking.push.ios_text": "iPhone'da bildirim, bu sayfa ana ekrana eklenince açılır:",
   "tracking.push.ios_step1": "Tarayıcının Paylaş düğmesine dokun (kare ve yukarı ok).",
   "tracking.push.ios_step2": "\"Ana Ekrana Ekle\"yi seç.",
-  "tracking.push.ios_step3": "Ana ekrandaki simgeden aç ve \"Durum değişince haber ver\"e dokun."
+  "tracking.push.ios_step3": "Ana ekrandaki simgeden aç ve \"Durum değişince haber ver\"e dokun.",
+  "workorder.passcode_show": "Cihaz şifresini göster",
+  "workorder.passcode_unreadable": "Şifre okunamadı; müşteriden yeniden iste."
 }

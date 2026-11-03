@@ -21,7 +21,11 @@ namespace Tamirhane.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+    /// <param name="keysDirectory">
+    /// Data Protection anahtarlarının klasörü (yayında systemd'nin STATE_DIRECTORY'si). Boşsa anahtarlar veritabanında
+    /// durur (geliştirme ve testler).
+    /// </param>
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, string? keysDirectory = null)
     {
         services.AddDbContext<TamirhaneDbContext>(options => Configure(options, connectionString));
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<TamirhaneDbContext>());
@@ -56,11 +60,15 @@ public static class DependencyInjection
             .AddDefaultTokenProviders()
             .AddTokenProvider<PasswordResetTokenProvider>(PasswordResetTokenProvider.ProviderName);
 
-        // Çerezler ve e-posta linklerindeki token'lar bu anahtarlarla imzalanır. Anahtarlar veritabanında durur:
-        // sunucu yeniden başlayınca (her yayında) oturumlar kapanmaz, gönderilmiş linkler geçerli kalır.
-        services.AddDataProtection()
-            .SetApplicationName("Tamirhane")
-            .PersistKeysToDbContext<TamirhaneDbContext>();
+        // Çerezler, e-posta linklerindeki token'lar ve cihaz şifreleri bu anahtarlarla korunur; yeniden başlayınca
+        // (her yayında) oturumlar kapanmasın diye kalıcı bir yerde durur. Yayında sunucunun diskinde, sadece uygulamanın
+        // okuyabildiği klasörde: veritabanı sızsa bile sahte oturum çerezi üretilemez, cihaz şifreleri çözülemez.
+        var protection = services.AddDataProtection().SetApplicationName("Tamirhane");
+        if (string.IsNullOrWhiteSpace(keysDirectory))
+            protection.PersistKeysToDbContext<TamirhaneDbContext>();
+        else
+            protection.PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(keysDirectory, "keys")));
+        services.AddSingleton<IPasscodeProtector, PasscodeProtector>();
 
         services.AddBackgroundJobs();
         // Bildirim kanalları (#30 e-posta, #31 tarayıcı bildirimi). Veritabanı gerektikleri için arka plan kuyruğunun

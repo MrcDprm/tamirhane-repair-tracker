@@ -17,4 +17,9 @@
     <Content Remove="Resources\*.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Yerel geliştirme bağlantısı yayın paketine girmez. -->
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
 </Project>

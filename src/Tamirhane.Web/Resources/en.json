@@ -680,5 +680,7 @@
   "tracking.push.ios_text": "On iPhone, notifications work once this page is added to the Home Screen:",
   "tracking.push.ios_step1": "Tap the browser's Share button (the square with an arrow).",
   "tracking.push.ios_step2": "Choose \"Add to Home Screen\".",
-  "tracking.push.ios_step3": "Open it from the Home Screen icon and tap \"Notify me when the status changes\"."
+  "tracking.push.ios_step3": "Open it from the Home Screen icon and tap \"Notify me when the status changes\".",
+  "workorder.passcode_show": "Show the device passcode",
+  "workorder.passcode_unreadable": "The passcode could not be read; ask the customer again."
 }

@@ -134,14 +134,16 @@ Kabul: `ReceiveDevice`, `FindCustomerByPhone`, `UpdateIntakeDetails`. İş emri:
 - Yetki her istekte sunucuda: rol politikaları + kiracı filtresi. Teknisyen ciro ve ayar uçlarına giremez (test).
 - Bütün POST'larda antiforgery (`action` yazılı formlarda da; view tarayan regresyon testi, Sahaf'taki hatadan).
 - Overposting yok: her form kendi giriş modeliyle; `ShopId`, durum, toplamlar asla formdan alınmaz.
-- Rate limit (`CF-Connecting-IP`; Render önünde Cloudflare, Crypto Toolkit dersi): giriş, kayıt, şifre sıfırlama, davet, takip sayfası, teklif kararı, push aboneliği.
-- Kişisel verinin görünürlüğü: atölye panelinde (giriş yapmış personel) müşterinin tam adı, telefonu ve e-postası her yerde görünür. Giriş gerektirmeyen takip sayfası ise iletilebilir bir link olduğu için asgari bilgi gösterir: kargo takip sayfalarındaki gibi her ismin ilk iki harfi, gerisi yıldız ("Ayşe Kaya" → "Ay** Ka**"). Görünen harf sayısı en fazla 2, ama her zaman en az bir harf gizli kalır: "Ali" → "Al*", "Su" → "S*"; maskeleme sunucuda yapılır, tam ad sayfaya hiç gönderilmez. Telefon ve e-posta hiç görünmez; cihaz şifresi hiçbir yerde.
+- Rate limit: IP başına genel sınır (dakikada 600) + giriş, kayıt, şifre sıfırlama, davet, atölye silme, takip sayfası, teklif kararı, push aboneliği, demo açma. İstemci IP'si Caddy'nin yazdığı `X-Forwarded-For`'dan, sadece aynı makineden gelirse (2026-11-03: Render'da son adres Render'ın vekiliydi, herkes aynı sınırı paylaşıyordu; Oracle'a taşınınca düzeldi, uydurulmuş başlıkla aşılamadığı canlıda denendi).
+- Kişisel verinin görünürlüğü: atölye panelinde (giriş yapmış personel) müşterinin tam adı, telefonu ve e-postası her yerde görünür. Giriş gerektirmeyen takip sayfası ise iletilebilir bir link olduğu için asgari bilgi gösterir: kargo takip sayfalarındaki gibi her ismin ilk iki harfi, gerisi yıldız ("Ayşe Kaya" → "Ay** Ka**"). Görünen harf sayısı en fazla 2, ama her zaman en az bir harf gizli kalır: "Ali" → "Al*", "Su" → "S*"; maskeleme sunucuda yapılır, tam ad sayfaya hiç gönderilmez. Telefon ve e-posta hiç görünmez; cihaz şifresi fişte ve takip sayfasında yok, panelde personel tıklayınca görür.
 - E-posta linkleri `Host` başlığından değil `PUBLIC_ORIGIN` ayarından (Casus dersi); `AllowedHosts`.
 - CSP: `default-src 'self'`, satır içi script yok, Trusted Types; HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `frame-ancestors 'none'`. Yazdırma sayfaları da aynı CSP ile.
 - CORS yok. Production'da genel hata sayfası, stack trace yok; loglarda e-posta, telefon, IP yok.
-- Gizli bilgiler (bağlantı dizesi, Resend, VAPID) ortam değişkeninde; repoda `.env.example`.
+- Gizli bilgiler (bağlantı dizesi, Resend, VAPID) sunucuda sadece root'un okuyabildiği ortam dosyasında; repoda `.env.example`.
+- Data Protection anahtarları (oturum çerezi, e-posta token'ları, cihaz şifresi) yayında sunucunun diskinde (systemd `StateDirectory`), veritabanında değil: veritabanı sızsa da sahte çerez üretilemez, cihaz şifreleri çözülemez. Cihaz şifresi veritabanında şifreli (`dp1:` önekli).
+- Neon bağlantısı `VerifyFull`: şifreli ve sunucu sertifikası doğrulanmış.
 - KVKK: aydınlatma metni, müşteri kaydında açık onay zamanı, atölye silinince bütün verisi silinir; teslim edilen iş emrinde cihaz şifresi silinir.
-- Bağımlılıklar yayından önce `dotnet list package --vulnerable`.
+- Bağımlılıklar yayından önce `dotnet list package --vulnerable`; yayın paketi .NET çalışma ortamını içinde taşıdığı için her yayından önce SDK güncellenir (açılışta sürüm günlüğe yazılır).
 
 ## Sprintler (1 hafta)
 
