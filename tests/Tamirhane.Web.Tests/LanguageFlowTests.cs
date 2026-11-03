@@ -192,6 +192,25 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         Assert.Contains("/en/account/confirm-email?", new ShopFlows(app).LinkIn("dil-eposta@example.com", "/account/confirm-email"));
     }
 
+    /// <summary>
+    /// __Host- önekli çerez tarayıcıda ancak Path=/ ise kabul edilir. Test istemcisi bu kuralı uygulamadığı için burada
+    /// açıkça denetlenir: İngilizce (/en) sayfada da çerezler kök yolda olmalı, yoksa formlar ve giriş çalışmaz.
+    /// </summary>
+    [DockerFact]
+    public async Task Cookies_on_english_pages_use_the_root_path()
+    {
+        var browser = app.NewBrowser();
+        var page = await browser.GetAsync("/en/account/login");
+        var login = await browser.SubmitAsync("/en/account/login", "/en/account/login",
+            new() { ["Email"] = "yok-boyle-biri@example.com", ["Password"] = "yanlis-sifre-123" });
+
+        var cookies = page.Headers.GetValues("Set-Cookie").Concat(login.Headers.TryGetValues("Set-Cookie", out var more) ? more : []).ToList();
+        Assert.Contains(cookies, c => c.StartsWith("__Host-tamirhane-csrf="));
+        foreach (var cookie in cookies.Where(c => c.StartsWith("__Host-")))
+            Assert.Contains("path=/;", cookie.ToLowerInvariant() + ";");
+        Assert.DoesNotContain(cookies, c => c.Contains("path=/en", StringComparison.OrdinalIgnoreCase));
+    }
+
     [DockerFact]
     public async Task An_unknown_language_changes_nothing()
     {

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.Localization;
@@ -69,7 +70,12 @@ builder.Services.AddAntiforgery(options =>
 {
     options.Cookie.Name = "__Host-tamirhane-csrf";
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    // Yol sabit "/": verilmezse temel yol (İngilizce sayfalarda /en) olur; tarayıcı __Host- önekli çerezi Path=/
+    // değilse reddeder ve İngilizce sayfadaki her form 400 döner (2026-11-03'te canlıda yakalandı).
+    options.Cookie.Path = "/";
 });
+// Yönlendirmeden sonra gösterilen mesaj (TempData): İngilizce ve Türkçe sayfa arasında da taşınsın.
+builder.Services.Configure<CookieTempDataProviderOptions>(options => options.Cookie.Path = "/");
 // systemd StateDirectory= verince STATE_DIRECTORY ortam değişkeni gelir (yayın); yoksa anahtarlar veritabanında.
 builder.Services.AddInfrastructure(connectionString, builder.Configuration["STATE_DIRECTORY"]);
 builder.Services.AddAccounts(new AccountOptions(publicOrigin, resendApiKey,
