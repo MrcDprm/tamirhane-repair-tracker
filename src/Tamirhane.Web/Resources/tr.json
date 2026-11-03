@@ -614,5 +614,13 @@
   "legal.terms.title": "Kullanım koşulları",
   "legal.updated": "Son güncelleme: 3 Kasım 2026",
   "account.register.legal_html": "Kayıt olarak <a href=\"/terms\">kullanım koşullarını</a> kabul etmiş olursun. Verilerinin nasıl işlendiği <a href=\"/privacy\">gizlilik metninde</a>.",
-  "tracking.privacy": "Gizlilik"
+  "tracking.privacy": "Gizlilik",
+  "settings.delete.title": "Atölyeyi sil",
+  "settings.delete.text": "Bütün iş emirleri, müşteriler, cihazlar, stok, tahsilat kayıtları, şubeler ve personel hesapları kalıcı olarak silinir. Müşterilerin takip linkleri çalışmaz olur. Bu işlem geri alınamaz; önce gerekli kayıtların çıktısını al.",
+  "settings.delete.password": "Onaylamak için şifren",
+  "settings.delete.submit": "Atölyeyi ve bütün verisini sil",
+  "settings.delete.confirm": "Atölye ve bütün verisi kalıcı olarak silinsin mi? Bu işlem geri alınamaz.",
+  "settings.delete.wrong_password": "Şifre yanlış; atölye silinmedi.",
+  "settings.delete.demo": "Demo atölye silinemez; 24 saat sonra kendiliğinden silinir.",
+  "settings.delete.done": "Atölyen ve bütün verisi silindi. Tamirhane'yi kullandığın için teşekkürler."
 }

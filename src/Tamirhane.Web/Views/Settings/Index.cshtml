@@ -105,3 +105,21 @@
         <button type="submit" class="btn btn-primary"><svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["settings.add_branch"]</button>
     </form>
 </section>
+
+@* Geri alınamaz işlem en altta, ayrı panelde; şifre yeniden sorulur ve tarayıcı bir kez daha onay ister (site.js). Demo atölyede yok. *@
+@if (!User.HasClaim("tamirhane:demo", "true"))
+{
+    <section class="panel panel-danger" aria-labelledby="delete-heading">
+        <div class="panel-head"><h2 id="delete-heading">@T["settings.delete.title"]</h2></div>
+        <form asp-action="Delete" method="post" class="panel-body" data-confirm="@T["settings.delete.confirm"]">
+            <p>@T["settings.delete.text"]</p>
+            <div class="inline-form">
+                <div class="grow">
+                    <label for="delete-password" class="label">@T["settings.delete.password"]</label>
+                    <input id="delete-password" name="password" type="password" autocomplete="current-password" required />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-danger">@T["settings.delete.submit"]</button>
+        </form>
+    </section>
+}
