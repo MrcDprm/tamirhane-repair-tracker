@@ -19,8 +19,8 @@ public static class GlobalRateLimit
         services.AddRateLimiter(options =>
         {
             options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                // Sağlık kontrolünü barındırma servisi sık sık çağırır; sınırlanmaz.
-                context.Request.Path.StartsWithSegments("/health")
+                // Sağlık kontrollerini barındırma servisi sık sık çağırır; sınırlanmaz.
+                context.Request.Path.StartsWithSegments("/health") || context.Request.Path.StartsWithSegments("/healthz")
                     ? RateLimitPartition.GetNoLimiter("health")
                     : RateLimitPartition.GetFixedWindowLimiter(AccountRateLimit.ClientKey(context, clientIpHeader),
                         _ => new FixedWindowRateLimiterOptions

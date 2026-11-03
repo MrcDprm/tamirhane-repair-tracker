@@ -1,8 +1,11 @@
 using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.WebEncoders;
@@ -10,6 +13,7 @@ using Tamirhane.Application;
 using Tamirhane.Infrastructure;
 using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Infrastructure.Notifications;
+using Tamirhane.Infrastructure.Persistence;
 using Tamirhane.Web.Authorization;
 using Tamirhane.Web.Localization;
 using Tamirhane.Web.ModelBinding;
@@ -81,6 +85,22 @@ builder.Services.AddShopPolicies();
 // Kullanım senaryoları (her istek kendi örneğini alır) ve saat.
 builder.Services.AddApplication();
 
+// Render TLS'i kendi vekil sunucusunda bitirir, uygulamaya http ile gelir: istemcinin IP'si ve asıl şema (https)
+// X-Forwarded-For / X-Forwarded-Proto'dan okunur. Uygulamaya Render'ın dışından ulaşılamadığı için vekil listesi boş
+// bırakılır; ForwardLimit 1: sadece Render'ın en sona eklediği adres kullanılır, istemcinin uydurduğu öncekiler değil.
+// Rate limit bu sayede başlık ayarı (CLIENT_IP_HEADER) olmadan gerçek IP'yle sayar.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+builder.Services.AddHttpsRedirection(options => options.HttpsPort = 443);
+
+// Yayında Host başlığı sadece sitenin kendi adresleri olabilir (AllowedHosts ortam değişkeni); "*" ile açılmaz.
+if (builder.Environment.IsProduction() && builder.Configuration["AllowedHosts"] is null or "*")
+    throw new InvalidOperationException("AllowedHosts ortam değişkeni yok: sitenin alan adlarını ';' ile ayırarak verin.");
+
 // HSTS bir yıl: tarayıcı siteye bir kez https ile girdikten sonra http'yi hiç denemez.
 builder.Services.AddHsts(options => options.MaxAge = TimeSpan.FromDays(365));
 // Cevaplarda "Server: Kestrel" yazmasın: sunucu yazılımı dışarıya söylenmez.
@@ -88,6 +108,14 @@ builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 var app = builder.Build();
 
+// Yayında şema açılışta güncellenir (yeni migration'lar uygulanır); geliştirmede "dotnet ef database update".
+if (app.Environment.IsProduction())
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<TamirhaneDbContext>().Database.MigrateAsync();
+}
+
+app.UseForwardedHeaders();
 app.UseSecurityHeaders();
 if (!app.Environment.IsDevelopment())
 {
@@ -98,7 +126,8 @@ if (!app.Environment.IsDevelopment())
 // Gövdesiz hata kodları (bulunamayan adres, bozuk form) çıplak tarayıcı sayfası yerine sitenin hata sayfasıyla.
 app.UseStatusCodePagesWithReExecute("/error/{0}");
 
-app.UseHttpsRedirection();
+// Render'ın sağlık kontrolü uygulamaya içeriden http ile gelir; yönlendirilirse servis "sağlıksız" sayılırdı.
+app.UseWhen(context => !context.Request.Path.StartsWithSegments("/healthz"), branch => branch.UseHttpsRedirection());
 // Tarih ve sayı biçimi sunucunun işletim sistemine bağlı kalmasın (yayındaki Linux konteyneri kültürsüz çalışır):
 // arayüz Türkçe ya da İngilizce (#35), kültürler AppCultures'ta.
 app.UseRequestLocalization(new RequestLocalizationOptions
@@ -117,6 +146,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+// /healthz: uygulama ayakta mı (Render bunu sık sorar; veritabanına dokunmaz, Neon'u boşuna uyandırmaz).
+// /health: veritabanına da ulaşılıyor mu (elle ya da izleme için).
+app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health");
 
 app.MapControllerRoute(
