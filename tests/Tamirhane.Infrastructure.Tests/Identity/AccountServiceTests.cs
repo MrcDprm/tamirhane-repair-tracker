@@ -83,8 +83,8 @@ public sealed class AccountServiceTests(PostgresFixture db)
         await scope.Accounts.SendAlreadyRegisteredAsync("dort@example.com", "en", default);
 
         var mail = Assert.Single(db.Emails.SentTo("dort@example.com"));
-        Assert.Contains("https://tamirhane.test/account/login", mail.Text);
-        Assert.Contains("https://tamirhane.test/account/forgot-password", mail.Text);
+        Assert.Contains("https://tamirhane.test/en/account/login", mail.Text); // İngilizce atölye: İngilizce sayfa
+        Assert.Contains("https://tamirhane.test/en/account/forgot-password", mail.Text);
         Assert.Equal("You already have a Tamirhane account", mail.Subject);
     }
 

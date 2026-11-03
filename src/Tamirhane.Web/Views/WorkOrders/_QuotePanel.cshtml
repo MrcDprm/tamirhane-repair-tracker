@@ -69,7 +69,7 @@
                             {
                                 <td class="actions">
                                     <form method="post" asp-action="RemoveLine" asp-route-id="@Model.Id" asp-route-lineId="@line.Id"
-                                          hx-post="/work-orders/@Model.Id/quote-lines/@line.Id/remove" hx-target="#work-order" hx-swap="outerHTML">
+                                          hx-post="@Url.Content("~/work-orders/")@Model.Id/quote-lines/@line.Id/remove" hx-target="#work-order" hx-swap="outerHTML">
                                         <button type="submit" class="btn btn-danger" aria-label="@T["quote.remove_label", line.Description]">@T["quote.remove"]</button>
                                     </form>
                                 </td>
@@ -94,7 +94,7 @@
     {
         <div class="quote-add">
             <form method="post" asp-action="AddLine" asp-route-id="@Model.Id"
-                  hx-post="/work-orders/@Model.Id/quote-lines" hx-target="#work-order" hx-swap="outerHTML">
+                  hx-post="@Url.Content("~/work-orders/")@Model.Id/quote-lines" hx-target="#work-order" hx-swap="outerHTML">
                 <h3>@T["quote.add_part"]</h3>
                 <input type="hidden" name="Kind" value="@QuoteLineKind.Part" />
                 @if (Model.PartOptions.Count == 0)
@@ -135,7 +135,7 @@
             </form>
 
             <form method="post" asp-action="AddLine" asp-route-id="@Model.Id"
-                  hx-post="/work-orders/@Model.Id/quote-lines" hx-target="#work-order" hx-swap="outerHTML">
+                  hx-post="@Url.Content("~/work-orders/")@Model.Id/quote-lines" hx-target="#work-order" hx-swap="outerHTML">
                 <h3>@T["quote.add_free"]</h3>
                 <div class="field-row">
                     <div class="field">

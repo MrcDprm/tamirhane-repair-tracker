@@ -113,7 +113,7 @@ public sealed class SettingsController(ListBranches listBranches, IStringLocaliz
 
         await accounts.SignOutAsync();
         TempData["Status"] = t["settings.delete.done"].Value;
-        return LocalRedirect("/");
+        return LocalRedirect(Url.Content("~/"));
     }
 
     private async Task<IActionResult> PageAsync(ShopSettingsInput shop, BranchInput newBranch, CancellationToken ct) =>

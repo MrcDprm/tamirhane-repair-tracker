@@ -28,7 +28,7 @@
 <body class="track-page">
     @RenderBody()
     <footer class="track-foot">
-        <p>@T["tracking.private"] <a href="/privacy">@T["tracking.privacy"]</a></p>
+        <p>@T["tracking.private"] <a href="@(LanguagePrefix.For(CultureInfo.CurrentUICulture))/privacy">@T["tracking.privacy"]</a></p>
     </footer>
     <script src="~/js/vendor/motion.min.js" asp-append-version="true"></script>
     <script src="~/js/motion.js" asp-append-version="true"></script>

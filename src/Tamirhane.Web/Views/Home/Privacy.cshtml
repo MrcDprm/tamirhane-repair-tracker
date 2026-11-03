@@ -2,6 +2,7 @@
 @{
     Layout = "_PublicLayout";
     ViewData["Title"] = T["legal.privacy.title"];
+    ViewData["Description"] = T["seo.privacy.description"].Value;
     // Yasal metin uzun ve dile göre yapısı farklı: anahtar anahtar çevrilmez, her dil kendi dosyasında (Legal/).
     var lang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "tr";
 }

@@ -67,7 +67,8 @@ public sealed partial class DesignSystemTests
     [GeneratedRegex(@"(?<selector>[^{}]+)\{(?<body>[^{}]*)\}")]
     private static partial Regex CssRule();
 
-    [GeneratedRegex(@"<script(?![^>]*\bsrc=)[^>]*>")]
+    // Dışarıdan yüklenmeyen ve çalıştırılan betik; JSON-LD veri bloğu (type="application/ld+json") çalıştırılmaz, sayılmaz.
+    [GeneratedRegex(@"<script(?![^>]*\bsrc=)(?![^>]*type=""application/ld\+json"")[^>]*>")]
     private static partial Regex InlineScript();
 
     [GeneratedRegex(@"\sstyle=""")]

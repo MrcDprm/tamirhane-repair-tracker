@@ -31,6 +31,8 @@ public sealed class LanguageController : Controller
                     IsEssential = true, // kişisel veri değil, arayüz tercihi
                 });
         }
-        return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
+        // Dönüş adresi önsüz gelir (sayfanın Request.Path'i); seçilen dilin öneki burada eklenir.
+        var path = Url.IsLocalUrl(returnUrl) ? returnUrl! : "/";
+        return Redirect(LanguagePrefix.For(chosen ?? AppCultures.Turkish) + path);
     }
 }

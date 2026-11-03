@@ -14,7 +14,8 @@
     var stamps = Model.History.Select(h => h.Status).ToList();
     var workshopNotes = Model.Notes.Where(n => !n.VisibleToCustomer).ToList();
     var customerNotes = Model.Notes.Where(n => n.VisibleToCustomer).ToList();
-    string Hx(string path) => $"/work-orders/{Model.Id}/{path}";
+    // htmx adresleri: Url.Content temel yolu (dil öneki /en) ekler; yanıt sayfanın dilinde gelir.
+    string Hx(string path) => Url.Content($"~/work-orders/{Model.Id}/{path}");
 }
 
 <div id="work-order">

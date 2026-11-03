@@ -65,7 +65,7 @@ internal sealed class AccountService(
 
     public Task SendInvitationAsync(StaffInvitationEmail invitation, CancellationToken ct)
     {
-        var link = Link("/invitation", new() { ["token"] = invitation.Token });
+        var link = Link("/invitation", new() { ["token"] = invitation.Token }, invitation.Locale);
         outbox.Enqueue(AccountEmails.Invitation(invitation, link), "davet");
         return Task.CompletedTask;
     }
@@ -80,7 +80,7 @@ internal sealed class AccountService(
     public Task SendAlreadyRegisteredAsync(string email, string locale, CancellationToken ct)
     {
         var message = AccountEmails.AlreadyRegistered(email.Trim(), locale,
-            Link("/account/login", []), Link("/account/forgot-password", []));
+            Link("/account/login", [], locale), Link("/account/forgot-password", [], locale));
         outbox.Enqueue(message, "zaten kayıtlı");
         return Task.CompletedTask;
     }
@@ -156,8 +156,9 @@ internal sealed class AccountService(
             return;
 
         var token = await users.GeneratePasswordResetTokenAsync(user);
-        var link = Link("/account/reset-password", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) });
-        outbox.Enqueue(AccountEmails.PasswordReset(user.Email!, await LocaleOfAsync(user.Id, ct), link), "şifre sıfırlama");
+        var locale = await LocaleOfAsync(user.Id, ct);
+        var link = Link("/account/reset-password", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) }, locale);
+        outbox.Enqueue(AccountEmails.PasswordReset(user.Email!, locale, link), "şifre sıfırlama");
     }
 
     public async Task<Result> ResetPasswordAsync(Guid userId, string token, string newPassword, CancellationToken ct)
@@ -197,14 +198,15 @@ internal sealed class AccountService(
     private async Task SendConfirmationAsync(ApplicationUser user, string locale, CancellationToken ct)
     {
         var token = await users.GenerateEmailConfirmationTokenAsync(user);
-        var link = Link("/account/confirm-email", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) });
+        var link = Link("/account/confirm-email", new() { ["userId"] = user.Id.ToString(), ["token"] = Encode(token) }, locale);
         // E-posta kuyruğa girer, istek gönderimi beklemez; gönderim hatası hesabı bozmaz, 3 kez denenir.
         // Her hesap e-postası aynı yoldan gittiği için cevap süresi "bu adres kayıtlı mı" bilgisini de sızdırmaz.
         outbox.Enqueue(AccountEmails.Confirmation(user.Email!, locale, link), "doğrulama");
     }
 
-    private Uri Link(string path, Dictionary<string, string?> query) =>
-        new(options.PublicOrigin, QueryHelpers.AddQueryString(path, query));
+    // E-postadaki link alıcının dilindeki sayfayı açar: İngilizce /en ile başlar (#42).
+    private Uri Link(string path, Dictionary<string, string?> query, string locale) =>
+        new(options.PublicOrigin, QueryHelpers.AddQueryString((locale == "en" ? "/en" : "") + path, query));
 
     // Token içinde '+' ve '/' olabilir; linkte bozulmasın diye Base64Url.
     private static string Encode(string token) => WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));

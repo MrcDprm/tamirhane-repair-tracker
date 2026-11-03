@@ -1,6 +1,22 @@
 ﻿@{
     Layout = "_PublicLayout";
     ViewData["Title"] = T["home.title"];
+    ViewData["SeoTitle"] = T["seo.home.title"].Value;
+    ViewData["Description"] = T["seo.home.description"].Value;
+    // Google için uygulamanın kendisi: ücretsiz, web'de çalışan bir iş uygulaması.
+    ViewData["StructuredData"] = new Dictionary<string, object>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "SoftwareApplication",
+        ["name"] = "Tamirhane",
+        ["description"] = T["seo.home.description"].Value,
+        ["applicationCategory"] = "BusinessApplication",
+        ["operatingSystem"] = "Web",
+        ["inLanguage"] = new[] { "tr", "en" },
+        ["url"] = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.PathBase}/",
+        ["offers"] = new Dictionary<string, object> { ["@type"] = "Offer", ["price"] = "0", ["priceCurrency"] = "TRY" },
+        ["author"] = new Dictionary<string, object> { ["@type"] = "Person", ["name"] = "Miraç Deprem", ["url"] = "https://miracdeprem.com" },
+    };
     // Bir cihazın tezgâhtaki yolu: her durak panoya asılı bir etiket, üstünde o durağın kaşesi.
     var journey = new (string Status, string Tone, string Text)[]
     {
