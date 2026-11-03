@@ -2,40 +2,46 @@ English | [Türkçe](README.tr.md)
 
 # Tamirhane
 
-Work order tracking for repair shops and service centers: device intake, repair status, quotes and customer approval, parts inventory, warranty tracking and a login-free tracking link for customers. Built with ASP.NET Core MVC on Clean Architecture.
+Free repair shop software for phone, computer and appliance repair shops: device check-in with a printable receipt, work orders, quotes the customer approves from a tracking link, parts stock, payments and warranty. Customers follow their repair on their phone without an account. Built with ASP.NET Core MVC on Clean Architecture.
 
-> **Status:** In development. This document describes the plan; features are checked off as they are completed.
+**Live:** [tamirhane.miracdeprem.com](https://tamirhane.miracdeprem.com) · try the demo shop without signing up ([English](https://tamirhane.miracdeprem.com/en/))
 
 ## Features
 
-**Shops and users**
-- [ ] Multi-tenant sign-up: each shop's data is fully isolated
-- [ ] Branches: inventory and work orders per branch
-- [ ] Roles: owner and technician; staff invitations by email
-- [ ] Sign-up with email verification, password reset
-
-**Device intake**
-- [ ] Customer and device records: brand, model, serial number / IMEI, accessories received, visible condition, customer's complaint
-- [ ] Printable A5 intake receipt with a QR code to the tracking link
-- [ ] Barcode / QR label to stick on the device
+**Check-in at the counter**
+- Find the customer by phone; a returning customer and their devices come up, nobody is typed twice
+- Form changes with the device type (12 types, phone to large appliance): brand list, model suggestions from the shop's own history, IMEI only where it exists, screen lock type (PIN, pattern, password)
+- Tick boxes for visible condition and accessories received
+- Printable A5 receipt with a QR code to the tracking page, and a device tag for label printers
 
 **Work orders**
-- [ ] Status flow: Received → Diagnosis → Awaiting approval → In repair → Ready → Delivered; cancel and return. Invalid transitions are blocked
-- [ ] Quotes: parts and labor lines, VAT; the customer approves or declines from the tracking link
-- [ ] Parts inventory: used parts are deducted, low-stock warning
-- [ ] Payment records: cash, card, bank transfer; outstanding balance
-- [ ] Warranty: the warranty period starts at delivery; a device returning under warranty is linked to its previous work order
+- Status flow: Checked in → Diagnosing → Awaiting approval → In repair → Ready → Delivered; invalid steps are refused in the domain
+- Quotes with parts from stock and labour, VAT and discount per line; approval recorded with name and time
+- Parts stock per branch with low-stock levels; used parts leave stock, cancelled ones come back
+- Payments (cash, card, transfer), partial payments and balance due; warranty starts on delivery and a returning device links to its old work order
+- Device passcode stored encrypted and shown to staff only on click; deleted when the work order closes
 
-**Customer communication**
-- [ ] Login-free tracking page: unguessable code, status timeline
-- [ ] Email notification on every status change
-- [ ] Browser notifications (Web Push): the customer opts in on the tracking page
-- [ ] "Notify via WhatsApp" button: one click with a ready message and the tracking link
+**Customer side**
+- Login-free tracking page: status timeline, expected date, quote approval or refusal, shop address and phone
+- Email on every status change, browser notifications (on iPhone after adding the page to the Home Screen), one-click WhatsApp message
 
-**Dashboard**
-- [ ] Open jobs, awaiting approval, ready for pickup, monthly revenue
-- [ ] Turkish and English, light and dark theme
-- [ ] Public demo shop with sample data
+**Shop**
+- Dashboard: awaiting approval, in repair, ready, waiting over 30 days, monthly revenue, low stock
+- Multi-tenant: every shop's data is isolated; branches, owner and technician roles, staff invited by email
+- Turkish and English (English under `/en`), light and dark theme, works on a phone at the counter
+- Public demo shop with sample data, deleted after 24 hours; the owner can delete the shop and all its data
+
+## Screenshots
+
+| Dashboard | Check-in |
+|---|---|
+| ![Dashboard](docs/screenshots/panel-en.png) | ![Check-in form](docs/screenshots/intake-en.png) |
+
+| Work order | Customer tracking page |
+|---|---|
+| ![Work order](docs/screenshots/work-order-en.png) | ![Tracking page on a phone](docs/screenshots/tracking-en.png) |
+
+![Landing page](docs/screenshots/landing-en.png)
 
 ## Architecture
 
@@ -49,27 +55,54 @@ Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
 
 | Project | Responsibility |
 |---|---|
-| `Tamirhane.Domain` | Entities and business rules (e.g. the work order status flow). Depends on no other project or framework. |
-| `Tamirhane.Application` | Use cases; interfaces for external services such as storage, email and the clock. |
-| `Tamirhane.Infrastructure` | Implementations of those interfaces: EF Core + PostgreSQL, email, Web Push. |
-| `Tamirhane.Web` | ASP.NET Core MVC: controllers, views, authentication. |
+| `Tamirhane.Domain` | Entities and business rules: work order status flow, quote totals, stock, warranty, IMEI check. No framework references. |
+| `Tamirhane.Application` | Use cases (one class each) and interfaces for storage, email, push, the clock and passcode encryption. |
+| `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend email, Web Push, QR codes, Data Protection. |
+| `Tamirhane.Web` | MVC controllers and views, localisation, security headers, rate limits. |
 
-The dependency rule is verified by tests in `Tamirhane.Architecture.Tests`.
+The dependency rule is checked by `Tamirhane.Architecture.Tests`. 734 tests run against a real PostgreSQL in Docker (Testcontainers).
+
+Security in short: strict CSP with Trusted Types, CSRF tokens on every POST (a test walks all POST endpoints), per-IP rate limits, `__Host-` cookies, tenant filter on every query, passwords hashed by Identity, Data Protection keys on the server's disk, encrypted device passcodes, TLS-verified database connection.
 
 ## Tech Stack
 
-- C#, ASP.NET Core MVC, Entity Framework Core, PostgreSQL
-- ASP.NET Core Identity
-- xUnit, NetArchTest
+- C#, ASP.NET Core MVC, Entity Framework Core, PostgreSQL (Neon)
+- ASP.NET Core Identity, Data Protection
+- htmx, Motion (animations), plain CSS
+- Resend (email), Web Push (VAPID)
+- xUnit, Testcontainers, NetArchTest
 - Oracle Cloud (Ubuntu, systemd), Caddy
 
 ## Installation
 
-To be written.
+Requirements: the current .NET SDK and Docker (local database and integration tests).
+
+```sh
+git clone https://github.com/MrcDprm/tamirhane-repair-tracker.git
+cd tamirhane-repair-tracker
+docker run -d --name tamirhane-db -e POSTGRES_USER=tamirhane -e POSTGRES_PASSWORD=tamirhane -e POSTGRES_DB=tamirhane -p 5433:5432 postgres:17-alpine
+cp .env.example .env          # values are explained in the file; empty RESEND_API_KEY prints emails to the console
+dotnet tool install --global dotnet-ef
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web --launch-profile https
+```
+
+Open https://localhost:7071 and press "Try the demo", or register a shop (the verification link appears in the console).
+
+Tests: `dotnet test` (integration tests are skipped with a note if Docker is not running).
+
+Deployment to a Linux server behind Caddy: [deploy/README.md](deploy/README.md).
 
 ## What I Learned
 
-To be written when the project is finished.
+- **Clean Architecture for real:** I kept the domain free of EF Core and ASP.NET and let a test fail the build when a project references the wrong layer. Business rules like "you can't deliver a device with a balance due" live in one place and are tested without a database.
+- **Multi-tenancy:** every shop's data is filtered by a global EF Core query filter fed from the signed-in user. I wrote tests that try to read another shop's records, and reviewed every place the filter is deliberately switched off.
+- **Security headers and CSP:** I learned why inline scripts and styles had to go, how Trusted Types blocks `innerHTML` while htmx still works through one policy, and how a test that walks every POST endpoint keeps CSRF protection from silently disappearing.
+- **Rate limiting behind proxies:** on Render the last `X-Forwarded-For` hop was Render's own proxy, so all visitors shared one limit; email link scanners locked real users out. I moved to my own server behind Caddy and trust the header only from localhost.
+- **Hosting trade-offs:** a free plan that sleeps makes the first click take a minute. A self-contained ReadyToRun build as a hardened systemd service on a free ARM VM was faster and cheaper, but I also learned that the runtime then has to be updated by me.
+- **Encrypting data at rest:** device passcodes are encrypted with ASP.NET Data Protection and the keys live on the server's disk, not in the database, so a database leak alone reveals nothing.
+- **Localisation and SEO:** a language prefix moved into `PathBase` gives every generated link `/en` for free. A `__Host-` cookie then needs `Path=/`, otherwise browsers drop it; the test client didn't enforce this, so I added a test that does.
+- **Product details:** the check-in form adapts to the device type, a phone layout was checked at 320 to 768 pixels in both languages, and iPhone notifications needed a web app manifest per tracking page.
 
 ## License
 
