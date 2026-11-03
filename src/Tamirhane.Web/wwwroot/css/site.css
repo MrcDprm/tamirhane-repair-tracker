@@ -731,6 +731,87 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
 .track-missing { padding-top: 56px; }
 .track-missing h1 { font-size: 2rem; }
 
+/* ---------- Tanıtım ve yasal sayfalar (#37) ---------- */
+
+/* Üst şerit ve ilk bölüm aynı pano: şerit 3 delik yüksekliğinde, delikler aşağıda kesintisiz devam eder. */
+.public-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 78px; padding: 0 clamp(16px, 4vw, 48px);
+}
+.public-top .brand { color: #fff; }
+a.side-btn { text-decoration: none; }
+.btn-board { color: #fff; background: rgb(255 255 255 / 0.06); border-color: rgb(255 255 255 / 0.4); }
+.btn-board:hover { border-color: #fff; }
+
+.hero {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 24px; align-items: end;
+  padding: 26px clamp(16px, 4vw, 48px) 0; overflow: hidden;
+}
+.hero-copy { align-self: center; padding-bottom: 72px; }
+.hero h1 { color: #fff; font-size: clamp(2.6rem, 5vw, 4.2rem); max-width: 13ch; margin-bottom: 18px; }
+.hero-lead { font-size: 1.15rem; max-width: 46ch; }
+.hero-help { color: var(--board-dim); font-size: 0.9rem; max-width: 46ch; margin-top: 14px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+/* Tezgâh şeridi çizimin dışına, bölümün iki kenarına kadar uzar. */
+/* Yükseklik giriş sayfasındaki (pano sütununa göre) kuraldan değil, çizimin kendi oranından gelir. */
+.hero .scene { display: block; width: 100%; max-width: 720px; height: auto; margin: 0 0 0 auto; overflow: visible; }
+
+.landing-band { max-width: 1160px; margin: 0 auto; padding: 80px clamp(16px, 4vw, 48px) 0; }
+.landing-band h2 { font-size: clamp(1.9rem, 3vw, 2.6rem); margin-top: 0; }
+.landing-lead { font-size: 1.1rem; color: var(--lead-text); max-width: 60ch; }
+
+/* Durak etiketleri çelik bir askıdan iple sarkar. */
+.journey { position: relative; list-style: none; margin: 32px 0 0; padding-left: 0; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.journey::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; border-radius: 2px; background: var(--steel); }
+.journey .hang-tag p { margin: 12px 0 0; font-size: 0.95rem; }
+
+.customer-view { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); gap: 56px; align-items: center; }
+.tick-list { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 14px; }
+.tick-list li { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.tick-list .icon { color: var(--stamp); }
+/* Takip sayfasının telefondaki hâli: gerçek sayfanın sınıfları, küçültülmüş. */
+.phone-frame { padding: 12px; border-radius: 38px; background: #0e1418; box-shadow: 0 24px 48px rgb(31 42 48 / 0.25); transform: rotate(2deg); }
+.phone-screen { height: 31rem; overflow: hidden; border-radius: 28px; }
+.phone-screen .track-board { padding-top: 18px; }
+.phone-screen .track-shop { font-size: 1.05rem; }
+.phone-screen .track-tag { margin: 34px 12px -30px; padding: 34px 18px 20px; }
+.track-model { margin: 2px 0 4px; font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; line-height: 1.05; }
+.phone-screen .track-owner { margin-bottom: 14px; }
+.phone-screen .track-body { padding: 52px 18px 16px; }
+.phone-screen .track-steps li { min-height: 42px; }
+
+/* Özellikler tek panel; hücreler arası 1 px çizgi (kart içinde kart yok). */
+.feature-grid {
+  list-style: none; margin: 28px 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; box-shadow: var(--shadow);
+}
+.feature-grid li { padding: 24px; background: var(--surface); }
+.feature-grid .icon { width: 26px; height: 26px; color: var(--stamp); }
+.feature-grid h3 { margin: 12px 0 6px; }
+.feature-grid p { margin: 0; color: var(--lead-text); }
+
+.landing-close { padding-bottom: 88px; text-align: center; }
+.landing-close .landing-lead { margin-inline: auto; }
+.landing-close .hero-actions { justify-content: center; }
+
+.legal { max-width: 46rem; margin: 0 auto; padding: 48px clamp(16px, 4vw, 48px) 72px; }
+.legal h1 { font-size: clamp(2rem, 4vw, 2.8rem); }
+.legal h2 { font-size: 1.3rem; margin-top: 1.8em; }
+.legal ul { padding-left: 1.2em; }
+.legal li { margin-bottom: 0.5em; max-width: 68ch; }
+
+/* Alt bilgi: her sayfanın en altında; uygulamada sağ sütunun dibinde, giriş sayfalarında formun altında. */
+.site-foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 20px;
+  padding: 8px clamp(16px, 4vw, 48px); border-top: 1px solid var(--line); color: var(--lead-text); font-size: 0.9rem;
+}
+.site-foot p { margin: 0; }
+.site-foot nav { display: flex; flex-wrap: wrap; gap: 0 20px; }
+.site-foot a { display: inline-flex; align-items: center; min-height: var(--touch); color: var(--lead-text); }
+.main > .site-foot { margin-top: auto; padding-inline: 32px; }
+.auth-form > .site-foot { margin-top: 32px; padding-inline: 0; }
+
 /* ---------- Kaşe (tek cesur öğe) ---------- */
 
 .stamp {
@@ -799,6 +880,12 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
   .quote-add form + form { border-left: 0; border-top: 1px solid var(--line); }
   .empty { grid-template-columns: 1fr; }
   .empty svg { width: 120px; }
+  .hero { grid-template-columns: 1fr; }
+  .hero-copy { padding-bottom: 8px; }
+  .customer-view { grid-template-columns: 1fr; gap: 40px; }
+  .phone-frame { width: min(100%, 22rem); margin: 0 auto; }
+  .landing-band { padding-top: 56px; }
+  .main > .site-foot { padding-inline: 16px; }
 }
 
 @media (max-width: 640px) {
@@ -806,6 +893,10 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
   .top-end { width: 100%; }
   .top-end .btn-primary { flex: 1; }
   .ticket { padding-left: 52px; }
+  .public-login { display: none; }
+  /* Uygulamanın üst çubuğundaki "tam genişlik" kuralı tanıtım şeridinde geçerli değil. */
+  .public-top .top-end { width: auto; }
+  .public-top .top-end .btn-primary { flex: none; }
 }
 
 /* ---------- Hareket azaltma ---------- */

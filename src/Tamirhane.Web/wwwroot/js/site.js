@@ -59,3 +59,8 @@ if (themeButton) {
     label();
   });
 }
+
+// Alt bilgideki yıl: sunucunun yazdığı yıl, ziyaretçinin saatindeki yılla güncellenir (sayfa önbellekten gelse de).
+document.querySelectorAll("[data-year]").forEach(function (el) {
+  el.textContent = String(new Date().getFullYear());
+});

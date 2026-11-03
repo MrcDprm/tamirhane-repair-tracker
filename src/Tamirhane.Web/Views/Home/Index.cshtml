@@ -1,22 +1,117 @@
 ﻿@{
-    Layout = "_AuthLayout";
+    Layout = "_PublicLayout";
     ViewData["Title"] = T["home.title"];
+    // Bir cihazın tezgâhtaki yolu: her durak panoya asılı bir etiket, üstünde o durağın kaşesi.
+    var journey = new (string Status, string Tone, string Text)[]
+    {
+        ("status.received", "", "home.step.received"),
+        ("status.awaiting_approval", "", "home.step.quote"),
+        ("status.in_repair", "", "home.step.repair"),
+        ("status.ready", " stamp-ok", "home.step.ready"),
+        ("status.delivered", " stamp-ok", "home.step.delivered"),
+    };
+    var features = new (string Icon, string Title, string Text)[]
+    {
+        ("i-box", "home.feature.stock.title", "home.feature.stock.text"),
+        ("i-tag", "home.feature.payment.title", "home.feature.payment.text"),
+        ("i-printer", "home.feature.print.title", "home.feature.print.text"),
+        ("i-users", "home.feature.staff.title", "home.feature.staff.text"),
+        ("i-home", "home.feature.panel.title", "home.feature.panel.text"),
+        ("i-search", "home.feature.search.title", "home.feature.search.text"),
+    };
 }
 
-@* Asıl tanıtım sayfası #37'de; şimdilik pano çizimiyle kısa bir giriş. *@
-<div class="narrow">
-    @if (TempData["Error"] is string error)
-    {
-        <div class="notice notice-error" role="alert">@error</div>
-    }
-    <h1>@T["home.heading"]</h1>
-    <p>@T["home.text"]</p>
-    <div class="inline-form">
-        <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@T["account.register.title"]</a>
+<section class="hero pegboard" aria-labelledby="hero-title">
+    <div class="hero-copy">
+        @if (TempData["Error"] is string error)
+        {
+            <div class="notice notice-error" role="alert">@error</div>
+        }
+        <h1 id="hero-title">@T["home.heading"]</h1>
+        <p class="hero-lead">@T["home.text"]</p>
+        <div class="hero-actions">
+            <form asp-controller="Demo" asp-action="Start" method="post">
+                <button type="submit" class="btn btn-primary">@T["demo.try"]</button>
+            </form>
+            <a class="btn btn-board" asp-controller="Account" asp-action="Register">@T["home.open_shop"]</a>
+        </div>
+        <p class="hero-help">@T["demo.try_help"]</p>
+    </div>
+    <div class="hero-art">
+        <partial name="_WorkbenchScene" />
+    </div>
+</section>
+
+<section class="landing-band" aria-labelledby="journey-title">
+    <h2 id="journey-title">@T["home.journey.title"]</h2>
+    <p class="landing-lead">@T["home.journey.text"]</p>
+    <ol class="hang-tags journey">
+        @foreach (var step in journey)
+        {
+            <li class="hang-tag">
+                <span class="stamp stamp-sm@(step.Tone)">@T[step.Status]</span>
+                <p>@T[step.Text]</p>
+            </li>
+        }
+    </ol>
+</section>
+
+<section class="landing-band customer-view" aria-labelledby="customer-title">
+    <div>
+        <h2 id="customer-title">@T["home.customer.title"]</h2>
+        <p class="landing-lead">@T["home.customer.text"]</p>
+        <ul class="tick-list">
+            <li><svg class="icon"><use href="/img/icons.svg#i-phone" /></svg>@T["home.customer.point.track"]</li>
+            <li><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>@T["home.customer.point.quote"]</li>
+            <li><svg class="icon"><use href="/img/icons.svg#i-bell" /></svg>@T["home.customer.point.notify"]</li>
+            <li><svg class="icon"><use href="/img/icons.svg#i-chat" /></svg>@T["home.customer.point.whatsapp"]</li>
+        </ul>
+    </div>
+    @* Takip sayfasının küçük bir örneği (gerçek sayfanın sınıflarıyla); süs, ekran okuyucu metni yukarıda. *@
+    <div class="phone-frame" aria-hidden="true">
+        <div class="phone-screen track-page">
+            <div class="track-board pegboard">
+                <div class="track-shop"><p>Kaya Telefon<span>Kadıköy, İstanbul</span></p></div>
+                <div class="track-tag">
+                    <p class="track-no">2026-0042</p>
+                    <p class="track-model">Apple iPhone 13</p>
+                    <p class="track-owner">Ze**** Ar*****</p>
+                    <span class="stamp">@T["status.in_repair"]</span>
+                </div>
+            </div>
+            <div class="track-body">
+                <ol class="track-steps">
+                    <li><span class="track-dot"></span><span class="track-step">@T["status.received"]</span></li>
+                    <li><span class="track-dot"></span><span class="track-step">@T["status.awaiting_approval"]</span></li>
+                    <li class="is-current"><span class="track-dot"></span><span class="track-step">@T["status.in_repair"]</span></li>
+                    <li class="is-ahead"><span class="track-dot"></span><span class="track-step">@T["status.ready"]</span></li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-band" aria-labelledby="features-title">
+    <h2 id="features-title">@T["home.features.title"]</h2>
+    <ul class="feature-grid">
+        @foreach (var feature in features)
+        {
+            <li>
+                <svg class="icon"><use href="/img/icons.svg#@feature.Icon" /></svg>
+                <h3>@T[feature.Title]</h3>
+                <p>@T[feature.Text]</p>
+            </li>
+        }
+    </ul>
+</section>
+
+<section class="landing-band landing-close" aria-labelledby="close-title">
+    <h2 id="close-title">@T["home.close.title"]</h2>
+    <p class="landing-lead">@T["home.close.text"]</p>
+    <div class="hero-actions">
+        <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@T["home.open_shop"]</a>
         <form asp-controller="Demo" asp-action="Start" method="post">
             <button type="submit" class="btn">@T["demo.try"]</button>
         </form>
-        <a class="btn" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>
     </div>
-    <p class="muted">@T["demo.try_help"]</p>
-</div>
+</section>

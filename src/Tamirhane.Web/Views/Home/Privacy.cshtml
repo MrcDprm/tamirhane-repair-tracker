@@ -1,0 +1,13 @@
+@using System.Globalization
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = T["legal.privacy.title"];
+    // Yasal metin uzun ve dile göre yapısı farklı: anahtar anahtar çevrilmez, her dil kendi dosyasında (Legal/).
+    var lang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "tr";
+}
+
+<article class="legal">
+    <h1>@T["legal.privacy.title"]</h1>
+    <p class="muted">@T["legal.updated"]</p>
+    <partial name="@($"~/Views/Home/Legal/_Privacy.{lang}.cshtml")" />
+</article>

@@ -35,8 +35,13 @@
   var tags = document.querySelectorAll(".hang-tag");
   tags.forEach(function (el, i) {
     var tilt = parseFloat(getComputedStyle(el).getPropertyValue("--tilt")) || 0;
-    animate(el, { rotate: [tilt + 14, tilt - 6, tilt + 3, tilt], opacity: [0, 1, 1, 1] },
-      { delay: 0.08 * i, duration: 1.2, ease: "easeOut" });
+    var swing = function () {
+      animate(el, { rotate: [tilt + 14, tilt - 6, tilt + 3, tilt], opacity: [0, 1, 1, 1] },
+        { delay: 0.08 * (i % 5), duration: 1.2, ease: "easeOut" });
+    };
+    // Tanıtım sayfasındaki duraklar sayfanın aşağısında: ekrana girince bir kez asılır.
+    if (el.closest(".journey") && M.inView) M.inView(el, function () { swing(); }, { amount: 0.6 });
+    else swing();
   });
 
   // 3. Basılan kaşe (kabul ve durum değişikliği sonrası): büyükten iner, hafif ezilip oturur, etiket hafifçe sarsılır.
