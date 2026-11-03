@@ -35,7 +35,11 @@ kod önceden derlenir, küçük işlemcide ilk açılışlar hızlanır.
 dotnet publish src/Tamirhane.Web -c Release -r linux-arm64 --self-contained -p:PublishReadyToRun=true -o dist/linux-arm64
 tar -czf dist/tamirhane.tar.gz -C dist/linux-arm64 .
 scp dist/tamirhane.tar.gz ubuntu@SUNUCU:/tmp/
-ssh ubuntu@SUNUCU 'sudo rm -rf /opt/tamirhane/* && sudo tar -xzf /tmp/tamirhane.tar.gz -C /opt/tamirhane && sudo systemctl restart tamirhane'
+ssh ubuntu@SUNUCU 'sudo rm -rf /opt/tamirhane/* && sudo tar --no-same-owner -xzf /tmp/tamirhane.tar.gz -C /opt/tamirhane && sudo chown -R root:root /opt/tamirhane && sudo chmod 755 /opt/tamirhane/Tamirhane.Web && sudo systemctl restart tamirhane'
 ```
+
+Windows'ta paketlenen arşiv dosyaların "çalıştırılabilir" iznini ve sahibini taşımaz: `chmod` olmadan servis
+`status=203/EXEC` ile açılmaz (2026-11-03'te bir kez oldu), `--no-same-owner` ve `chown` olmadan dosyalar
+Windows kullanıcı numarasına ait kalır.
 
 Migration'lar uygulama açılırken uygulanır. Kontrol: `curl -s https://tamirhane.miracdeprem.com/health` → `Healthy`.
