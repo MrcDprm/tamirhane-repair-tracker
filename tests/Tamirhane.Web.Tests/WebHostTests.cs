@@ -23,6 +23,17 @@ public sealed class WebHostTests(TamirhaneWebFactory app)
     }
 
     [DockerFact]
+    public async Task Liveness_endpoint_answers_over_plain_http_without_the_database()
+    {
+        // Render'ın sağlık kontrolü uygulamaya içeriden http ile gelir: https'e yönlendirilmemeli.
+        var response = await app.CreateClient(new() { BaseAddress = new Uri("http://localhost"), AllowAutoRedirect = false })
+            .GetAsync("/healthz");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("Healthy", await response.Content.ReadAsStringAsync());
+    }
+
+    [DockerFact]
     public async Task Home_page_opens()
     {
         // Sayfada form (dil seçici) var; CSRF çerezi Secure olduğu için https tarayıcıyla açılır, yayında da her istek https.

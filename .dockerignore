@@ -1,0 +1,12 @@
+# İmaj için sadece src/ gerekir; testler, belgeler ve yerel ayarlar girmez.
+.git
+.vs
+.vscode
+**/bin
+**/obj
+**/TestResults
+tests
+docs
+*.md
+.env
+*.local.json
