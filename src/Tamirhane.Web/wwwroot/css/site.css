@@ -174,6 +174,7 @@
 html { -webkit-text-size-adjust: 100%; }
 
 body {
+  overflow-x: clip;
   margin: 0;
   background: var(--bench);
   color: var(--ink);
@@ -313,7 +314,7 @@ kbd {
 .page-head p { margin: 6px 0 0; color: var(--lead-text); }
 
 /* Oturumsuz basit sayfalar (hata, vitrin) */
-.plain-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; }
+.plain-top { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; padding: 12px 24px; }
 
 /* ---------- Giriş, kayıt ve davet: solda pano çizimi, sağda form ---------- */
 
@@ -402,6 +403,9 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, t
   border-radius: var(--radius-control);
 }
 textarea { min-height: 6rem; resize: vertical; }
+/* Safari'nin tarih/saat kutusu: yerleşik en küçük genişlik ve ortalanmış metin yerine diğer alanlar gibi davransın. */
+input[type="date"], input[type="time"], input[type="datetime-local"] { -webkit-appearance: none; appearance: none; min-width: 0; display: block; text-align: left; }
+input::-webkit-date-and-time-value { text-align: left; }
 input::placeholder, textarea::placeholder { color: var(--lead-text); opacity: 0.75; }
 .input-validation-error { border-color: var(--warn) !important; border-width: 2px !important; }
 
@@ -420,6 +424,7 @@ fieldset.field > legend { margin-bottom: 6px; }
 .check input { width: 22px; height: 22px; flex: none; accent-color: var(--stamp); }
 
 .inline-form { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.inline-form > * { min-width: 0; }
 .inline-form > .grow { flex: 1 1 220px; }
 .inline-form > .wide { flex: 2 1 280px; }
 .inline-form.fill { flex: 1; }
@@ -767,9 +772,12 @@ a.hang-tag:hover strong { text-decoration: underline; text-decoration-thickness:
 
 /* Üst şerit ve ilk bölüm aynı pano: şerit 3 delik yüksekliğinde, delikler aşağıda kesintisiz devam eder. */
 .public-top {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  min-height: 78px; padding: 0 clamp(16px, 4vw, 48px);
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px;
+  min-height: 78px; padding: 12px clamp(16px, 4vw, 48px);
 }
+/* Oturumsuz üst şerit: logo, dil, giriş/kayıt. Dil seçici sağa yaslanır; dar ekranda giriş ve kayıt alt satırda yarı yarıya. */
+.public-top > .lang-switch > button, .plain-top > .lang-switch > button { margin-left: auto; }
+.account-links { display: flex; align-items: center; gap: 10px; }
 .public-top .brand { color: #fff; }
 a.side-btn { text-decoration: none; }
 .btn-board { color: #fff; background: rgb(255 255 255 / 0.06); border-color: rgb(255 255 255 / 0.4); }
@@ -925,10 +933,11 @@ a.side-btn { text-decoration: none; }
   .top-end { width: 100%; }
   .top-end .btn-primary { flex: 1; }
   .ticket { padding-left: 52px; }
-  .public-login { display: none; }
-  /* Uygulamanın üst çubuğundaki "tam genişlik" kuralı tanıtım şeridinde geçerli değil. */
-  .public-top .top-end { width: auto; }
-  .public-top .top-end .btn-primary { flex: none; }
+  /* Uzun düğme yazısı (İngilizce) en dar telefonda kutusundan taşmasın: iki satıra iner. */
+  .btn { white-space: normal; text-align: center; line-height: 1.2; padding-block: 8px; }
+  .account-links { width: 100%; }
+  .account-links > a { flex: 1 1 0; justify-content: center; padding-inline: 10px; }
+  .plain-top { padding-inline: 16px; }
 }
 
 /* ---------- Hareket azaltma ---------- */
