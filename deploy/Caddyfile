@@ -3,8 +3,8 @@
 # adresini yazar, uygulama rate limit için bunu okur. Erişim log'u kapalı (Caddy varsayılanı).
 tamirhane.miracdeprem.com {
 	encode zstd gzip
-	reverse_proxy 127.0.0.1:8090 {
-		# Cevapta önde bir vekil sunucu olduğunu söyleyen başlık gönderilmez.
-		header_down -Via
-	}
+	# Cevapta önde bir vekil sunucu olduğunu söyleyen başlık gönderilmez (Caddy onu yanıt yazılırken ekler;
+	# silme işlemi bu yüzden ertelenir, reverse_proxy içindeki header_down yetmez).
+	header -Via
+	reverse_proxy 127.0.0.1:8090
 }
