@@ -95,10 +95,10 @@ public sealed partial class DemoFlowTests(TamirhaneWebFactory app)
         var visitor = app.NewBrowser();
         await visitor.SubmitAsync("/", "/language", new() { ["culture"] = "en", ["returnUrl"] = "/" });
 
-        Assert.Equal("/panel", Browser.RedirectOf(await visitor.SubmitAsync("/", "/demo", new())));
+        Assert.Equal("/en/panel", Browser.RedirectOf(await visitor.SubmitAsync("/en/", "/en/demo", new())));
 
-        Assert.Contains("This is a demo workshop", await BodyAsync(visitor, "/panel"));
-        Assert.Contains("Sample Repair Shop", await BodyAsync(visitor, "/settings"));
+        Assert.Contains("This is a demo workshop", await BodyAsync(visitor, "/en/panel"));
+        Assert.Contains("Sample Repair Shop", await BodyAsync(visitor, "/en/settings"));
     }
 
     [DockerFact]

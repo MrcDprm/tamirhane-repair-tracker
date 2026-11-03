@@ -154,7 +154,7 @@
                             <td>
                                 @if (m.WorkOrderId is { } orderId)
                                 {
-                                    <a href="/work-orders/@orderId">@T["inventory.work_order", m.WorkOrderNumber ?? ""]</a>
+                                    <a asp-controller="WorkOrders" asp-action="Details" asp-route-id="@orderId">@T["inventory.work_order", m.WorkOrderNumber ?? ""]</a>
                                 }
                                 @m.Note
                             </td>

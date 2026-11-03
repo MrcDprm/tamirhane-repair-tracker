@@ -613,7 +613,7 @@
   "legal.privacy.title": "Privacy and KVKK notice",
   "legal.terms.title": "Terms of use",
   "legal.updated": "Last updated: 3 November 2026",
-  "account.register.legal_html": "By signing up you accept the <a href=\"/terms\">terms of use</a>. How your data is handled is in the <a href=\"/privacy\">privacy notice</a>.",
+  "account.register.legal_html": "By signing up you accept the <a href=\"{0}\">terms of use</a>. How your data is handled is in the <a href=\"{1}\">privacy notice</a>.",
   "tracking.privacy": "Privacy",
   "settings.delete.title": "Delete shop",
   "settings.delete.text": "All work orders, customers, devices, stock, payment records, branches and staff accounts are permanently deleted. Customers' tracking links stop working. This cannot be undone; print or save any records you need first.",
@@ -682,5 +682,9 @@
   "tracking.push.ios_step2": "Choose \"Add to Home Screen\".",
   "tracking.push.ios_step3": "Open it from the Home Screen icon and tap \"Notify me when the status changes\".",
   "workorder.passcode_show": "Show the device passcode",
-  "workorder.passcode_unreadable": "The passcode could not be read; ask the customer again."
+  "workorder.passcode_unreadable": "The passcode could not be read; ask the customer again.",
+  "seo.home.title": "Tamirhane: Free repair shop software and repair tracking",
+  "seo.home.description": "Free repair shop software: check-in receipts, work orders, quote approval and parts stock. Customers follow their device's repair on their phone.",
+  "seo.privacy.description": "How Tamirhane repair shop software handles shop, staff and customer data: privacy and KVKK notice, cookies and your rights.",
+  "seo.terms.description": "Terms of use for Tamirhane, the free repair shop software: accounts, the shop's responsibilities, demo shops and service limits."
 }

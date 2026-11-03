@@ -117,6 +117,8 @@ if (app.Environment.IsProduction())
 
 app.UseForwardedHeaders();
 app.UseSecurityHeaders();
+// "/en/..." → İngilizce; önsüz adres Türkçe (#42). Aşağıdaki her şey öneki temel yol olarak görür.
+app.UseLanguagePrefix();
 if (!app.Environment.IsDevelopment())
 {
     // Yayında ayrıntı (stack trace) gösterilmez: genel hata sayfası ve istek numarası.
@@ -135,8 +137,8 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     DefaultRequestCulture = new RequestCulture(AppCultures.Turkish),
     SupportedCultures = [.. AppCultures.All],
     SupportedUICultures = [.. AppCultures.All],
-    // Önce kişinin seçtiği dil (çerez), yoksa tarayıcının dili; ikisi de yoksa Türkçe.
-    RequestCultureProviders = [new CookieRequestCultureProvider { CookieName = AppCultures.CookieName }, new BrowserLanguageProvider()],
+    // Dil adresten: /en İngilizce, önsüz Türkçe. Kişinin seçimi (çerez) önsüz adresi /en'e yönlendirerek uygulanır.
+    RequestCultureProviders = [new LanguagePrefix.Provider()],
     ApplyCurrentCultureToResponseHeaders = true, // Content-Language
 });
 app.UseRouting();

@@ -29,16 +29,13 @@ public sealed class PublicPagesTests(TamirhaneWebFactory app)
     }
 
     [DockerTheory]
-    [InlineData("/privacy", "tr-TR", "Gizlilik ve KVKK aydınlatma metni", "veri işleyen")]
-    [InlineData("/privacy", "en-US", "Privacy and KVKK notice", "data processor")]
-    [InlineData("/terms", "tr-TR", "Kullanım koşulları", "olduğu gibi")]
-    [InlineData("/terms", "en-US", "Terms of use", "as is")]
-    public async Task Legal_pages_open_without_a_session_in_both_languages(string path, string language, string heading, string body)
+    [InlineData("/privacy", "Gizlilik ve KVKK aydınlatma metni", "veri işleyen")]
+    [InlineData("/en/privacy", "Privacy and KVKK notice", "data processor")]
+    [InlineData("/terms", "Kullanım koşulları", "olduğu gibi")]
+    [InlineData("/en/terms", "Terms of use", "as is")]
+    public async Task Legal_pages_open_without_a_session_in_both_languages(string path, string heading, string body)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, path);
-        request.Headers.AcceptLanguage.ParseAdd(language);
-
-        var response = await app.NewBrowser().SendAsync(request);
+        var response = await app.NewBrowser().GetAsync(path);
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

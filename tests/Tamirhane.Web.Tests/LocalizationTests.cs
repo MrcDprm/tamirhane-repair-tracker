@@ -78,18 +78,16 @@ public sealed partial class LocalizationTests
     }
 
     [Theory]
-    [InlineData("en-US,en;q=0.9", "en-GB")]
-    [InlineData("de-DE,en;q=0.8,tr;q=0.5", "en-GB")] // Almanca desteklenmiyor, sıradaki İngilizce
-    [InlineData("tr-TR,tr;q=0.9,en;q=0.8", "tr-TR")]
-    [InlineData("en;q=0.3,tr;q=0.9", "tr-TR")]       // sıra değil kalite belirler
-    [InlineData("de-DE,fr;q=0.8", null)]             // ikisi de yok: varsayılan Türkçe
-    [InlineData("", null)]
-    public async Task Browser_language_picks_turkish_or_english(string header, string? expected)
+    [InlineData("/en", "en-GB")]
+    [InlineData("", "tr-TR")]
+    [InlineData("/eng", "tr-TR")]
+    public async Task Language_comes_from_the_address_prefix(string pathBase, string expected)
     {
         var context = new DefaultHttpContext();
-        context.Request.Headers.AcceptLanguage = header;
+        context.Request.PathBase = pathBase;
+        context.Request.Headers.AcceptLanguage = "de-DE,en;q=0.9"; // tarayıcı dili artık seçmez
 
-        var result = await new BrowserLanguageProvider().DetermineProviderCultureResult(context);
+        var result = await new LanguagePrefix.Provider().DetermineProviderCultureResult(context);
 
         Assert.Equal(expected, result?.Cultures.Single().Value);
     }

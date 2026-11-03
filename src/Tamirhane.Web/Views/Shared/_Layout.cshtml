@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] · Tamirhane</title>
+    @* Uygulama ve hesap sayfaları arama sonuçlarına girmez; aranan sayfa tanıtım (#42). *@
+    <meta name="robots" content="noindex" />
     <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
     <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -72,7 +74,7 @@
             <div class="main">
                 <header class="top">
                     @* Arama her ekranda; "/" aramaya, "N" kabule götürür (site.js). *@
-                    <form class="search" role="search" method="get" action="/work-orders">
+                    <form class="search" role="search" method="get" asp-controller="WorkOrders" asp-action="Index">
                         <svg class="icon"><use href="/img/icons.svg#i-search" /></svg>
                         <label for="search" class="visually-hidden">@T["layout.search_label"]</label>
                         <input id="search" name="q" type="search" placeholder="@T["layout.search_placeholder"]" autocomplete="off"

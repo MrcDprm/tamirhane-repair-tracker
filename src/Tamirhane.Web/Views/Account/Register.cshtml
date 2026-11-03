@@ -42,7 +42,7 @@
             <span asp-validation-for="Locale"></span>
         </div>
 
-        <p class="field-help">@H["account.register.legal_html"]</p>
+        <p class="field-help">@H["account.register.legal_html", Url.Action("Terms", "Home")!, Url.Action("Privacy", "Home")!]</p>
         <button type="submit" class="btn btn-primary btn-block">@T["account.register.submit"]</button>
     </form>
 

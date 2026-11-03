@@ -613,7 +613,7 @@
   "legal.privacy.title": "Gizlilik ve KVKK aydınlatma metni",
   "legal.terms.title": "Kullanım koşulları",
   "legal.updated": "Son güncelleme: 3 Kasım 2026",
-  "account.register.legal_html": "Kayıt olarak <a href=\"/terms\">kullanım koşullarını</a> kabul etmiş olursun. Verilerinin nasıl işlendiği <a href=\"/privacy\">gizlilik metninde</a>.",
+  "account.register.legal_html": "Kayıt olarak <a href=\"{0}\">kullanım koşullarını</a> kabul etmiş olursun. Verilerinin nasıl işlendiği <a href=\"{1}\">gizlilik metninde</a>.",
   "tracking.privacy": "Gizlilik",
   "settings.delete.title": "Atölyeyi sil",
   "settings.delete.text": "Bütün iş emirleri, müşteriler, cihazlar, stok, tahsilat kayıtları, şubeler ve personel hesapları kalıcı olarak silinir. Müşterilerin takip linkleri çalışmaz olur. Bu işlem geri alınamaz; önce gerekli kayıtların çıktısını al.",
@@ -682,5 +682,9 @@
   "tracking.push.ios_step2": "\"Ana Ekrana Ekle\"yi seç.",
   "tracking.push.ios_step3": "Ana ekrandaki simgeden aç ve \"Durum değişince haber ver\"e dokun.",
   "workorder.passcode_show": "Cihaz şifresini göster",
-  "workorder.passcode_unreadable": "Şifre okunamadı; müşteriden yeniden iste."
+  "workorder.passcode_unreadable": "Şifre okunamadı; müşteriden yeniden iste.",
+  "seo.home.title": "Tamirhane: Ücretsiz teknik servis ve tamir takip programı",
+  "seo.home.description": "Tamir atölyeleri için ücretsiz servis takip programı: cihaz kabul fişi, iş emri, teklif onayı, parça stoku; müşteri cihazını telefondan takip eder.",
+  "seo.privacy.description": "Tamirhane servis takip programında atölye, personel ve müşteri verilerinin nasıl işlendiği: KVKK aydınlatma metni, çerezler ve haklar.",
+  "seo.terms.description": "Tamirhane ücretsiz teknik servis programının kullanım koşulları: hesap, atölyenin sorumlulukları, demo atölye ve hizmetin sınırları."
 }

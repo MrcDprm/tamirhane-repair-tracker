@@ -81,9 +81,7 @@ public sealed partial class SecurityTests(TamirhaneWebFactory app)
         for (var i = 0; i < GlobalRateLimit.PermitsPerMinute; i++)
             await bot.GetAsync("/privacy");
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/privacy");
-        request.Headers.AcceptLanguage.ParseAdd("en-US");
-        var refused = await bot.SendAsync(request);
+        var refused = await bot.GetAsync("/en/privacy"); // sınır iki dilde ortak, metin sayfanın dilinde
 
         Assert.Equal(HttpStatusCode.TooManyRequests, refused.StatusCode);
         Assert.NotNull(refused.Headers.RetryAfter);

@@ -46,7 +46,7 @@
     @if (Model.CanSetDiagnosisFee)
     {
         <form method="post" asp-action="DiagnosisFee" asp-route-id="@Model.Id" class="panel-body inline-form bordered"
-              hx-post="/work-orders/@Model.Id/diagnosis-fee" hx-target="#work-order" hx-swap="outerHTML">
+              hx-post="@Url.Content("~/work-orders/")@Model.Id/diagnosis-fee" hx-target="#work-order" hx-swap="outerHTML">
             <div class="grow">
                 <label for="diagnosis-fee">@T["payment.diagnosis_fee_label"]</label>
                 <input id="diagnosis-fee" name="fee" type="number" min="0" step="0.01" inputmode="decimal" value="@Plain(Model.DiagnosisFee)" />
@@ -58,7 +58,7 @@
     @if (Model.CanTakePayment)
     {
         <form method="post" asp-action="Pay" asp-route-id="@Model.Id" class="panel-body bordered"
-              hx-post="/work-orders/@Model.Id/payments" hx-target="#work-order" hx-swap="outerHTML">
+              hx-post="@Url.Content("~/work-orders/")@Model.Id/payments" hx-target="#work-order" hx-swap="outerHTML">
             <fieldset class="choices">
                 <legend class="label">@T["payment.method"]</legend>
                 @foreach (var method in new[] { PaymentMethod.Cash, PaymentMethod.Card, PaymentMethod.Transfer })
@@ -104,7 +104,7 @@
         <details class="cancel panel-body">
             <summary>@T["payment.refund"]</summary>
             <form method="post" asp-action="Refund" asp-route-id="@Model.Id"
-                  hx-post="/work-orders/@Model.Id/refunds" hx-target="#work-order" hx-swap="outerHTML">
+                  hx-post="@Url.Content("~/work-orders/")@Model.Id/refunds" hx-target="#work-order" hx-swap="outerHTML">
                 <div class="field-row">
                     <div class="field">
                         <label for="refund-amount">@T["quote.amount"]</label>
