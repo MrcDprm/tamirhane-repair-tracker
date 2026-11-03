@@ -15,9 +15,10 @@
     <a class="skip-link" href="#main">@T["layout.skip"]</a>
     <header class="public-top pegboard">
         <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
-        <nav class="top-end" aria-label="@T["layout.account"]">
-            <partial name="_LanguageSwitch" model="@("side-btn")" />
-            <a class="side-btn public-login" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>
+        @* Dil seçici logonun yanında; giriş ve kayıt dar ekranda alt satıra iner (hiçbiri ekrandan taşmaz). *@
+        <partial name="_LanguageSwitch" model="@("side-btn")" />
+        <nav class="account-links" aria-label="@T["layout.account"]">
+            <a class="side-btn" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>
             <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@T["account.register.title"]</a>
         </nav>
     </header>

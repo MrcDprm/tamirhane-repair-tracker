@@ -107,8 +107,8 @@
     {
         <header class="plain-top">
             <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
-            <nav class="top-end" aria-label="@T["layout.account"]">
-                <partial name="_LanguageSwitch" model="@("btn")" />
+            <partial name="_LanguageSwitch" model="@("btn")" />
+            <nav class="account-links" aria-label="@T["layout.account"]">
                 <a class="btn" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>
                 <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@T["account.register.title"]</a>
             </nav>
