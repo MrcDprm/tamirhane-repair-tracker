@@ -18,6 +18,16 @@ public sealed class DockerFactAttribute : FactAttribute
     }
 }
 
+/// <summary>Docker gerektiren, veriyle çalışan test (<see cref="DockerFactAttribute"/> gibi atlanır).</summary>
+public sealed class DockerTheoryAttribute : TheoryAttribute
+{
+    public DockerTheoryAttribute()
+    {
+        if (!DockerEngine.IsAvailable)
+            Skip = DockerFactAttribute.SkipReason;
+    }
+}
+
 public static class DockerEngine
 {
     private static readonly Lazy<bool> Available = new(Ping);
