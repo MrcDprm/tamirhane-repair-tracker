@@ -22,8 +22,12 @@ services:
         value: "mailto:mrcdprmm@hotmail.com"
       - key: EMAIL_FROM
         value: "Tamirhane <tamirhane@miracdeprem.com>"
+      # Render, X-Forwarded-For'un sonuna kendi vekil sunucusunun IP'sini ekler; oradan okunan adres herkes için
+      # aynı olurdu. Render'ın önündeki Cloudflare gerçek istemci IP'sini bu başlığa yazar (istemcinin gönderdiğini ezer).
+      - key: CLIENT_IP_HEADER
+        value: "CF-Connecting-IP"
       - key: PUBLIC_ORIGIN
         value: "https://tamirhane.miracdeprem.com"
-      # Render servis adı alınmışsa sonuna ek koyar (ör. tamirhane-ab12.onrender.com); öyleyse burası güncellenir.
+      # onrender.com adresi Render'da kapatıldı; site sadece kendi alan adından açılır.
       - key: AllowedHosts
-        value: "tamirhane.miracdeprem.com;tamirhane.onrender.com"
+        value: "tamirhane.miracdeprem.com"
