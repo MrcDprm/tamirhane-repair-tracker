@@ -61,7 +61,7 @@ Bağımlılık kuralı `Tamirhane.Architecture.Tests` içinde testle doğrulanı
 - C#, ASP.NET Core MVC, Entity Framework Core, PostgreSQL
 - ASP.NET Core Identity
 - xUnit, NetArchTest
-- Docker, Render
+- Oracle Cloud (Ubuntu, systemd), Caddy
 
 ## Kurulum ve Çalıştırma
 

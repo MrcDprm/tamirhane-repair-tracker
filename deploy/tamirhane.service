@@ -1,0 +1,40 @@
+# Tamirhane web uygulaması (Oracle Cloud Always Free, Ubuntu). Caddy önde; uygulama sadece 127.0.0.1:8090'da dinler.
+# Kurulum: /etc/systemd/system/tamirhane.service, ayrıntılar deploy/README.md.
+[Unit]
+Description=Tamirhane web uygulaması
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/tamirhane
+ExecStart=/opt/tamirhane/Tamirhane.Web
+Restart=always
+RestartSec=5
+
+# Gizli değerler (DATABASE_URL, RESEND_API_KEY, VAPID...) sadece root'un okuyabildiği dosyada; repoda yok.
+EnvironmentFile=/etc/tamirhane/tamirhane.env
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:8090
+Environment=DOTNET_gcServer=0
+Environment=DOTNET_NOLOGO=1
+
+# Sıkılaştırma: her açılışta geçici bir kullanıcı; dosya sistemi salt okunur, ev klasörleri ve diğer süreçler görünmez.
+# Uygulama diske hiçbir şey yazmaz (veri Neon'da, şifreleme anahtarları veritabanında).
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+# Not: MemoryDenyWriteExecute açılmaz; .NET'in JIT derleyicisi çalışma anında kod üretir.
+
+[Install]
+WantedBy=multi-user.target

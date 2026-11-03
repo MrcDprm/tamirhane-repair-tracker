@@ -151,7 +151,7 @@ Her madde bir issue; her issue bir branch ve PR (`Closes #n`).
 2. **Altyapı ve hesaplar:** EF Core + PostgreSQL, migration'lar, kiracı filtresi, Identity, kayıt + e-posta doğrulama, personel daveti, şubeler, roller; entegrasyon testleri (Testcontainers).
 3. **Atölye ekranları:** Cihaz kabul, iş emri sayfası (durum, teklif, notlar), stok, tahsilat, kabul fişi ve etiket yazdırma, hızlı arama.
 4. **Müşteri tarafı:** Takip sayfası, teklif onayı, e-posta bildirimleri, Web Push, WhatsApp düğmesi.
-5. **Panel ve yayın:** Panel, garanti dönüşü, demo atölye, tanıtım ve yasal sayfalar, TR/EN, tema, son tarama, Docker + Render + Neon + Resend, README, v1.0.0, SEO.
+5. **Panel ve yayın:** Panel, garanti dönüşü, demo atölye, tanıtım ve yasal sayfalar, TR/EN, tema, son tarama, Oracle Cloud (Caddy + systemd) + Neon + Resend (2026-11-03: Render ücretsiz planı uyuduğu ve alan adı ücretli olduğu için Oracle'a taşındı), README, v1.0.0, SEO.
 
 ## Tasarım planı
 

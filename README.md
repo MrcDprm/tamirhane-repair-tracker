@@ -61,7 +61,7 @@ The dependency rule is verified by tests in `Tamirhane.Architecture.Tests`.
 - C#, ASP.NET Core MVC, Entity Framework Core, PostgreSQL
 - ASP.NET Core Identity
 - xUnit, NetArchTest
-- Docker, Render
+- Oracle Cloud (Ubuntu, systemd), Caddy
 
 ## Installation
 
