@@ -28,6 +28,41 @@ document.addEventListener("submit", function (event) {
   if (message && !confirm(message)) event.preventDefault();
 });
 
+// Gönderilen form: basılan düğme hemen "işleniyor" olur ve form ikinci kez gönderilmez (yavaş bağlantıda tekrar
+// tıklayıp aynı kaydı iki kez açmak olmasın). Düğme bir sonraki adımda kilitlenir: hemen kilitlense tıklanan düğmenin
+// değeri (ör. hangi adım) forma eklenmezdi. Geri tuşuyla dönülen sayfada (önbellekten) kilit kalkar.
+function busy(button, on) {
+  if (!button) return;
+  button.classList.toggle("is-busy", on);
+  button.disabled = on;
+  if (on) button.setAttribute("aria-busy", "true"); else button.removeAttribute("aria-busy");
+}
+document.addEventListener("submit", function (event) {
+  var form = event.target;
+  if (form.target === "_blank") return;
+  if (form.dataset.submitting) { event.preventDefault(); return; }
+  if (event.defaultPrevented) return; // onay sorusu reddedildi ya da htmx kendisi gönderiyor (aşağıda)
+  form.dataset.submitting = "1";
+  var button = event.submitter || form.querySelector("button[type=submit], button:not([type])");
+  setTimeout(function () { busy(button, true); }, 0);
+});
+window.addEventListener("pageshow", function () {
+  document.querySelectorAll("form[data-submitting]").forEach(function (form) {
+    delete form.dataset.submitting;
+    form.querySelectorAll(".is-busy").forEach(function (b) { busy(b, false); });
+  });
+});
+
+// htmx ile giden formlar (iş emri sayfası): istek sürerken düğme işleniyor; cevap gelince (hata olsa da) açılır.
+document.addEventListener("htmx:beforeRequest", function (event) {
+  var form = event.detail.elt.closest("form");
+  if (form) form.querySelectorAll("button").forEach(function (b) { busy(b, true); });
+});
+document.addEventListener("htmx:afterRequest", function (event) {
+  var form = event.detail.elt.closest("form");
+  if (form && form.isConnected) form.querySelectorAll("button").forEach(function (b) { busy(b, false); });
+});
+
 // Dar ekranda yan menü (pano) katlanır; düğme açar ve kapatır.
 var sideToggle = document.querySelector(".side-toggle");
 if (sideToggle) {

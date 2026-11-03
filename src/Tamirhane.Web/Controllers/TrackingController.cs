@@ -31,6 +31,37 @@ public sealed class TrackingController : Controller
         return view is null ? Missing() : View(view);
     }
 
+    /// <summary>
+    /// Bu takip sayfasının web uygulaması tanımı. iPhone'da tarayıcı bildirimi sadece ana ekrana eklenmiş web uygulamasında
+    /// çalışır; eklenince doğrudan bu cihazın takip sayfası açılır (start_url), bildirim düğmesi orada görünür.
+    /// </summary>
+    [HttpGet("{code}/manifest.webmanifest")]
+    public async Task<IActionResult> Manifest(string code, [FromServices] GetTracking get, CancellationToken ct)
+    {
+        KeepPrivate();
+        var view = await get.HandleAsync(code, ct);
+        if (view is null)
+            return NotFound();
+
+        var page = Url.Action(nameof(Show), new { code })!;
+        var manifest = new
+        {
+            name = $"{view.Brand} {view.Model} · {view.ShopName}",
+            short_name = view.Model.Length <= 12 ? view.Model : view.ShopName.Length <= 12 ? view.ShopName : "Tamirhane",
+            start_url = page,
+            scope = page,
+            display = "standalone",
+            background_color = "#26323a",
+            theme_color = "#26323a",
+            icons = new[]
+            {
+                new { src = "/img/apple-touch-icon.png", sizes = "180x180", type = "image/png" },
+                new { src = "/img/icon-512.png", sizes = "512x512", type = "image/png" },
+            },
+        };
+        return new JsonResult(manifest) { ContentType = "application/manifest+json" };
+    }
+
     [HttpPost("{code}/decision")]
     public async Task<IActionResult> Decide(
         string code, string? lang, DecisionInput input, [FromServices] DecideQuoteByCustomer decide, [FromServices] GetTracking get, CancellationToken ct)

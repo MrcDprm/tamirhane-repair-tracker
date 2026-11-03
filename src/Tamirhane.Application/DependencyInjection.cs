@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<GetReceipt>();
         services.AddScoped<ListWorkOrders>();
         services.AddScoped<FindCustomerByPhone>();
+        services.AddScoped<ListKnownModels>();
         services.AddScoped<UpdateIntakeDetails>();
         services.AddScoped<PromiseDelivery>();
         services.AddScoped<GetTracking>();

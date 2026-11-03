@@ -37,7 +37,7 @@
     @if (lines.Count > 0)
     {
         <div class="table-wrap">
-            <table class="data-table">
+            <table class="data-table quote-table">
                 <thead>
                     <tr>
                         <th scope="col">@T["quote.line"]</th>
@@ -60,11 +60,11 @@
                                 @line.Description
                                 <span class="muted small">@T[line.Kind == QuoteLineKind.Labor ? "quote.kind_labor" : line.FromStock ? "quote.kind_stock" : "quote.kind_ordered"]</span>
                             </td>
-                            <td class="num">@line.Quantity.ToString("0.##")</td>
-                            <td class="num">@line.UnitPrice.ToString("C")</td>
-                            <td class="num">@(line.DiscountRate == 0 ? "" : Percent(line.DiscountRate))</td>
-                            <td class="num">@Percent(line.VatRate)</td>
-                            <td class="num"><strong>@line.Total.ToString("C")</strong></td>
+                            <td class="num" data-label="@T["quote.quantity"]">@line.Quantity.ToString("0.##")</td>
+                            <td class="num" data-label="@T["quote.unit_price"]">@line.UnitPrice.ToString("C")</td>
+                            <td class="num@(line.DiscountRate == 0 ? " is-blank" : "")" data-label="@T["quote.discount"]">@(line.DiscountRate == 0 ? "" : Percent(line.DiscountRate))</td>
+                            <td class="num" data-label="@T["quote.vat"]">@Percent(line.VatRate)</td>
+                            <td class="num quote-total" data-label="@T["quote.amount"]"><strong>@line.Total.ToString("C")</strong></td>
                             @if (Model.IsQuoteEditable)
                             {
                                 <td class="actions">

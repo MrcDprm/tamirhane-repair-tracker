@@ -118,6 +118,10 @@ public interface IDeviceRepository
 {
     Task<Device?> GetAsync(Guid id, CancellationToken ct);
     Task<IReadOnlyList<Device>> ListByCustomerAsync(Guid customerId, CancellationToken ct);
+
+    /// <summary>Atölyenin bu tür ve markada daha önce kaydettiği modeller (kabul formundaki öneriler için), en çok gelen önce.</summary>
+    Task<IReadOnlyList<string>> KnownModelsAsync(DeviceKind kind, string brand, int take, CancellationToken ct);
+
     void Add(Device device);
 }
 

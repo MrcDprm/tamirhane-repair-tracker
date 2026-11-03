@@ -201,6 +201,16 @@ internal sealed class DeviceRepository(TamirhaneDbContext db) : IDeviceRepositor
     public async Task<IReadOnlyList<Device>> ListByCustomerAsync(Guid customerId, CancellationToken ct) =>
         await db.Devices.Where(d => d.CustomerId == customerId).OrderBy(d => d.Brand).ThenBy(d => d.Model).ToListAsync(ct);
 
+    public async Task<IReadOnlyList<string>> KnownModelsAsync(DeviceKind kind, string brand, int take, CancellationToken ct) =>
+        await db.Devices
+            // ILIKE değil: markadaki % ve _ joker sayılmasın. Büyük/küçük harf farkı yok sayılır.
+            .Where(d => d.Kind == kind && d.Brand.ToLower() == brand.ToLower())
+            .GroupBy(d => d.Model)
+            .OrderByDescending(g => g.Count()).ThenBy(g => g.Key)
+            .Select(g => g.Key)
+            .Take(take)
+            .ToListAsync(ct);
+
     public void Add(Device device) => db.Devices.Add(device);
 }
 

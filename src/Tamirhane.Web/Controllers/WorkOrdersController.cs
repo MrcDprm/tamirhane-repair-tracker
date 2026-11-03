@@ -8,6 +8,7 @@ using Tamirhane.Domain.Common;
 using Tamirhane.Domain.Customers;
 using Tamirhane.Domain.Inventory;
 using Tamirhane.Domain.WorkOrders;
+using Tamirhane.Web.Display;
 using Tamirhane.Web.Localization;
 using Tamirhane.Web.Models.WorkOrders;
 
@@ -93,10 +94,16 @@ public sealed class WorkOrdersController(IStringLocalizer<SharedResource> t) : C
         if (!ModelState.IsValid)
             return View(page);
 
+        // Kayıtlı cihaz seçildiyse seçenekler onun türüne göre; formdaki tür seçimi yeni cihaz içindir.
+        var kind = lookup.Value?.Devices.FirstOrDefault(d => d.Id == input.DeviceId)?.Kind ?? input.DeviceKind;
+        var profile = DeviceCatalog.For(kind);
         var result = await receive.HandleAsync(new ReceiveDeviceCommand(
             input.CustomerId, input.CustomerName, input.Phone, input.CustomerEmail, input.KvkkConsent,
-            input.DeviceId, input.DeviceKind, input.Brand, input.Model, input.Serial, input.Imei,
-            input.Complaint, input.Condition, input.Accessories, input.Passcode, input.PromisedDate), ct);
+            input.DeviceId, input.DeviceKind, input.Brand, input.Model, input.Serial, profile.AsksImei ? input.Imei : null,
+            input.Complaint,
+            IntakeText.Join(t, "intake.cond.", input.ConditionItems, profile.Conditions, input.Condition),
+            IntakeText.Join(t, "intake.acc.", input.AccessoryItems, profile.Accessories, input.Accessories),
+            IntakeText.Passcode(t, profile, input.LockType, input.Passcode), input.PromisedDate), ct);
         if (result.IsFailure)
         {
             AddError(result.Error!);
@@ -105,6 +112,20 @@ public sealed class WorkOrdersController(IStringLocalizer<SharedResource> t) : C
 
         TempData["Created"] = true;
         return RedirectToAction(nameof(Details), new { id = result.Value.WorkOrderId });
+    }
+
+    /// <summary>
+    /// Kabul formundaki model önerileri: atölyenin bu tür ve markada daha önce girdiği modeller önce, sonra hazır liste.
+    /// Sadece öneri; listede olmayan model de yazılabilir.
+    /// </summary>
+    [HttpGet("device-models")]
+    public async Task<IActionResult> DeviceModels(DeviceKind kind, string? brand, [FromServices] ListKnownModels known, CancellationToken ct)
+    {
+        var models = (await known.HandleAsync(kind, brand, ct))
+            .Concat(DeviceCatalog.Models(kind, brand))
+            .DistinctBy(m => m.ToLowerInvariant())
+            .ToList();
+        return Json(models);
     }
 
     [HttpGet("{id:guid}")]
