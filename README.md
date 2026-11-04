@@ -31,6 +31,11 @@ Free repair shop software for phone, computer and appliance repair shops: device
 - Turkish and English (English under `/en`), light and dark theme, works on a phone at the counter
 - Public demo shop with sample data, deleted after 24 hours; the owner can delete the shop and all its data
 
+**AI assistant (MCP)**
+- Connect Claude (or another MCP client) to your shop and ask in plain language: "What is the status of 2026-0042?", "Which devices are ready for pickup?", "What is low on stock?"
+- The assistant can move a work order to the next status and add a shop note; it cannot delete anything, take payments, change prices or see device passcodes
+- Sign-in with OAuth 2.1: the shop owner or technician approves on a consent screen, sees the connected apps and can disconnect them at any time
+
 ## Screenshots
 
 | Dashboard | Check-in |
@@ -42,6 +47,10 @@ Free repair shop software for phone, computer and appliance repair shops: device
 | ![Work order](docs/screenshots/work-order-en.png) | ![Tracking page on a phone](docs/screenshots/tracking-en.png) |
 
 ![Landing page](docs/screenshots/landing-en.png)
+
+| Connecting an AI assistant | Connected apps |
+|---|---|
+| ![Consent screen](docs/screenshots/mcp-consent-en.png) | ![AI assistant page](docs/screenshots/mcp-connections-en.png) |
 
 ## Architecture
 
@@ -58,9 +67,9 @@ Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
 | `Tamirhane.Domain` | Entities and business rules: work order status flow, quote totals, stock, warranty, IMEI check. No framework references. |
 | `Tamirhane.Application` | Use cases (one class each) and interfaces for storage, email, push, the clock and passcode encryption. |
 | `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend email, Web Push, QR codes, Data Protection. |
-| `Tamirhane.Web` | MVC controllers and views, localisation, security headers, rate limits. |
+| `Tamirhane.Web` | MVC controllers and views, localisation, security headers, rate limits. The MCP server and OAuth endpoints are a second presentation layer here that calls the same use cases. |
 
-The dependency rule is checked by `Tamirhane.Architecture.Tests`. 734 tests run against a real PostgreSQL in Docker (Testcontainers).
+The dependency rule is checked by `Tamirhane.Architecture.Tests`. 744 tests run against a real PostgreSQL in Docker (Testcontainers).
 
 Security in short: strict CSP with Trusted Types, CSRF tokens on every POST (a test walks all POST endpoints), per-IP rate limits, `__Host-` cookies, tenant filter on every query, passwords hashed by Identity, Data Protection keys on the server's disk, encrypted device passcodes, TLS-verified database connection.
 
@@ -70,6 +79,7 @@ Security in short: strict CSP with Trusted Types, CSRF tokens on every POST (a t
 - ASP.NET Core Identity, Data Protection
 - htmx, Motion (animations), plain CSS
 - Resend (email), Web Push (VAPID)
+- Model Context Protocol (C# SDK), OpenIddict (OAuth 2.1)
 - xUnit, Testcontainers, NetArchTest
 - Oracle Cloud (Ubuntu, systemd), Caddy
 
@@ -93,6 +103,14 @@ Tests: `dotnet test` (integration tests are skipped with a note if Docker is not
 
 Deployment to a Linux server behind Caddy: [deploy/README.md](deploy/README.md).
 
+## Use with Claude
+
+1. In Claude, open Settings → Connectors → Add custom connector.
+2. Server URL: `https://tamirhane.miracdeprem.com/mcp` (for a local run: `https://localhost:7071/mcp`).
+3. Sign in on the Tamirhane page that opens and press Allow. Connected apps are listed under **AI assistant** in the menu.
+
+Tools: `find_work_order`, `list_work_orders`, `low_stock`, `change_status`. Before a status change the client asks you to confirm.
+
 ## What I Learned
 
 - **Clean Architecture for real:** I kept the domain free of EF Core and ASP.NET and let a test fail the build when a project references the wrong layer. Business rules like "you can't deliver a device with a balance due" live in one place and are tested without a database.
@@ -102,6 +120,7 @@ Deployment to a Linux server behind Caddy: [deploy/README.md](deploy/README.md).
 - **Hosting trade-offs:** a free plan that sleeps makes the first click take a minute. A self-contained ReadyToRun build as a hardened systemd service on a free ARM VM was faster and cheaper, but I also learned that the runtime then has to be updated by me.
 - **Encrypting data at rest:** device passcodes are encrypted with ASP.NET Data Protection and the keys live on the server's disk, not in the database, so a database leak alone reveals nothing.
 - **Localisation and SEO:** a language prefix moved into `PathBase` gives every generated link `/en` for free. A `__Host-` cookie then needs `Path=/`, otherwise browsers drop it; the test client didn't enforce this, so I added a test that does.
+- **Letting an AI assistant in safely:** I built an OAuth 2.1 authorization server with OpenIddict that follows what MCP clients expect: discovery documents, dynamic client registration limited to known redirect addresses, PKCE and resource indicators. The token only names the user; shop, role and branch are read from the database on every request, so removing a staff member or disconnecting the app takes effect on the next call. Text written by customers is returned as data in its own field so it can't pass as an instruction to the assistant.
 - **Product details:** the check-in form adapts to the device type, a phone layout was checked at 320 to 768 pixels in both languages, and iPhone notifications needed a web app manifest per tracking page.
 
 ## License
