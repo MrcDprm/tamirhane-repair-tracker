@@ -152,6 +152,23 @@ public sealed partial class McpFlowTests(TamirhaneWebFactory app)
         Assert.StartsWith("/account/login", Browser.RedirectOf(response));
     }
 
+    [DockerFact]
+    public async Task English_user_gets_the_consent_screen_under_the_language_prefix()
+    {
+        // Dil çerezi İngilizce olan kullanıcı /connect/authorize'dan /en/connect/authorize'a yönlendirilir.
+        var owner = await _flows.OwnerAsync("mcp-english@example.com");
+        var (clientId, _) = await RegisterAsync("Claude");
+        var (authorize, _) = AuthorizeUrl(clientId);
+        var english = "/en" + authorize;
+
+        var consent = await owner.GetAsync(english);
+        Assert.True(consent.StatusCode == HttpStatusCode.OK, $"{(int)consent.StatusCode} {consent.Headers.Location}");
+        Assert.Contains("lang=\"en\"", await consent.Content.ReadAsStringAsync());
+
+        var allowed = await owner.SubmitAsync(english, "/en/connect/authorize", Fields(authorize, "allow"));
+        Assert.StartsWith(Callback, allowed.Headers.Location?.AbsoluteUri);
+    }
+
     // --- yardımcılar ---
 
     /// <summary>İstemci kaydı + izin ekranında onay + kodu token'a çevirme; erişim token'ını döner.</summary>
