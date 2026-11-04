@@ -1,0 +1,66 @@
+@using Tamirhane.Web.Mcp
+@model ConnectionsPage
+@{
+    ViewData["Title"] = T["nav.connections"];
+    var turkey = TimeSpan.FromHours(3);
+}
+
+<div class="page-head">
+    <div>
+        <h1>@T["nav.connections"]</h1>
+        <p>@T["mcp.connections.text"]</p>
+    </div>
+</div>
+
+@if (TempData["Status"] is string status)
+{
+    <div class="notice notice-ok" role="status">@status</div>
+}
+
+<section class="panel" aria-labelledby="how-heading">
+    <div class="panel-head"><h2 id="how-heading">@T["mcp.connections.how"]</h2></div>
+    <div class="panel-body">
+        <ol class="steps-list">
+            <li>@T["mcp.connections.step1"]</li>
+            <li>@T["mcp.connections.step2"] <code class="mono">@Model.McpUrl</code></li>
+            <li>@T["mcp.connections.step3"]</li>
+        </ol>
+        <p class="muted">@T["mcp.connections.examples"]</p>
+        <div class="notice" role="note">
+            <strong>@T["mcp.consent.kvkk_title"]</strong>
+            <p>@T["mcp.consent.kvkk_text"]</p>
+        </div>
+    </div>
+</section>
+
+<section class="panel" aria-labelledby="list-heading">
+    <div class="panel-head"><h2 id="list-heading">@T["mcp.connections.list"]</h2></div>
+    @if (Model.Connections.Count == 0)
+    {
+        <p class="panel-body muted">@T["mcp.connections.empty"]</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr><th scope="col">@T["mcp.connections.app"]</th><th scope="col">@T["mcp.connections.since"]</th><th scope="col"><span class="visually-hidden">@T["quote.actions"]</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Connections)
+                    {
+                        <tr>
+                            <td><strong>@row.AppName</strong></td>
+                            <td>@(row.CreatedAt?.ToOffset(turkey).ToString("d MMMM yyyy HH:mm", CultureInfo.CurrentCulture))</td>
+                            <td>
+                                <form asp-action="Revoke" asp-route-id="@row.Id" method="post">
+                                    <button type="submit" class="btn">@T["mcp.connections.revoke"]</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

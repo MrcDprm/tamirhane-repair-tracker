@@ -320,8 +320,8 @@ public sealed class WorkOrdersController(IStringLocalizer<SharedResource> t) : C
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    // Hata kodu → metnin anahtarı.
-    private static readonly Dictionary<string, string> StepMessages = new()
+    // Hata kodu → metnin anahtarı (MCP araçları da aynı metinleri kullanır).
+    internal static readonly Dictionary<string, string> StepMessages = new()
     {
         [WorkOrderErrors.InvalidTransition.Code] = "error.invalid_transition",
         [WorkOrderErrors.CancelReasonRequired.Code] = "error.cancel_reason",
