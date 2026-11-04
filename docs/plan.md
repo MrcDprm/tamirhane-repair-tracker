@@ -235,7 +235,7 @@ Atölye sahibi ya da teknisyen kendi Claude'una (web, mobil, masaüstü) "2026-0
 - `low_stock`: kritik seviyenin altındaki parçalar, şube başına.
 - `change_status`: iş emri durumunu değiştirir (domain kuralları geçerli, geçersiz geçiş anlamlı hata), isteğe bağlı not. İstemci onay sorar (`destructiveHint`).
 - Silme, ödeme alma, fiyat değiştirme araçları yok. Mesaj taslağı araç değil: veriyi araç verir, metni kullanıcının modeli yazar.
-- Teknisyen rolü fiyat, ödeme ve ciroyu görmez (web'deki kural). Müşterinin yazdığı şikâyet metni araç çıktısında "müşteri metni" olarak ayrı alanda döner (prompt injection'a karşı veri, talimat değil).
+- Asistan, bağlanan kişinin web'de gördüğünü görür (teknisyen ciroyu görmez); alış fiyatı ve cihaz şifresi hiçbir rolde dönmez. Müşterinin yazdığı şikâyet metni araç çıktısında "müşteri metni" olarak ayrı alanda döner (prompt injection'a karşı veri, talimat değil).
 
 **Güvenlik ve KVKK**
 - Token'lar Data Protection ile imzalı/şifreli, veritabanında sadece referans; ayarlarda "Bağlı uygulamalar" listesi ve tek tıkla iptal.
