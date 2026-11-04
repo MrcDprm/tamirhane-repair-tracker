@@ -58,6 +58,7 @@ internal sealed class AccountService(
         var user = await users.FindByIdAsync(userId.ToString());
         if (user is null)
             return;
+        await OAuthGrants.DeleteForUsersAsync(db, [userId], ct);
         var result = await users.DeleteAsync(user);
         if (!result.Succeeded)
             throw new InvalidOperationException($"Hesap silinemedi: {result.Errors.First().Code}");

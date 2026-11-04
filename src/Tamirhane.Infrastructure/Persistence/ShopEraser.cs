@@ -38,6 +38,7 @@ internal sealed class ShopEraser(TamirhaneDbContext db) : IShopEraser
         await db.Branches.IgnoreQueryFilters().Where(b => b.ShopId == shopId).ExecuteDeleteAsync(ct);
         await db.WorkOrderSequences.Where(s => s.ShopId == shopId).ExecuteDeleteAsync(ct);
         await db.Shops.IgnoreQueryFilters().Where(s => s.Id == shopId).ExecuteDeleteAsync(ct);
+        await OAuthGrants.DeleteForUsersAsync(db, userIds, ct);
         await db.Users.Where(u => userIds.Contains(u.Id)).ExecuteDeleteAsync(ct);
     }
 }

@@ -179,5 +179,7 @@ public static class DependencyInjection
     internal static void Configure(DbContextOptionsBuilder options, string connectionString) =>
         options
             .UseNpgsql(ConnectionStrings.Normalize(connectionString))
-            .UseSnakeCaseNamingConvention();
+            .UseSnakeCaseNamingConvention()
+            // Yapay zekâ istemcilerinin OAuth kayıtları (istemciler, izinler, token'lar): OpenIddict'in tabloları.
+            .UseOpenIddict();
 }

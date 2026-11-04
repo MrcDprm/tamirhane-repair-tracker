@@ -6,8 +6,8 @@ using Tamirhane.Infrastructure.Persistence;
 
 namespace Tamirhane.Infrastructure.Identity;
 
-/// <summary>Oturum çerezindeki atölye bilgileri.</summary>
-internal static class ShopClaims
+/// <summary>Oturumdaki atölye bilgileri (çerezde; MCP isteğinde token'dan değil her istekte yeniden üretilir).</summary>
+public static class ShopClaims
 {
     public const string ShopId = "tamirhane:shop";
     public const string StaffId = "tamirhane:staff";
