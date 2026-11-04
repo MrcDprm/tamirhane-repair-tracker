@@ -218,3 +218,31 @@ Koyu tema (akşam kapanış sayımı): zemin `#1B2024`, etiket `#4A4130`, metin 
 - **Kabul ekranı:** numaralı adımlar (müşteri, cihaz, arıza) ve sağda yazdıkça dolan etiket önizlemesi.
 - **Hareket (Motion, MIT; GSAP AGPL lisansla uyumsuz olduğu için seçilmedi):** pano çizimi bir kez canlanır (aletler asılır, etiket ipinde sallanır, kaşe basılır), panodaki etiketler asılırken salınır, kaşe yaylı basılır, yan menüdeki aletler üstüne gelince sallanır. Sayfa geçişleri View Transitions ile (kabuldeki etiket iş emri sayfasındaki etikete taşınır; Firefox'ta sayfa normal açılır). Kısmi sayfa güncellemesi htmx ile #22'de (durum değişince sadece etikete kaşe basılır). Hareket azaltma açıksa hiçbiri çalışmaz.
 - Her yerde hareket yok: kayarak beliren bölümler gibi kalıp hareketler bilerek kullanılmadı.
+
+## v1.1.0: Yapay zekâ asistanından erişim (MCP)
+
+Atölye sahibi ya da teknisyen kendi Claude'una (web, mobil, masaüstü) "2026-0042 ne durumda", "kritik stoktaki parçalar", "bugün teslime hazırlar", "Ayşe Hanım'a cihazı hazır mesajı yaz" diyebilsin. Dil modelini kullanıcının kendi istemcisi çalıştırır; Tamirhane'ye API maliyeti ya da anahtar gelmez.
+
+**Mimari**
+- MCP, MVC'nin yanında ikinci bir sunum katmanı: resmî C# SDK'sı (`ModelContextProtocol.AspNetCore`) ile aynı uygulamada `/mcp` (Streamable HTTP). Araçlar mevcut Application kullanım senaryolarını çağırır; kiracı filtresi, roller ve durum makinesi aynen geçerli. Ayrı sunucu yok, aynı Oracle VM ve Caddy.
+- **OAuth 2.1:** Tamirhane kendi yetkilendirme sunucusu olur (OpenIddict, Apache-2.0, ASP.NET Identity üstüne). Yetkilendirme kodu + PKCE (S256), kısa ömürlü erişim token'ı, dönen yenileme token'ı. Giriş mevcut giriş sayfasıyla; ardından izin ekranı ("Claude bu atölyenin iş emirlerini okuyabilir ve durumunu değiştirebilir"). Token tek atölyeye ve o personelin rolüne bağlı.
+- **Keşif:** `/.well-known/oauth-protected-resource` (RFC 9728) ve `/.well-known/oauth-authorization-server` (RFC 8414); 401 yanıtında `WWW-Authenticate` ile metadata adresi. Token'ın `aud` değeri MCP adresi (RFC 8707).
+- **İstemci kaydı:** Dinamik kayıt (RFC 7591), claude.ai, Claude Desktop/Code, VS Code ve Cursor'ın kullandığı yol. Yönlendirme adresleri izin listesiyle sınırlı (claude.ai/claude.com https, yerel istemciler için `localhost`/`127.0.0.1`); kayıt için ayrı rate limit; hiç token almamış eski kayıtlar düzenli silinir.
+
+**Araçlar**
+- `find_work_order`: numara, müşteri adı ya da telefonla iş emri; durum, cihaz, şikâyet, teklif, tahmini teslim.
+- `list_work_orders`: duruma göre (bekleyen, parça bekleyen, teslime hazır, gecikmiş), en fazla 50 kayıt.
+- `low_stock`: kritik seviyenin altındaki parçalar, şube başına.
+- `change_status`: iş emri durumunu değiştirir (domain kuralları geçerli, geçersiz geçiş anlamlı hata), isteğe bağlı not. İstemci onay sorar (`destructiveHint`).
+- Silme, ödeme alma, fiyat değiştirme araçları yok. Mesaj taslağı araç değil: veriyi araç verir, metni kullanıcının modeli yazar.
+- Teknisyen rolü fiyat, ödeme ve ciroyu görmez (web'deki kural). Müşterinin yazdığı şikâyet metni araç çıktısında "müşteri metni" olarak ayrı alanda döner (prompt injection'a karşı veri, talimat değil).
+
+**Güvenlik ve KVKK**
+- Token'lar Data Protection ile imzalı/şifreli, veritabanında sadece referans; ayarlarda "Bağlı uygulamalar" listesi ve tek tıkla iptal.
+- MCP için kullanıcı başına rate limit, her araç çağrısı denetim kaydına (kim, hangi araç, hangi iş emri; müşteri verisi kaydedilmez).
+- İzin ekranında KVKK uyarısı: veriler kullanıcının seçtiği yapay zekâ sağlayıcısına gider; atölye bunu aydınlatma metnine eklemelidir.
+- Demo atölye MCP ile salt okunur denenebilir.
+
+**Kapsam dışı (ücretsiz ama gereksiz):** ChatGPT için ayrıca uğraşılmaz; standart OAuth + MCP olduğu için destekliyorsa kendiliğinden çalışır, denenip README'ye yazılır.
+
+**Issue'lar (Sprint 3, 3-9 Kasım):** (1) MCP sunucusu + OAuth, (2) v1.1.0 yayını (canlıda claude.ai ile deneme, README TR/EN, Release).

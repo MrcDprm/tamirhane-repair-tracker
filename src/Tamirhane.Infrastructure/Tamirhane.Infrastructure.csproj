@@ -27,6 +27,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.14" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.8.0" />
     <PackageReference Include="QRCoder" Version="1.8.1" />
   </ItemGroup>
 

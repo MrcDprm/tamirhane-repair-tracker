@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
@@ -17,6 +18,7 @@ using Tamirhane.Infrastructure.Notifications;
 using Tamirhane.Infrastructure.Persistence;
 using Tamirhane.Web.Authorization;
 using Tamirhane.Web.Localization;
+using Tamirhane.Web.Mcp;
 using Tamirhane.Web.ModelBinding;
 using Tamirhane.Web.RateLimiting;
 using Tamirhane.Web.Security;
@@ -89,6 +91,14 @@ builder.Services.AddTrackingRateLimit(builder.Configuration["CLIENT_IP_HEADER"])
 builder.Services.AddDemoRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
 builder.Services.AddShopPolicies();
 
+// Yapay zekâ asistanlarından erişim (v1.1.0): OAuth 2.1 yetkilendirme sunucusu + /mcp. Araçlar mevcut kullanım
+// senaryolarını çağırır; ayrıntı Mcp/OAuthServer.cs.
+builder.Services.AddMcpAccess(publicOrigin);
+builder.Services.AddMcpRateLimit(builder.Configuration["CLIENT_IP_HEADER"]);
+builder.Services.AddAuthorizationBuilder().AddPolicy(OAuthServer.McpScheme, policy =>
+    policy.AddAuthenticationSchemes(OAuthServer.McpScheme).RequireAuthenticatedUser());
+builder.Services.AddMcpServer().WithHttpTransport().WithTools<WorkshopTools>();
+
 // Kullanım senaryoları (her istek kendi örneğini alır) ve saat.
 builder.Services.AddApplication();
 
@@ -133,6 +143,14 @@ if (!app.Environment.IsDevelopment())
 }
 // Gövdesiz hata kodları (bulunamayan adres, bozuk form) çıplak tarayıcı sayfası yerine sitenin hata sayfasıyla.
 app.UseStatusCodePagesWithReExecute("/error/{0}");
+// MCP ve OAuth adresleri programların çağırdığı API'ler: 401'in WWW-Authenticate başlığı ve OAuth'un JSON hataları HTML
+// hata sayfasıyla değiştirilmez (yeniden çalıştırılan hata sayfası POST'ta CSRF'e takılıp 400 da veriyordu).
+app.Use((context, next) =>
+{
+    if (OAuthServer.IsApiPath(context.Request.Path) && context.Features.Get<IStatusCodePagesFeature>() is { } pages)
+        pages.Enabled = false;
+    return next();
+});
 
 // Sağlık kontrolü sunucunun içinden, Caddy'siz http ile de sorulabilir; https'e yönlendirilmez.
 app.UseWhen(context => !context.Request.Path.StartsWithSegments("/healthz"), branch => branch.UseHttpsRedirection());
@@ -158,6 +176,10 @@ app.MapStaticAssets();
 // /health: veritabanına da ulaşılıyor mu (elle ya da izleme için).
 app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health");
+
+app.MapMcp(OAuthServer.McpPath)
+    .RequireAuthorization(OAuthServer.McpScheme)
+    .RequireRateLimiting(McpRateLimit.McpPolicy);
 
 app.MapControllerRoute(
     name: "default",

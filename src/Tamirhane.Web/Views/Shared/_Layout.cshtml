@@ -47,6 +47,7 @@
                         <li><a asp-controller="WorkOrders" asp-action="Index" aria-current="@(controller == "WorkOrders" && !onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-list" /></svg>@T["nav.work_orders"]</a></li>
                         <li><a asp-controller="WorkOrders" asp-action="New" aria-current="@(onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>@T["nav.intake"]</a></li>
                         <li><a asp-controller="Inventory" asp-action="Index" aria-current="@Current("Inventory")"><svg class="icon"><use href="/img/icons.svg#i-box" /></svg>@T["nav.inventory"]</a></li>
+                        <li><a asp-controller="Connections" asp-action="Index" aria-current="@Current("Connections")"><svg class="icon"><use href="/img/icons.svg#i-chat" /></svg>@T["nav.connections"]</a></li>
                         @if (isOwner)
                         {
                             <li><a asp-controller="Staff" asp-action="Index" aria-current="@Current("Staff")"><svg class="icon"><use href="/img/icons.svg#i-users" /></svg>@T["nav.staff"]</a></li>

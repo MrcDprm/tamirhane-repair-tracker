@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using OpenIddict.EntityFrameworkCore.Models;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tamirhane.Application.Abstractions;
@@ -21,6 +22,7 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
 {
     /// <summary>Stok tablolarında ShopId domain'de yok; atölyeyi Infrastructure gölge sütunla tutar.</summary>
     internal const string ShopIdColumn = "ShopId";
+    private const int MaxTextLength = 1000;
 
     /// <summary>Çerez ve e-posta token'larını imzalayan anahtarlar (Data Protection).</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
@@ -70,6 +72,18 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
     {
         base.OnModelCreating(modelBuilder); // Identity tabloları
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TamirhaneDbContext).Assembly);
+        // OpenIddict tabloları da diğerleri gibi küçük harf ve alt çizgiyle.
+        modelBuilder.Entity<OpenIddictEntityFrameworkCoreApplication>().ToTable("openiddict_applications");
+        modelBuilder.Entity<OpenIddictEntityFrameworkCoreAuthorization>().ToTable("openiddict_authorizations");
+        modelBuilder.Entity<OpenIddictEntityFrameworkCoreScope>().ToTable("openiddict_scopes");
+        modelBuilder.Entity<OpenIddictEntityFrameworkCoreToken>().ToTable("openiddict_tokens");
+        // Projedeki "metin en fazla 1000" kuralı bu tablolara uymaz (token içeriği, izin listesi uzun olabilir): kuraldan
+        // gelen sınır kaldırılır, OpenIddict'in kendi verdiği uzunluklar (client_id 100 gibi) kalır.
+        foreach (var type in new[] { typeof(OpenIddictEntityFrameworkCoreApplication), typeof(OpenIddictEntityFrameworkCoreAuthorization),
+                     typeof(OpenIddictEntityFrameworkCoreScope), typeof(OpenIddictEntityFrameworkCoreToken) })
+            foreach (var property in modelBuilder.Entity(type).Metadata.GetProperties()
+                         .Where(p => p.ClrType == typeof(string) && p.GetMaxLength() == MaxTextLength))
+                property.SetMaxLength(null);
 
         // Kiracı filtresi: her sorgu sadece oturumdaki atölyenin kayıtlarını görür.
         // İş emrinin alt kayıtları (geçmiş, kalemler, ödemeler, notlar) sadece iş emri üzerinden yüklenir.
@@ -141,7 +155,7 @@ public sealed class TamirhaneDbContext(DbContextOptions<TamirhaneDbContext> opti
         // Durum, tür gibi enum'lar veritabanında okunabilir metin olarak durur.
         builder.Properties<Enum>().HaveConversion<string>().HaveMaxLength(32);
         builder.Properties<decimal>().HavePrecision(18, 2);
-        builder.Properties<string>().HaveMaxLength(1000);
+        builder.Properties<string>().HaveMaxLength(MaxTextLength);
     }
 
     private sealed class EfTransaction(IDbContextTransaction transaction) : ITransaction

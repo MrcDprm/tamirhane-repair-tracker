@@ -1,0 +1,44 @@
+@using Tamirhane.Web.Mcp
+@model ConsentModel
+@{
+    Layout = "_AuthLayout";
+    ViewData["Title"] = T["mcp.consent.title"];
+}
+
+@* Uygulama adı istemcinin kendi yazdığı metin: Razor kaçışlar, kayıtta da kısaltılıp temizlendi. *@
+<div class="narrow">
+    <h1>@T["mcp.consent.heading", Model.AppName]</h1>
+    <p>@T["mcp.consent.shop", Model.ShopName]</p>
+
+    <ul class="consent-list">
+        <li>@T["mcp.consent.read"]</li>
+        <li>@T["mcp.consent.write"]</li>
+        <li>@T["mcp.consent.never"]</li>
+        @if (!Model.IsOwner)
+        {
+            <li>@T["mcp.consent.technician"]</li>
+        }
+    </ul>
+
+    <div class="notice" role="note">
+        <strong>@T["mcp.consent.kvkk_title"]</strong>
+        <p>@T["mcp.consent.kvkk_text"]</p>
+    </div>
+
+    @if (Model.RedirectHost.Length > 0)
+    {
+        <p class="muted">@T["mcp.consent.redirect", Model.RedirectHost]</p>
+    }
+
+    <form method="post" action="@(Context.Request.PathBase + Context.Request.Path)" asp-antiforgery="true">
+        @foreach (var parameter in Model.Parameters)
+        {
+            foreach (var value in parameter.Value)
+            {
+                <input type="hidden" name="@parameter.Key" value="@value" />
+            }
+        }
+        <button type="submit" name="decision" value="allow" class="btn btn-primary btn-block">@T["mcp.consent.allow"]</button>
+        <button type="submit" name="decision" value="deny" class="btn btn-block">@T["mcp.consent.deny"]</button>
+    </form>
+</div>

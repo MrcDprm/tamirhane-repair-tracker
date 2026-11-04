@@ -59,7 +59,10 @@ public sealed partial class SecurityTests(TamirhaneWebFactory app)
             await flows.OwnerAsync("csrf-2@example.com"),
             await flows.OwnerAsync("csrf-3@example.com"),
         ];
-        var posts = PostRoutes().ToList();
+        // Programların çağırdığı, çerez kullanmayan API'ler CSRF'in konusu değil: /mcp sadece Bearer token kabul eder
+        // (McpFlowTests çerezle reddedildiğini denetler), istemci kaydı oturuma hiç bakmaz ve sadece JSON kabul eder.
+        string[] tokenOnlyApis = ["/mcp", "/connect/register"];
+        var posts = PostRoutes().Where(p => !tokenOnlyApis.Contains(p.TrimEnd('/'))).ToList();
         Assert.True(posts.Count > 20, $"Sadece {posts.Count} POST ucu bulundu; uç listesi okunamıyor olabilir.");
 
         var accepted = new List<string>();
