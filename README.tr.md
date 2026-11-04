@@ -31,6 +31,11 @@ Telefon, bilgisayar ve ev aleti tamir eden atölyeler için ücretsiz teknik ser
 - Türkçe ve İngilizce (İngilizce `/en` altında), açık ve koyu tema, tezgâhta telefondan kullanılabilir
 - Örnek verili, 24 saat sonra silinen herkese açık demo atölye; sahip atölyeyi bütün verisiyle silebilir
 
+**Yapay zekâ asistanı (MCP)**
+- Claude'u (ya da başka bir MCP istemcisini) atölyene bağla ve günlük dille sor: "2026-0042 ne durumda?", "Teslime hazır cihazlar hangileri?", "Kritik stokta ne var?"
+- Asistan iş emrini bir sonraki duruma geçirebilir ve atölye notu ekleyebilir; hiçbir şeyi silemez, tahsilat yapamaz, fiyat değiştiremez, cihaz şifrelerini göremez
+- OAuth 2.1 ile giriş: atölye sahibi ya da teknisyen izin ekranında onaylar, bağlı uygulamaları görür ve istediği an bağlantıyı keser
+
 ## Ekran Görüntüleri
 
 | Panel | Cihaz kabul |
@@ -42,6 +47,10 @@ Telefon, bilgisayar ve ev aleti tamir eden atölyeler için ücretsiz teknik ser
 | ![İş emri](docs/screenshots/work-order-tr.png) | ![Telefonda takip sayfası](docs/screenshots/tracking-tr.png) |
 
 ![Tanıtım sayfası](docs/screenshots/landing-tr.png)
+
+| Yapay zekâ asistanını bağlama | Bağlı uygulamalar |
+|---|---|
+| ![İzin ekranı](docs/screenshots/mcp-consent-tr.png) | ![Yapay zekâ sayfası](docs/screenshots/mcp-connections-tr.png) |
 
 ## Mimari
 
@@ -58,9 +67,9 @@ Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
 | `Tamirhane.Domain` | Varlıklar ve iş kuralları: iş emri durum akışı, teklif toplamları, stok, garanti, IMEI kontrolü. Hiçbir çatıya bağlı değil. |
 | `Tamirhane.Application` | Kullanım senaryoları (her biri tek sınıf); depolama, e-posta, bildirim, saat ve şifre şifreleme arayüzleri. |
 | `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend e-posta, Web Push, QR kod, Data Protection. |
-| `Tamirhane.Web` | MVC controller ve görünümler, dil desteği, güvenlik başlıkları, istek sınırları. |
+| `Tamirhane.Web` | MVC controller ve görünümler, dil desteği, güvenlik başlıkları, istek sınırları. MCP sunucusu ve OAuth uçları da burada, aynı kullanım senaryolarını çağıran ikinci bir sunum katmanı olarak durur. |
 
-Bağımlılık kuralını `Tamirhane.Architecture.Tests` denetler. 734 test Docker'daki gerçek bir PostgreSQL'e karşı çalışır (Testcontainers).
+Bağımlılık kuralını `Tamirhane.Architecture.Tests` denetler. 744 test Docker'daki gerçek bir PostgreSQL'e karşı çalışır (Testcontainers).
 
 Kısaca güvenlik: Trusted Types'lı sıkı CSP, her POST'ta CSRF token'ı (bir test bütün POST uçlarını gezer), IP başına istek sınırı, `__Host-` çerezler, her sorguda kiracı filtresi, Identity ile hash'lenmiş şifreler, sunucu diskinde Data Protection anahtarları, şifreli cihaz şifreleri, sertifikası doğrulanan veritabanı bağlantısı.
 
@@ -70,6 +79,7 @@ Kısaca güvenlik: Trusted Types'lı sıkı CSP, her POST'ta CSRF token'ı (bir 
 - ASP.NET Core Identity, Data Protection
 - htmx, Motion (hareket), düz CSS
 - Resend (e-posta), Web Push (VAPID)
+- Model Context Protocol (C# SDK), OpenIddict (OAuth 2.1)
 - xUnit, Testcontainers, NetArchTest
 - Oracle Cloud (Ubuntu, systemd), Caddy
 
@@ -93,6 +103,14 @@ Testler: `dotnet test` (Docker çalışmıyorsa entegrasyon testleri nedeni yaz�
 
 Caddy arkasında bir Linux sunucuya yayın: [deploy/README.md](deploy/README.md).
 
+## Claude ile kullanım
+
+1. Claude'da Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle'yi aç.
+2. Sunucu adresi: `https://tamirhane.miracdeprem.com/mcp` (yerelde: `https://localhost:7071/mcp`).
+3. Açılan Tamirhane sayfasında giriş yap ve İzin ver'e bas. Bağlı uygulamalar menüdeki **Yapay zekâ** sayfasında listelenir.
+
+Araçlar: `find_work_order`, `list_work_orders`, `low_stock`, `change_status`. Durum değiştirmeden önce istemci senden onay ister.
+
 ## Öğrendiklerim
 
 - **Gerçekten Clean Architecture:** Domain'i EF Core'dan ve ASP.NET'ten bağımsız tuttum; bir proje yanlış katmana bağlanırsa bir test düşüyor. "Borcu olan cihaz teslim edilemez" gibi kurallar tek bir yerde duruyor ve veritabanı olmadan test ediliyor.
@@ -102,6 +120,7 @@ Caddy arkasında bir Linux sunucuya yayın: [deploy/README.md](deploy/README.md)
 - **Barındırma tercihleri:** Uyuyan ücretsiz bir plan ilk tıklamayı bir dakika bekletiyor. Ücretsiz ARM sunucuda, sıkılaştırılmış bir systemd servisi olarak önceden derlenmiş (ReadyToRun) yayın hem daha hızlı hem bedava oldu. Karşılığında .NET çalışma ortamını güncel tutmanın artık benim işim olduğunu öğrendim.
 - **Veriyi şifreli saklamak:** Cihaz şifreleri ASP.NET Data Protection ile şifreleniyor. Anahtarlar veritabanında değil sunucunun diskinde duruyor; veritabanı tek başına sızsa bir şey açığa çıkmıyor.
 - **Dil desteği ve SEO:** Dil önekini `PathBase`'e almak, üretilen her linke `/en`'i kendiliğinden ekliyor. Ama `__Host-` önekli çerez o zaman `Path=/` istiyor, yoksa tarayıcı onu reddediyor. Test istemcisi bu kuralı uygulamadığı için kuralı denetleyen bir test ekledim.
+- **Yapay zekâ asistanını güvenle içeri almak:** OpenIddict ile MCP istemcilerinin beklediği gibi çalışan bir OAuth 2.1 yetkilendirme sunucusu kurdum: keşif belgeleri, sadece bilinen yönlendirme adreslerine izin veren dinamik istemci kaydı, PKCE ve kaynak göstergesi. Token sadece kullanıcıyı söylüyor; atölye, rol ve şube her istekte veritabanından okunuyor, böylece personel çıkarılınca ya da bağlantı kesilince bir sonraki çağrıda etkili oluyor. Müşterinin yazdığı metin ayrı bir alanda veri olarak dönüyor, asistana talimat gibi geçemiyor.
 - **Ürün ayrıntıları:** Kabul formu cihaz türüne göre değişiyor. Telefon görünümünü iki dilde 320-768 piksel arasında taradım. iPhone bildirimleri için her takip sayfasına ayrı bir web uygulaması tanımı gerekti.
 
 ## Lisans
