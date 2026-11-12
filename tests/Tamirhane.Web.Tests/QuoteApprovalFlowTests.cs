@@ -26,7 +26,9 @@ public sealed partial class QuoteApprovalFlowTests(TamirhaneWebFactory app)
         Assert.Equal(tracking, Browser.RedirectOf(response));
 
         page = await BodyAsync(customer, tracking);
-        Assert.Contains("Onayın atölyeye iletildi.", page);
+        // Onay iş emrini doğrudan Onarımda'ya taşır: mesaj ve sayfanın durumu aynı şeyi söyler.
+        Assert.Contains("Onayın atölyeye iletildi, onarım başladı.", page);
+        Assert.Contains("Cihazın onarılıyor.", page);
         Assert.Contains("Onaylandı", page);
         Assert.DoesNotContain("Onarımı onayla", page);
         Assert.DoesNotContain("Zeynep Arslan", page); // yazılan ad takip sayfasında görünmez
@@ -156,7 +158,7 @@ public sealed partial class QuoteApprovalFlowTests(TamirhaneWebFactory app)
 
         var done = await customer.SubmitAsync(english, tracking + "/decision?lang=en", new() { ["Approved"] = "true", ["DecidedBy"] = "Zeynep Arslan" });
         Assert.Equal(english, Browser.RedirectOf(done));
-        Assert.Contains("Your approval was sent to the shop.", await BodyAsync(customer, english));
+        Assert.Contains("Your approval was sent to the shop and the repair has started.", await BodyAsync(customer, english));
     }
 
     private static async Task<(string Order, string Tracking)> QuotedAsync(Browser owner, string phone)

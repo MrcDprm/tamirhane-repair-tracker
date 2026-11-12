@@ -568,7 +568,7 @@
   "tracking.notes": "Notes from the shop",
   "tracking.directions": "Directions",
   "tracking.decision.name_required": "Enter your full name so we can record who decided (at most 100 characters).",
-  "tracking.decision.approved": "Your approval was sent to the shop. You'll see it on this page when the repair starts.",
+  "tracking.decision.approved": "Your approval was sent to the shop and the repair has started. You'll see it on this page when your device is ready.",
   "tracking.decision.declined": "Your decision was sent to the shop. You can call the shop to arrange picking up your device.",
   "tracking.decision.already": "A decision was already made on this quote; the latest status on the page is what counts.",
   "layout.light_theme": "Light theme",

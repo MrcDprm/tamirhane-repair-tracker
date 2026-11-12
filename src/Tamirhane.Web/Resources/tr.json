@@ -568,7 +568,7 @@
   "tracking.notes": "Atölyeden notlar",
   "tracking.directions": "Yol tarifi",
   "tracking.decision.name_required": "Kararı kimin verdiğini yazmak için adını ve soyadını gir (en fazla 100 karakter).",
-  "tracking.decision.approved": "Onayın atölyeye iletildi. Onarım başlayınca bu sayfada görünür.",
+  "tracking.decision.approved": "Onayın atölyeye iletildi, onarım başladı. Cihazın hazır olunca bu sayfada görürsün.",
   "tracking.decision.declined": "Kararın atölyeye iletildi. Cihazını teslim almak için atölyeyi arayabilirsin.",
   "tracking.decision.already": "Bu teklif için karar zaten verilmiş; sayfadaki son durum geçerli.",
   "layout.light_theme": "Açık tema",
